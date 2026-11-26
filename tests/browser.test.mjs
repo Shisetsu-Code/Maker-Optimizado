@@ -199,3 +199,25 @@ test('HTML export freezes the selected project and waits for its catalogue',{tim
   assert.doesNotMatch(html,/<img[^>]+src="\/media\/objects\//);
  }finally{release?.();await browser.close();}
 });
+
+test('reference cover profiles and mobile navigation operate in the new renderer',{timeout:120000},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1440,height:900}});await page.goto(origin);
+  await page.locator('html[data-ready=true]').waitFor();
+  await page.locator('#preset').selectOption('violet');
+  await page.locator('#mode').click();
+  const frame=page.frameLocator('#preview');
+  await frame.locator('#catalog[data-catalog-preset=violet]').waitFor();
+  assert.equal(await frame.locator('body').getAttribute('data-profile'),'violet');
+  assert.equal(await frame.locator('#hero').evaluate(el=>getComputedStyle(el).aspectRatio),'2.75 / 1');
+  await frame.locator('.lobby-rail [data-provider-nav]').first().click();
+  assert.notEqual(await frame.locator('[data-catalog-filter=provider]').inputValue(),'');
+  await page.locator('[data-size=mobile]').click();
+  await frame.locator('.lobby-mobile').waitFor({state:'visible'});
+  await frame.locator('.lobby-mobile [data-catalog-mode=all][data-catalog-scroll=catalog]').click();
+  assert.equal(await frame.locator('[data-catalog-filter=provider]').inputValue(),'');
+  await frame.locator('#categories [data-category-nav=Favoritos]').click();
+  assert.equal(await frame.locator('.catalog-controls [data-catalog-mode=favorites]').getAttribute('aria-pressed'),'true');
+ }finally{await browser.close();}
+});

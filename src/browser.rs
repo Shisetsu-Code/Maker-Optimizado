@@ -143,11 +143,12 @@ impl Studio {
         self.editor.redo()
     }
     pub fn html(&self, screen: &str, preview: bool) -> Result<String, JsValue> {
-        Ok(render::document_with_appearance(
+        Ok(render::document_with_profile(
             self.editor.active(),
             view(screen)?,
             preview,
             &self.editor.workspace().appearance,
+            Some(&self.editor.workspace().active),
         ))
     }
 }

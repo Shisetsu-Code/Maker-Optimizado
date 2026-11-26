@@ -223,8 +223,6 @@ impl Catalog {
         let custom: Vec<_> = if query.provider.is_empty()
             && query.category.is_empty()
             && query.group.is_empty()
-            && !query.favorites_only
-            && !query.recent_only
             && !query.top
         {
             nodes
@@ -232,6 +230,8 @@ impl Catalog {
                 .filter(|n| {
                     !consumed.contains(n.id.as_str())
                         && !is_placeholder(n)
+                        && (!query.favorites_only || favorites.contains(n.id.as_str()))
+                        && (!query.recent_only || recent.contains(n.id.as_str()))
                         && (query.preview || !n.hidden)
                         && (search.is_empty()
                             || format!("{} {}", n.title, n.text)
@@ -245,8 +245,23 @@ impl Catalog {
         let total = rows.len() + custom.len();
         let offset = query.offset.min(total);
         let end = (offset + PAGE_SIZE).min(total);
+        let mut order: Vec<usize> = (0..total).collect();
+        if query.recent_only {
+            order.sort_by_key(|index| {
+                let id = if let Some((item, _)) = rows.get(*index) {
+                    &item.id
+                } else {
+                    &custom[*index - rows.len()].id
+                };
+                query
+                    .recent
+                    .iter()
+                    .position(|s| s == id)
+                    .unwrap_or(usize::MAX)
+            });
+        }
         let mut html = String::new();
-        for index in offset..end {
+        for &index in &order[offset..end] {
             if let Some((item, effective)) = rows.get(index) {
                 let fallback;
                 let node = match effective {
@@ -263,7 +278,12 @@ impl Catalog {
                     query.preview,
                 ));
             } else if let Some(n) = custom.get(index - rows.len()) {
-                html.push_str(&crate::render::catalog_card(n, &n.id, false, query.preview));
+                html.push_str(&crate::render::catalog_card(
+                    n,
+                    &n.id,
+                    favorites.contains(n.id.as_str()),
+                    query.preview,
+                ));
             }
         }
         Page {
@@ -308,6 +328,38 @@ mod tests {
         );
         assert_eq!(page.total, 1);
         assert!(page.html.contains("aria-pressed=\"true\""));
+    }
+    #[test]
+    fn custom_cards_participate_in_favorites_and_recents() {
+        let catalog = sample();
+        let mut design = crate::presets::design("ember").unwrap();
+        design
+            .lobby
+            .iter_mut()
+            .find(|node| node.id == "catalog")
+            .unwrap()
+            .children
+            .push(Component::new("custom-card", Kind::Tile, "Custom"));
+        let page = catalog.page(
+            &design,
+            &Query {
+                favorites_only: true,
+                favorites: vec!["custom-card".into()],
+                ..Default::default()
+            },
+        );
+        assert_eq!(page.total, 1);
+        assert!(page.html.contains("aria-pressed=\"true\""));
+        let page = catalog.page(
+            &design,
+            &Query {
+                recent_only: true,
+                recent: vec!["custom-card".into(), "item-one".into()],
+                ..Default::default()
+            },
+        );
+        assert_eq!(page.total, 2);
+        assert!(page.html.find("Custom").unwrap() < page.html.find("Golden Test").unwrap());
     }
     #[test]
     fn reject_untrusted_asset() {

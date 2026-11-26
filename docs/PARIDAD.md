@@ -75,3 +75,16 @@ del 1% (17,91%–99,98% de píxeles diferentes). Corresponde a la revisión
 El éxito del workflow en modo diagnóstico no implica paridad. La revisión
 visual debe repetirse después de cambios en el renderizador, los componentes
 o los estilos; no se certifica equivalencia 1:1.
+
+## Geometría y navegación de referencia
+
+Los perfiles neutrales de las familias con portada completa recuperan las
+proporciones de banner, tarjetas y columnas de las hojas de estilo anteriores.
+Las portadas sin texto añadido usan únicamente el arte local; los textos de las
+portadas editoriales se conservan como contenido editable. Se restauran una
+navegación inferior móvil, el menú lateral de la familia Violet, accesos a
+categorías y navegación de la portada hacia el catálogo. Las tarjetas creadas
+por el usuario participan también en favoritos y recientes. Cambios de
+geometría se aplican por perfil si el usuario conserva la distribución base;
+no se sobrescribe un proyecto guardado para imponer nuevos textos. Esto
+recupera funciones y geometría, pero todavía requiere comparación visual.

@@ -137,7 +137,13 @@ fn button(n: &Component) -> String {
         )
     }
 }
-fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
+fn render_node(
+    out: &mut String,
+    n: &Component,
+    theme: &Theme,
+    preview: bool,
+    category_tile: bool,
+) {
     if n.hidden && !preview {
         return;
     }
@@ -160,7 +166,15 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
             write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categorías</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
         }
         Kind::Hero => {
-            write!(out,"<section class=\"component hero\" {attr}><div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA · DEMO</span><h1>{title}</h1><p>{text}</p>{}</div><div class=\"hero-art\">{}</div></section>",button(n),artwork(n)).unwrap();
+            write!(out,"<section class=\"component hero\" {attr}>").unwrap();
+            if !n.title.is_empty() || !n.text.is_empty() || !n.button.is_empty() {
+                write!(out,"<div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA · DEMO</span><h1>{title}</h1><p>{text}</p>").unwrap();
+                if !n.button.is_empty() {
+                    write!(out,"<button type=\"button\" class=\"action\" data-catalog-mode=\"all\" data-catalog-scroll=\"catalog\">{}</button>",escape(&n.button)).unwrap();
+                }
+                out.push_str("</div>");
+            }
+            write!(out,"<div class=\"hero-art\">{}</div></section>",artwork(n)).unwrap();
         }
         Kind::Categories | Kind::Catalog | Kind::Live | Kind::Metrics | Kind::Activity => {
             let group = match n.kind {
@@ -182,12 +196,16 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
             }
             out.push_str("<div class=\"items\">");
             for child in &n.children {
-                render_node(out, child, theme, preview);
+                render_node(out, child, theme, preview, n.kind == Kind::Categories);
             }
             out.push_str("</div></section>");
         }
         Kind::Tile => {
-            write!(out,"<article class=\"component tile\" {attr}><div class=\"tile-art{}\">{}</div><div class=\"tile-copy\"><h3>{title}</h3><p>{text}</p>{}</div></article>",if n.image.is_some() || n.asset.is_some() {" has-artwork"} else {""},artwork(n),button(n)).unwrap();
+            write!(out,"<article class=\"component tile\" {attr}><div class=\"tile-art{}\">{}</div><div class=\"tile-copy\"><h3>{title}</h3><p>{text}</p>{}</div>",if n.image.is_some() || n.asset.is_some() {" has-artwork"} else {""},artwork(n),button(n)).unwrap();
+            if category_tile {
+                write!(out,"<button type=\"button\" class=\"category-hit\" data-category-nav=\"{title}\" aria-label=\"{title}\"></button>").unwrap();
+            }
+            out.push_str("</article>");
         }
         Kind::Footer => {
             write!(out,"<footer class=\"component footer\" {attr}><strong>{title}</strong><p>{text}</p>{}{}</footer>",optional_artwork(n,"section-art"),button(n)).unwrap();
@@ -237,7 +255,19 @@ pub fn document_with_appearance(
     preview: bool,
     appearance: &Appearance,
 ) -> String {
+    document_with_profile(design, view, preview, appearance, None)
+}
+pub fn document_with_profile(
+    design: &Design,
+    view: View,
+    preview: bool,
+    appearance: &Appearance,
+    preset: Option<&str>,
+) -> String {
     let t = &design.theme;
+    let profile = preset
+        .filter(|id| crate::presets::get(id).is_some_and(|p| p.layout == t.layout))
+        .unwrap_or("custom");
     let settings = &appearance.settings;
     let mut out = String::with_capacity(16_000);
     let button = t.button_color.as_deref().unwrap_or(&t.accent);
@@ -258,7 +288,7 @@ pub fn document_with_appearance(
     if let Some(weight) = settings.weight {
         write!(css, "--global-weight:{weight};").unwrap();
     }
-    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
+    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body data-profile=\"{profile}\" class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
     if settings.enabled {
         if let Some(image) = &appearance.image {
             write!(out,"<div class=\"page-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
@@ -279,10 +309,16 @@ pub fn document_with_appearance(
         out.push_str("<div class=\"panel-body\">");
     }
     for n in design.nodes(view) {
-        render_node(&mut out, n, t, preview);
+        render_node(&mut out, n, t, preview, false);
     }
     if view == View::Panel {
         out.push_str("</div>");
+    }
+    if view == View::Lobby && design.lobby.iter().any(|n| n.kind == Kind::Header) {
+        out.push_str(r#"<nav class="lobby-mobile" aria-label="Navegación móvil"><button type="button" data-catalog-mode="all" data-catalog-scroll="top"><span aria-hidden="true">⌂</span>Inicio</button><button type="button" data-catalog-mode="all" data-catalog-scroll="catalog"><span aria-hidden="true">▦</span>Juegos</button><button type="button" data-catalog-mode="favorites" data-catalog-scroll="catalog"><span aria-hidden="true">♡</span>Favoritos</button><button type="button" data-demo="true"><span aria-hidden="true">◉</span>Ayuda</button></nav>"#);
+        if profile == "violet" {
+            out.push_str(r#"<aside class="lobby-rail" aria-label="Explorar"><strong>EXPLORAR</strong><button type="button" data-catalog-mode="all" data-catalog-scroll="catalog">Todos los juegos</button><button type="button" data-catalog-mode="top" data-catalog-scroll="catalog">Destacados</button><button type="button" data-catalog-mode="favorites" data-catalog-scroll="catalog">Mis favoritos</button><button type="button" data-catalog-mode="recent" data-catalog-scroll="catalog">Recientes</button><strong>PROVEEDORES</strong><div data-provider-rail></div><strong>AYUDA</strong><button type="button" data-demo="true">Soporte demo</button></aside>"#);
+        }
     }
     out.push_str("</main></body></html>");
     out

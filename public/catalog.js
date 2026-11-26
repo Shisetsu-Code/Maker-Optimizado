@@ -91,8 +91,11 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   const input=await catalogSource(preset);if(!stillCurrent())return;
   studio.set_catalog(input);
   const meta=JSON.parse(studio.catalog_metadata()),state=stateFor(preset);
-  current={doc,studio,preset,state,editing,banner:null};
-  controls(doc,meta,state);populate();updateMode(doc,state);buildBanner(doc,meta,state);
+  current={doc,studio,preset,state,editing,meta,banner:null};
+  controls(doc,meta,state);
+  const rail=doc.querySelector('[data-provider-rail]');
+  if(rail)for(const provider of meta.providers)rail.append(button(doc,provider,'providerNav',provider));
+  populate();updateMode(doc,state);buildBanner(doc,meta,state);
 }
 export function catalogInput(doc,target){
   if(current?.doc!==doc)return false;
@@ -102,13 +105,37 @@ export function catalogInput(doc,target){
   else return false;
   state.shown=48;populate();return true;
 }
+function clearFilters(doc,state){
+  state.provider='';state.category='';state.group='';state.search='';
+  for(const s of doc.querySelectorAll('[data-catalog-filter]'))s.value='';
+  const q=doc.querySelector('[data-search]');if(q)q.value='';
+}
+function scrollTarget(doc,where){
+  if(where==='catalog')doc.querySelector('#catalog')?.scrollIntoView({block:'start'});
+  else if(where==='top')doc.defaultView?.scrollTo(0,0);
+}
 export function catalogClick(doc,target,notice){
   if(current?.doc!==doc)return false;
-  const state=current.state,b=target.closest?.('button');
+  const {state,meta}=current,b=target.closest?.('button');
+  if(b?.hasAttribute('data-category-nav')||b?.hasAttribute('data-provider-nav')){
+    const label=b.dataset.categoryNav??'';
+    const category=label==='Casino en vivo'?'En vivo':label;
+    const modes={Destacados:'top',Favoritos:'favorites',Recientes:'recent',Todos:'all'};
+    const mode=modes[label]??'all';
+    if(b.hasAttribute('data-category-nav')&&!Object.hasOwn(modes,label)&&!meta.categories.includes(category)){
+      notice('Categoría', 'No hay una categoría equivalente en este catálogo.');return true;
+    }
+    clearFilters(doc,state);
+    state.favorites_only=mode==='favorites';state.recent_only=mode==='recent';state.top=mode==='top';
+    if(b.hasAttribute('data-provider-nav'))state.provider=b.dataset.providerNav;
+    else if(!Object.hasOwn(modes,label))state.category=category;
+    for(const s of doc.querySelectorAll('[data-catalog-filter]'))s.value=state[s.dataset.catalogFilter]??'';
+    state.shown=48;populate();updateMode(doc,state);scrollTarget(doc,'catalog');return true;
+  }
   if(b?.dataset.catalogMode){
     const mode=b.dataset.catalogMode;state.favorites_only=mode==='favorites';state.recent_only=mode==='recent';state.top=mode==='top';
-    if(mode==='all'){state.provider='';state.category='';state.group='';state.search='';for(const s of doc.querySelectorAll('[data-catalog-filter]'))s.value='';const q=doc.querySelector('[data-search]');if(q)q.value='';}
-    state.shown=48;populate();updateMode(doc,state);return true;
+    if(mode==='all'||b.dataset.catalogScroll)clearFilters(doc,state);
+    state.shown=48;populate();updateMode(doc,state);scrollTarget(doc,b.dataset.catalogScroll);return true;
   }
   if(b?.hasAttribute('data-catalog-more')){populate(false);return true;}
   if(b?.dataset.favorite){const id=b.dataset.favorite;state.favorites.has(id)?state.favorites.delete(id):state.favorites.add(id);populate();return true;}
