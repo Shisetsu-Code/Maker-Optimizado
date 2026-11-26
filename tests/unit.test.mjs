@@ -64,3 +64,21 @@ test('legacy JSON import reports ambiguous rules instead of silently discarding 
  assert.match(studio.html('lobby',false),/font-archivo/);
  studio.free();
 });
+
+test('administrative preview uses isolated synthetic Rust state',()=>{
+ const studio=new Studio();
+ const navigate=section=>studio.panel_action(JSON.stringify({type:'navigate',section}));
+ assert.equal((studio.panel_navigation().match(/data-panel-section=/g)||[]).length,12);
+ navigate('support');
+ studio.panel_action(JSON.stringify({type:'select',id:'conversation-1'}));
+ studio.panel_action(JSON.stringify({type:'note',id:'conversation-1',text:'<script>local</script>'}));
+ assert.match(studio.panel_content(),/&lt;script&gt;local&lt;\/script&gt;/);
+ studio.panel_action(JSON.stringify({type:'toggle',id:'conversation-1'}));
+ assert.match(studio.panel_content(),/Reabrir conversación/);
+ navigate('settings');
+ studio.panel_action(JSON.stringify({type:'maintenance',enabled:true}));
+ assert.equal(JSON.parse(studio.panel_metadata()).maintenance,true);
+ studio.panel_action(JSON.stringify({type:'reset'}));
+ assert.equal(JSON.parse(studio.panel_metadata()).maintenance,false);
+ studio.free();
+});

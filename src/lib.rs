@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 pub mod catalog;
+pub mod demo_panel;
 pub mod editor;
 pub mod media;
 pub mod migration;

@@ -20,6 +20,7 @@ fn view(value: &str) -> Result<View, JsValue> {
 pub struct Studio {
     editor: Editor,
     catalog: Option<crate::catalog::Catalog>,
+    panel: crate::demo_panel::Panel,
 }
 
 #[wasm_bindgen]
@@ -29,6 +30,7 @@ impl Studio {
         Self {
             editor: Editor::new(),
             catalog: None,
+            panel: crate::demo_panel::Panel::default(),
         }
     }
     pub fn presets(&self) -> String {
@@ -88,6 +90,14 @@ impl Studio {
         serde_json::to_string(&catalog.page(self.editor.active(), &query))
             .map_err(|e| JsValue::from_str(&e.to_string()))
     }
+    pub fn panel_action(&mut self,input:&str)->Result<(),JsValue>{
+        if input.len()>8192{return Err(JsValue::from_str("Acción de demostración demasiado grande."));}
+        let action:crate::demo_panel::Action=serde_json::from_str(input).map_err(|_|JsValue::from_str("Acción de panel inválida."))?;
+        self.panel.apply(action).map_err(err)
+    }
+    pub fn panel_content(&self)->String{self.panel.content()}
+    pub fn panel_navigation(&self)->String{self.panel.navigation()}
+    pub fn panel_metadata(&self)->String{self.panel.metadata().to_string()}
     pub fn snapshot(&self) -> Result<String, JsValue> {
         serde_json::to_string(self.editor.workspace())
             .map_err(|e| JsValue::from_str(&e.to_string()))

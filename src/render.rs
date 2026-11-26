@@ -175,6 +175,11 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
             if n.kind == Kind::Catalog {
                 write!(out,"<label class=\"search-label\">Buscar <input type=\"search\" class=\"catalog-search\" placeholder=\"{}\" data-search=\"true\"></label>",escape(n.style.placeholder.as_deref().unwrap_or("Buscar juegos"))).unwrap();
             }
+            if n.id == "activity" && n.kind == Kind::Activity {
+                out.push_str("<div id=\"panel-workspace\">");
+                out.push_str(&crate::demo_panel::Panel::default().content());
+                out.push_str("</div>");
+            }
             out.push_str("<div class=\"items\">");
             for child in &n.children {
                 render_node(out, child, theme, preview);
@@ -269,9 +274,14 @@ pub fn document_with_appearance(
         }
     )
     .unwrap();
+    if view==View::Panel{
+        out.push_str(&crate::demo_panel::Panel::default().navigation());
+        out.push_str("<div class=\"panel-body\">");
+    }
     for n in design.nodes(view) {
         render_node(&mut out, n, t, preview);
     }
+    if view==View::Panel{out.push_str("</div>");}
     out.push_str("</main></body></html>");
     out
 }

@@ -134,3 +134,40 @@ test('full catalogue interactions and sparse editing',{timeout:120000},async()=>
   await page.locator('#exit-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),null);
  }finally{await browser.close();}
 });
+
+test('administrative local preview, notes, review, history and maintenance',{timeout:120000},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const context=await browser.newContext({viewport:{width:1440,height:900}});
+  const page=await context.newPage();page.on('dialog',dialog=>dialog.accept());
+  await page.goto(origin);await page.locator('html[data-ready=true]').waitFor();
+  await page.locator('#panel').click();await page.locator('#mode').click();
+  const frame=page.frameLocator('#preview');
+  await frame.locator('html[data-screen=panel][data-editing=false]').waitFor();
+  await frame.locator('#surface[data-panel-ready=true]').waitFor();
+  const nav=frame.locator('.panel-navigation');
+  assert.equal(await nav.locator('button').count(),12);
+  await nav.locator('[data-panel-section=support]').click();
+  await frame.locator('[data-panel-row=conversation-1]').click();
+  await frame.locator('[data-panel-note=conversation-1]').fill('Respuesta ficticia');
+  await frame.locator('[data-panel-save-note=conversation-1]').click();
+  assert.match(await frame.locator('.panel-note').textContent(),/Respuesta ficticia/);
+  await frame.locator('[data-panel-toggle=conversation-1]').click();
+  assert.match(await frame.locator('[data-panel-toggle=conversation-1]').textContent(),/Reabrir/);
+  await nav.locator('[data-panel-section=requests]').click();
+  await frame.locator('[data-panel-row=request-1]').click();
+  await frame.locator('[data-panel-review=request-1]').click();
+  assert.match(await frame.locator('[data-panel-row=request-1]').textContent(),/Revisada/);
+  await nav.locator('[data-panel-section=records]').click();
+  assert.match(await frame.locator('#panel-workspace').textContent(),/Revisión visual/);
+  await nav.locator('[data-panel-section=settings]').click();
+  await frame.locator('[data-panel-maintenance=true]').click();
+  await page.locator('#lobby').click();
+  await frame.getByRole('heading',{name:'Estamos en mantenimiento',exact:true}).waitFor();
+  await page.locator('#panel').click();
+  await frame.locator('[data-panel-maintenance=false]').click();
+  await page.locator('#lobby').click();
+  await frame.locator('#catalog[data-catalog-preset=ember]').waitFor();
+  assert.equal(await frame.locator('.maintenance-preview').count(),0);
+ }finally{await browser.close();}
+});
