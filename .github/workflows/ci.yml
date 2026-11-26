@@ -1,0 +1,93 @@
+name: Maker Rust verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: maker-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: source
+        shell: bash
+        run: |
+          if [[ ! -f public/muestra/socio.js || ! -f package-lock.json ]]; then
+            [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_EVENT_NAME" != pull_request ]]
+            bash scripts/import-upstream.sh
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add public docs outputs scripts tests package-lock.json
+            git commit -m "Import pinned Maker templates and assets"
+            git push origin HEAD:main
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  verify:
+    needs: import
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.import.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Rust toolchain
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+      - name: Rust unit tests and asset inventory
+        run: |
+          cargo test --lib
+          npm run check:assets
+      - name: Install build tooling
+        run: |
+          cargo install worker-build --version 0.8.7 --locked
+          cargo install wasm-bindgen-cli --version 0.2.130 --locked
+      - run: npm ci
+      - name: Browser WASM and original unit tests
+        run: npm test
+      - name: Workers bundle
+        run: npx wrangler deploy --dry-run
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Runtime and browser tests
+        env:
+          DEMO_ORIGIN: http://127.0.0.1:8787
+          PLAYWRIGHT_CHANNEL: chromium
+          WRANGLER_SEND_METRICS: 'false'
+        shell: bash
+        run: |
+          mkdir -p work
+          npm run dev >work/worker.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; tail -100 work/worker.log' EXIT
+          for i in $(seq 1 180); do
+            if curl -fsS "$DEMO_ORIGIN/api/health"; then break; fi
+            sleep 2
+          done
+          curl -fsS "$DEMO_ORIGIN/api/health"
+          npm run test:runtime
+          node tests/editor-browser-smoke.cjs
+          node tests/element-editor-browser-smoke.cjs
+          node tests/element-editor-coverage-browser.cjs
+          node tests/element-overlap-browser.cjs
+          node tests/template-picker-browser-smoke.cjs
+          node tests/bateupix-browser-smoke.cjs
+          for slug in cobraya lunabet multisala pinaplay celuapuestas40 bet30 casinotower30 fenarys fortunasjk ravenbet luckrex; do
+            DEMO_TEMPLATE="$slug" node tests/lobby-templates-browser-smoke.cjs
+          done

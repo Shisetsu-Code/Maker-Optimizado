@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "maker-optimizado",
+  "main": "build/index.js",
+  "compatibility_date": "2026-10-11",
+  "workers_dev": true,
+  "build": { "command": "npm run build:browser && worker-build --release" },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": ["/", "/api", "/api/*", "/muestra/games-cartas/*"]
+  },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}

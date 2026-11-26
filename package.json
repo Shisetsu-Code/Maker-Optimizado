@@ -1,0 +1,18 @@
+{
+  "name": "rushybet-replica",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:browser": "cargo build --release --target wasm32-unknown-unknown --no-default-features --features browser --lib && wasm-bindgen --target web --out-dir public/muestra/wasm --out-name maker_browser target/wasm32-unknown-unknown/release/maker_optimized.wasm",
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "test": "npm run build:browser && node --test tests/*.test.mjs",
+    "test:runtime": "node --test tests/runtime-smoke.mjs tests/edge-runtime.test.mjs",
+    "check:assets": "cargo run --release --no-default-features --features asset-cli --bin asset-audit -- public",
+    "check:references": "node scripts/check-assets.mjs",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.149.0"
+  }
+}
