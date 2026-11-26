@@ -29,7 +29,7 @@ jobs:
           cargo check --locked --target wasm32-unknown-unknown --lib
           cargo check --locked --target wasm32-unknown-unknown --no-default-features --features browser --lib
       - name: Preserve lockfiles
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-locks
           path: |
