@@ -1,6 +1,6 @@
 import init,{Studio} from './wasm/maker_studio.js';
 import {load,save} from './storage.js';
-import {attachCatalog,catalogInput,catalogClick,exportCatalog} from './catalog.js';
+import {attachCatalog,catalogInput,catalogClick,exportCatalog,snapshotCatalogQuery} from './catalog.js';
 import {attachPanel,panelClick,panelInput,previewMaintenance} from './panel.js';
 
 const $=id=>document.getElementById(id);
@@ -197,9 +197,16 @@ async function readAsset(id,budget){
   return {url,size};
 }
 async function standaloneHtml(view){
-  // Work exclusively on trusted Rust-rendered HTML; never interpret imported text as markup.
-  const doc=new DOMParser().parseFromString(studio.html(view,false),'text/html');
-  if(view==='lobby')exportCatalog(doc,studio,describe().active);
+  // Freeze project and interaction query before any asynchronous catalogue load.
+  const frozen=new Studio();
+  let doc;
+  try{
+    frozen.load(studio.snapshot());
+    const preset=JSON.parse(frozen.describe(view,'')).active;
+    const query=snapshotCatalogQuery(preset);
+    doc=new DOMParser().parseFromString(frozen.html(view,false),'text/html');
+    if(view==='lobby')await exportCatalog(doc,frozen,preset,query);
+  }finally{frozen.free();}
   const images=new Map();
   for(const img of doc.querySelectorAll('img[src]')){
     const src=img.getAttribute('src');

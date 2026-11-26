@@ -79,13 +79,16 @@ function buildBanner(doc,meta,state){
   };
   current.banner={draw};draw();
 }
-export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
-  if(!doc?.querySelector('#catalog'))return;
+function catalogSource(preset){
   if(!sources.has(preset)){
     const promise=fetch('/catalogs/'+preset+'.json').then(r=>{if(!r.ok)throw Error('Catálogo no disponible.');return r.text();});
-    sources.set(preset,promise);promise.catch(()=>sources.delete(preset));
+    sources.set(preset,promise);promise.catch(()=>{if(sources.get(preset)===promise)sources.delete(preset);});
   }
-  const input=await sources.get(preset);if(!stillCurrent())return;
+  return sources.get(preset);
+}
+export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
+  if(!doc?.querySelector('#catalog'))return;
+  const input=await catalogSource(preset);if(!stillCurrent())return;
   studio.set_catalog(input);
   const meta=JSON.parse(studio.catalog_metadata()),state=stateFor(preset);
   current={doc,studio,preset,state,editing,banner:null};
@@ -116,8 +119,12 @@ export function catalogClick(doc,target,notice){
   }
   return false;
 }
-export function exportCatalog(doc,studio,preset){
-  if(!current||current.studio!==studio||current.preset!==preset)return;
+// Capture the query before any await, independently of the visible iframe.
+export function snapshotCatalogQuery(preset){
+  return request(stateFor(preset),false,0);
+}
+export async function exportCatalog(doc,frozenStudio,preset,query){
   const items=doc.querySelector('#catalog .items');if(!items)return;
-  items.innerHTML=JSON.parse(studio.catalog_page(request(current.state,false,0))).html;
+  frozenStudio.set_catalog(await catalogSource(preset));
+  items.innerHTML=JSON.parse(frozenStudio.catalog_page(query)).html;
 }

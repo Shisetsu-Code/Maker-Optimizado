@@ -52,3 +52,18 @@ Se recuperan los ajustes globales, colores y nombre de marca, portada y orden de
 ## Panel administrativo compartido
 
 Se recuperó la navegación de doce áreas con un único modelo de demostración Rust, compartido entre las plantillas. Se incluyen búsqueda y filtros sobre registros ficticios, notas y respuestas locales, cambio de estado de muestra, revisión visual, historial y vista de mantenimiento reversible. No se ejecutan operaciones reales ni se generan credenciales. El estado de interacción es de sesión, separado del proyecto editable; no modifica un sitio externo. Las pantallas detalladas, el editor fino de cada subelemento y las demás interacciones del panel original todavía requieren equivalencia específica; esta implementación no supone paridad total.
+
+## Correcciones de consistencia
+
+La exportación congela el proyecto y los filtros de catálogo al pulsar el botón,
+carga el catálogo correspondiente aunque la vista todavía esté cargando y emplea
+una instancia WASM independiente. Cambiar de plantilla durante la exportación no
+modifica el archivo. En las vistas administrativas los filtros eliminan selecciones
+ocultas, no admiten estados ajenos a la sección y Movimientos informa cuando no
+hay coincidencias. La navegación y los registros siguen siendo exclusivamente
+locales y ficticios.
+
+Las miniaturas originales pendientes siguen contabilizadas (3.065 referencias
+en Ember y 3.065 en Cobalt). Las tarjetas sin imagen conservan su representación
+local sin solicitudes externas. No se inventan asociaciones ni se certifica
+paridad visual 1:1.

@@ -171,3 +171,31 @@ test('administrative local preview, notes, review, history and maintenance',{tim
   assert.equal(await frame.locator('.maintenance-preview').count(),0);
  }finally{await browser.close();}
 });
+
+test('HTML export freezes the selected project and waits for its catalogue',{timeout:120000},async()=>{
+ const browser=await chromium.launch({headless:true});
+ let release;
+ try{
+  const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});
+  const page=await context.newPage();
+  let requested;
+  const started=new Promise(resolve=>{requested=resolve;});
+  const gate=new Promise(resolve=>{release=resolve;});
+  await page.route('**/catalogs/cobalt.json',async route=>{requested();await gate;await route.continue();});
+  await page.goto(origin);await page.locator('html[data-ready=true]').waitFor();
+  await page.locator('#preset').selectOption('cobalt');
+  await started;
+  const downloadPromise=page.waitForEvent('download');
+  await page.locator('#export-html').click();
+  await page.locator('#preset').selectOption('violet');
+  release();
+  const download=await downloadPromise;
+  const html=await readFile(await download.path(),'utf8');
+  const catalog=JSON.parse(await readFile('public/catalogs/cobalt.json','utf8'));
+  assert.ok(html.includes('data-catalog-card="'+catalog.items[0].id+'"'));
+  const other=JSON.parse(await readFile('public/catalogs/violet.json','utf8'));
+  assert.ok(!html.includes('data-catalog-card="'+other.items[0].id+'"'));
+  assert.equal(await page.locator('#preset').inputValue(),'violet');
+  assert.doesNotMatch(html,/<img[^>]+src="\/media\/objects\//);
+ }finally{release?.();await browser.close();}
+});

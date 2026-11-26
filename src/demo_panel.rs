@@ -291,6 +291,38 @@ impl Panel {
             .find(|r| r.id == id && r.section == self.section)
             .ok_or_else(|| "Registro de ejemplo no encontrado.".into())
     }
+    fn row_visible(&self, row: &Row) -> bool {
+        row.section == self.section
+            && (self.filter.is_empty() || self.filter == row.status.id())
+            && format!("{} {}", row.title, row.detail)
+                .to_lowercase()
+                .contains(&self.query.trim().to_lowercase())
+    }
+
+    fn clear_hidden_selection(&mut self) {
+        if self.selected.as_ref().is_some_and(|id| {
+            !self
+                .rows
+                .iter()
+                .any(|row| &row.id == id && self.row_visible(row))
+        }) {
+            self.selected = None;
+        }
+    }
+
+    fn filter_options(&self) -> &'static [Status] {
+        match self.section {
+            Section::Support => &[Status::Open, Status::Closed],
+            Section::Requests | Section::Alerts | Section::Prizes => {
+                &[Status::Pending, Status::Reviewed]
+            }
+            Section::Partners | Section::Team | Section::Players | Section::Flyers => {
+                &[Status::Active, Status::Paused]
+            }
+            _ => &[],
+        }
+    }
+
     pub fn apply(&mut self, action: Action) -> Result<(), String> {
         let mut next = self.clone();
         let event = match action {
@@ -306,21 +338,21 @@ impl Panel {
                     return Err("Búsqueda inválida.".into());
                 }
                 next.query = query;
+                next.clear_hidden_selection();
                 None
             }
             Action::Filter { filter } => {
-                if ![
-                    "", "open", "closed", "pending", "reviewed", "active", "paused",
-                ]
-                .contains(&filter.as_str())
-                {
+                if !filter.is_empty() && !next.filter_options().iter().any(|s| s.id() == filter) {
                     return Err("Filtro inválido.".into());
                 }
                 next.filter = filter;
+                next.clear_hidden_selection();
                 None
             }
             Action::Select { id } => {
-                next.row_mut(&id)?;
+                if !next.rows.iter().any(|r| r.id == id && next.row_visible(r)) {
+                    return Err("Registro de ejemplo no encontrado.".into());
+                }
                 next.selected = Some(id);
                 None
             }
@@ -380,6 +412,7 @@ impl Panel {
                 next.log.remove(0);
             }
         }
+        next.clear_hidden_selection();
         *self = next;
         Ok(())
     }
@@ -424,18 +457,24 @@ impl Panel {
             }
             Section::Records => {
                 write!(out,"<label class=\"search-label\">Buscar<input data-panel-search type=\"search\" value=\"{}\" placeholder=\"Buscar en el historial\"></label><div class=\"panel-list\">",escape(&self.query)).unwrap();
+                let query = self.query.trim().to_lowercase();
+                let mut count = 0;
                 for event in self
                     .log
                     .iter()
                     .rev()
-                    .filter(|event| event.to_lowercase().contains(&self.query.to_lowercase()))
+                    .filter(|event| event.to_lowercase().contains(&query))
                 {
+                    count += 1;
                     write!(
                         out,
                         "<div class=\"panel-row\"><span>{}</span><small>Local</small></div>",
                         escape(event)
                     )
                     .unwrap();
+                }
+                if count == 0 {
+                    out.push_str("<p class=\"panel-empty\">No hay movimientos de ejemplo que coincidan.</p>");
                 }
                 out.push_str("</div>");
             }
@@ -459,14 +498,7 @@ impl Panel {
             }
             section if section.searchable() => {
                 write!(out,"<div class=\"panel-filters\"><label class=\"search-label\">Buscar<input type=\"search\" data-panel-search value=\"{}\" placeholder=\"Buscar registro\"></label><label class=\"search-label\">Estado<select data-panel-filter><option value=\"\">Todos</option>",escape(&self.query)).unwrap();
-                let options = match section {
-                    Section::Support => &[Status::Open, Status::Closed][..],
-                    Section::Requests | Section::Alerts | Section::Prizes => {
-                        &[Status::Pending, Status::Reviewed][..]
-                    }
-                    _ => &[Status::Active, Status::Paused][..],
-                };
-                for status in options {
+                for status in self.filter_options() {
                     write!(
                         out,
                         "<option value=\"{}\"{}>{}</option>",
@@ -481,15 +513,8 @@ impl Panel {
                     .unwrap();
                 }
                 out.push_str("</select></label></div><div class=\"panel-list\">");
-                let query = self.query.trim().to_lowercase();
                 let mut count = 0;
-                for row in self.rows.iter().filter(|r| {
-                    r.section == section
-                        && (self.filter.is_empty() || self.filter == r.status.id())
-                        && format!("{} {}", r.title, r.detail)
-                            .to_lowercase()
-                            .contains(&query)
-                }) {
+                for row in self.rows.iter().filter(|r| self.row_visible(r)) {
                     count += 1;
                     write!(out,"<button class=\"panel-row\" type=\"button\" data-panel-row=\"{}\" aria-pressed=\"{}\"><span><strong>{}</strong><small>{}</small></span><span class=\"panel-status\" data-state=\"{}\">{}</span></button>",escape(&row.id),self.selected.as_deref()==Some(&row.id),escape(&row.title),escape(&row.detail),row.status.id(),row.status.label()).unwrap();
                 }
@@ -500,7 +525,7 @@ impl Panel {
                 }
                 out.push_str("</div>");
                 if let Some(row) = self.rows.iter().find(|r| {
-                    Some(r.id.as_str()) == self.selected.as_deref() && r.section == section
+                    Some(r.id.as_str()) == self.selected.as_deref() && self.row_visible(r)
                 }) {
                     write!(
                         out,
@@ -569,6 +594,45 @@ mod tests {
         })
         .unwrap();
         assert!(p.content().contains("No hay registros"));
+    }
+    #[test]
+    fn filters_clear_hidden_details_and_records_report_empty_results() {
+        let mut p = Panel::default();
+        p.apply(Action::Navigate {
+            section: Section::Players,
+        })
+        .unwrap();
+        p.apply(Action::Select {
+            id: "player-1".into(),
+        })
+        .unwrap();
+        assert!(p.content().contains("data-panel-note"));
+        p.apply(Action::Filter {
+            filter: "paused".into(),
+        })
+        .unwrap();
+        assert!(!p.content().contains("data-panel-note"));
+        assert!(
+            p.apply(Action::Select {
+                id: "player-1".into(),
+            })
+            .is_err()
+        );
+        assert!(
+            p.apply(Action::Filter {
+                filter: "open".into(),
+            })
+            .is_err()
+        );
+        p.apply(Action::Navigate {
+            section: Section::Records,
+        })
+        .unwrap();
+        p.apply(Action::Search {
+            query: "no-match".into(),
+        })
+        .unwrap();
+        assert!(p.content().contains("No hay movimientos"));
     }
     #[test]
     fn maintenance_is_preview_only_and_resettable() {

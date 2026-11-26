@@ -34,7 +34,7 @@ Publicación: `npx wrangler deploy --dry-run`, después `npx wrangler login` y `
 
 Esta es una reconstrucción independiente. No reproduce píxel a píxel cada diseño anterior: conserva paletas, jerarquías visuales y familias de distribución, reutiliza la biblioteca gráfica original autorizada por el propietario, con identificadores por contenido y sin bundles heredados. Los archivos de proyecto antiguos no son compatibles automáticamente con el esquema nuevo. No hay apuestas, pagos, cuentas reales ni sesiones de terceros. El editor funciona localmente; D1/R2 se reservan para una eventual publicación con autenticación y almacenamiento remoto. La API de validación limita el cuerpo a 256 KiB; imágenes y proyectos grandes se validan localmente.
 
-Ver [arquitectura](docs/ARCHITECTURE.md) y [procedencia](docs/PROVENANCE.md). La edición anterior está preservada en el historial de Git y la rama principal mientras esta reconstrucción se verifica.
+Ver [arquitectura](docs/ARCHITECTURE.md) y [procedencia](docs/PROVENANCE.md). La edición anterior está preservada en el historial de Git y en la rama `legacy/pre-rebuild`. Las correcciones pendientes de equivalencia se describen en [PARIDAD.md](docs/PARIDAD.md).
 
 ## Biblioteca gráfica
 
@@ -44,6 +44,6 @@ Verificación gráfica: `npm run test:media` comprueba la integridad de todos lo
 
 ## Catálogos normalizados
 
-Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo incluye la primera página de la selección actual, con imágenes embebidas y sin motor de juego.
+Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo congela el proyecto y la selección actual al iniciar la exportación, incluye la primera página del catálogo correspondiente con imágenes embebidas y no integra motores de juego.
 
 Compatibilidad: la importación admite los formatos de ajustes y diseño anteriores, migra los campos conocidos y descarga un informe de las reglas sin correspondencia semántica. No se sobrescriben los archivos originales.
