@@ -253,7 +253,11 @@ fn validate_node(
     {
         return Err("Estilo no permitido.".into());
     }
-    if node.asset.as_deref().is_some_and(|id| !crate::media::valid_asset(id)) {
+    if node
+        .asset
+        .as_deref()
+        .is_some_and(|id| !crate::media::valid_asset(id))
+    {
         return Err("Recurso gráfico inválido.".into());
     }
     if let Some(image) = &node.image {
