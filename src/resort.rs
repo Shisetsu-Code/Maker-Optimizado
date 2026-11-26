@@ -146,10 +146,10 @@ pub fn document(design: &Design, preview: bool, appearance: &Appearance) -> Stri
         out.push_str(line);
     }
     scaled_css(&mut out,CSS,settings.scale);
-    write!(out,"</style></head><body data-profile=\"ivory\" data-gallery=\"true\" data-resort=\"true\" data-appearance-font=\"{font}\" data-global-weight=\"{}\" data-global-radius=\"{}\" class=\"{}\" style=\"--paper:{};--ink:{};--accent:{};--button:{button};--button-ink:{};--global-weight:{};--global-radius:{}px;\">",settings.weight.is_some(),radius.is_some(),if backdrop{"gallery-background-enabled"}else{""},t.background,t.ink,t.accent,accent_ink(button),settings.weight.unwrap_or(400),radius.unwrap_or(t.radius)).unwrap();
+    write!(out,"</style></head><body data-profile=\"ivory\" data-gallery=\"true\" data-resort=\"true\" data-appearance-font=\"{font}\" data-global-weight=\"{}\" data-global-radius=\"{}\" class=\"font-{font} {}\" style=\"--paper:{};--ink:{};--accent:{};--button:{button};--button-ink:{};--global-weight:{};--global-radius:{}px;\">",settings.weight.is_some(),radius.is_some(),if backdrop{"gallery-background-enabled"}else{""},t.background,t.ink,t.accent,accent_ink(button),settings.weight.unwrap_or(400),radius.unwrap_or(t.radius)).unwrap();
     if backdrop {
         if let Some(image)=&appearance.image{
-            write!(out,"<div class=\"gallery-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
+            write!(out,"<div class=\"gallery-backdrop page-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
         }
     }
     out.push_str("<div id=\"surface\" class=\"lobby\">");

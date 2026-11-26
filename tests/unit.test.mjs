@@ -99,3 +99,11 @@ test('untrusted raster headers and malformed legacy projects are rejected atomic
  assert.equal(studio.snapshot(),original);
  studio.free();
 });
+
+
+test('reference geometry keeps valid CSS alignment properties',async()=>{
+ for(const name of ['base','rail','rooms','rows','family','experience','editorial']){
+  const css=await readFile('frontend/gallery/'+name+'.css','utf8');
+  assert.doesNotMatch(css,/plaexperience-|spaexperience-/);
+ }
+});
