@@ -88,3 +88,13 @@ por el usuario participan también en favoritos y recientes. Cambios de
 geometría se aplican por perfil si el usuario conserva la distribución base;
 no se sobrescribe un proyecto guardado para imponer nuevos textos. Esto
 recupera funciones y geometría, pero todavía requiere comparación visual.
+
+## Miniaturas de una fuente autorizada
+
+Se incorpora un importador offline con inventario de faltantes agrupado por
+proveedor/título e IDs explícitos por plantilla. Verifica SHA-256 de la fuente,
+rutas confinadas, dimensiones, identidad exacta y ausencia de imagen anterior;
+recodifica y registra los nuevos recursos, deduplicados por contenido. No
+incluye un contrato de API desconocido ni completa los faltantes con imágenes
+de otros juegos. El inventario de 6.130 referencias permanece hasta recibir
+material autorizado.

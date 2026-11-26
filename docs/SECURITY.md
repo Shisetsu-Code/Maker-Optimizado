@@ -43,3 +43,20 @@ including after editing or legacy migration. History is bounded by both 32
 entries and 48 MiB of combined serialized snapshots (a conservative weight,
 not a heap measurement). Legacy assets share validated raster buffers and
 the cumulative image budget is checked before applying each replacement.
+
+## Dependency audit (2026-11-26)
+
+Initial Security verification run 45909759371: npm reported zero known
+vulnerabilities; RustSec scanned 82 crates against 1,568 advisories and found
+no vulnerability errors. It reported one informational unmaintained warning,
+[RUSTSEC-2026-0543](https://rustsec.org/advisories/RUSTSEC-2026-0543.html), for
+chrono 0.4.45, transitively required by the current Cloudflare worker 0.9.0 SDK.
+No patched chrono version is available. The warning is visible, not ignored;
+track removal by the upstream SDK rather than fork the dependency. A green
+dependency audit is not a penetration test or proof of future safety.
+
+The offline thumbnail importer accepts explicitly authorized local files
+and exact item IDs, validates SHA-256, bounds paths to a selected directory,
+preflights the raster using the Rust engine, and re-encodes through isolated
+Chromium with networking disabled. It cannot overwrite an existing thumbnail.
+The import command defaults to dry-run; no API integration has been configured.

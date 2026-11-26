@@ -16,10 +16,21 @@ test('Every original graphic is byte-preserved, deduplicated and indexed',{timeo
    if(target.has(entry.id))assert.equal(target.get(entry.id),entry.bytes);
    target.set(entry.id,entry.bytes);
  }
- assert.equal(index.unique,deployed.size);
  assert.equal(provenance.unique_raster,deployed.size);
  assert.equal(provenance.archived_unique,archived.size);
  assert.equal([...deployed.values()].reduce((a,b)=>a+b,0),provenance.raster_bytes);
+ const imported=await readJson('docs/imported-thumbnails.json');
+ assert.equal(imported.version,1);
+ for(const [id,meta] of Object.entries(imported.objects)){
+   assert.match(id,idPattern);
+   assert.ok(!deployed.has(id),'Imported object cannot overwrite original');
+   assert.match(meta.sha256,/^[a-f0-9]{64}$/);
+   assert.match(meta.source_sha256,/^[a-f0-9]{64}$/);
+   const bytes=await readFile(ROOT+'/objects/'+id);
+   assert.equal(createHash('sha256').update(bytes).digest('hex'),meta.sha256);
+   deployed.set(id,meta.bytes);
+ }
+ assert.equal(index.unique,deployed.size);
  assert.deepEqual((await readdir(ROOT+'/objects')).sort(),[...deployed.keys()].sort());
  assert.deepEqual((await readdir('assets/archive')).sort(),[...archived.keys()].sort());
  async function verify(directory,entries){

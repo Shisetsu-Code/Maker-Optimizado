@@ -47,3 +47,28 @@ Verificación gráfica: `npm run test:media` comprueba la integridad de todos lo
 Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo congela el proyecto y la selección actual al iniciar la exportación, incluye la primera página del catálogo correspondiente con imágenes embebidas y no integra motores de juego.
 
 Compatibilidad: la importación admite los formatos de ajustes y diseño anteriores, migra los campos conocidos y descarga un informe de las reglas sin correspondencia semántica. No se sobrescriben los archivos originales.
+
+## Miniaturas autorizadas pendientes
+
+Generar el inventario de faltantes sin solicitudes externas:
+
+```sh
+node scripts/import-thumbnails.mjs --inventory > missing-thumbnails.json
+```
+
+Para cada entrada aprobada añadir `file` (ruta relativa dentro de la carpeta de
+imágenes autorizadas) y `sha256` (SHA-256 del archivo). Conservar proveedor,
+título y los identificadores explícitos de `targets`. Eliminar del manifiesto
+las entradas que aún no tengan una imagen autorizada. Con WASM compilado y
+Chromium instalado:
+
+```sh
+node scripts/import-thumbnails.mjs --manifest thumbnails.json --source ./authorized-images
+node scripts/import-thumbnails.mjs --manifest thumbnails.json --source ./authorized-images --apply
+```
+
+La primera ejecución es un dry-run: no modifica el árbol público. La segunda
+revalida el archivo, identidad y hash, decodifica sin red, recodifica WebP a
+640 px como máximo y actualiza las colecciones, catálogos e inventarios. No
+sobrescribe miniaturas existentes. Ejecutar en una rama limpia, revisar el
+diff y correr `npm run test:media`. No se consulta ninguna API ni se despliega.

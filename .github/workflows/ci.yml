@@ -45,7 +45,7 @@ jobs:
       - name: WASM tests
         run: |
           npm test
-          node --test tests/catalog.test.mjs
+          node --test tests/catalog.test.mjs tests/thumbnail-import.test.mjs
       - name: Cloudflare dry-run
         run: npx --no-install wrangler deploy --dry-run
       - name: Browser runtime

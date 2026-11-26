@@ -221,3 +221,19 @@ test('reference cover profiles and mobile navigation operate in the new renderer
   assert.equal(await frame.locator('.catalog-controls [data-catalog-mode=favorites]').getAttribute('aria-pressed'),'true');
  }finally{await browser.close();}
 });
+
+test('offline thumbnail import re-encodes a validated image and rejects invalid headers',{timeout:30000},async()=>{
+ const {encodeThumbnail}=await import('../scripts/import-thumbnails.mjs');
+ const {default:init,Studio}=await import('../public/wasm/maker_studio.js');
+ await init({module_or_path:await readFile('public/wasm/maker_studio_bg.wasm')});
+ const studio=new Studio(),browser=await chromium.launch({headless:true});
+ try{
+  const context=await browser.newContext({offline:true});
+  const page=await context.newPage();
+  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=','base64');
+  const result=await encodeThumbnail(page,studio,png);
+  assert.equal(result.subarray(8,12).toString(),'WEBP');
+  const huge=Buffer.from(png);huge.writeUInt32BE(100000,16);
+  await assert.rejects(encodeThumbnail(page,studio,huge));
+ }finally{studio.free();await browser.close();}
+});
