@@ -274,14 +274,16 @@ pub fn document_with_appearance(
         }
     )
     .unwrap();
-    if view==View::Panel{
+    if view == View::Panel {
         out.push_str(&crate::demo_panel::Panel::default().navigation());
         out.push_str("<div class=\"panel-body\">");
     }
     for n in design.nodes(view) {
         render_node(&mut out, n, t, preview);
     }
-    if view==View::Panel{out.push_str("</div>");}
+    if view == View::Panel {
+        out.push_str("</div>");
+    }
     out.push_str("</main></body></html>");
     out
 }
