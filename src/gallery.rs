@@ -81,14 +81,22 @@ pub fn defaults(preset: &str, theme: &mut Theme, nodes: &mut [Component]) {
             Kind::Hero => {
                 node.asset = Some(profile.hero.clone());
                 let (title, text, button) = match preset {
-                    "amethyst" => ("Las salas más poderosas", "Tu mundo de juegos", "Entrar ahora →"),
+                    "amethyst" => (
+                        "Las salas más poderosas",
+                        "Tu mundo de juegos",
+                        "Entrar ahora →",
+                    ),
                     "rose" => ("Casino", "Descubrí tus favoritos", "Explorar juegos →"),
                     "aurum" => (
                         "Renace\nla emoción.",
                         "Explorá tus juegos favoritos en un mundo de nuevas experiencias.",
                         "Descubrir juegos →",
                     ),
-                    "verdant" => ("Donde empieza\ntu próxima aventura.", "", "Explorar casino →"),
+                    "verdant" => (
+                        "Donde empieza\ntu próxima aventura.",
+                        "",
+                        "Explorar casino →",
+                    ),
                     "crimson" => ("Entra a tu\npróxima partida.", "", "Explorar casino →"),
                     _ => ("", "", ""),
                 };
@@ -101,7 +109,8 @@ pub fn defaults(preset: &str, theme: &mut Theme, nodes: &mut [Component]) {
                 node.text.clear();
                 node.children.clear();
                 for (index, tile) in profile.tiles.iter().enumerate() {
-                    let mut n = Component::new(format!("category-{index}"), Kind::Tile, &tile.title);
+                    let mut n =
+                        Component::new(format!("category-{index}"), Kind::Tile, &tile.title);
                     n.text.clone_from(&tile.text);
                     n.button = "Explorar →".into();
                     n.asset = Some(tile.asset.clone());
@@ -141,7 +150,11 @@ fn attrs(n: &Component) -> String {
         escape(&n.id),
         escape(&n.id),
         escape(&node_style(n)),
-        if n.hidden { " data-hidden=\"true\"" } else { "" }
+        if n.hidden {
+            " data-hidden=\"true\""
+        } else {
+            ""
+        }
     )
 }
 fn image(n: &Component, primary: bool) -> String {
@@ -153,7 +166,11 @@ fn image(n: &Component, primary: bool) -> String {
     if let Some(src) = src {
         format!(
             "<img {} alt=\"{}\" src=\"{}\" loading=\"lazy\" decoding=\"async\">",
-            if primary { "data-primary-art=\"true\"" } else { "" },
+            if primary {
+                "data-primary-art=\"true\""
+            } else {
+                ""
+            },
             escape(&n.title),
             escape(&src)
         )
@@ -190,7 +207,11 @@ fn header(out: &mut String, n: &Component, theme: &Theme, preset: &str) {
     } else {
         "DEMO · Sin apuestas reales ni promociones vigentes"
     };
-    let icon = if matches!(preset, "violet" | "jade") { "♠" } else { "✦" };
+    let icon = if matches!(preset, "violet" | "jade") {
+        "♠"
+    } else {
+        "✦"
+    };
     write!(out,"<div class=\"gallery-demo\">{disclaimer}</div><header {}><button type=\"button\" class=\"gallery-menu\" data-gallery-menu aria-label=\"Mostrar menú\">☰</button><a class=\"gallery-brand\" href=\"#surface\">",attrs(n)).unwrap();
     if n.image.is_some() || n.asset.is_some() {
         out.push_str(&image(n, false));
@@ -250,7 +271,11 @@ fn copy(out: &mut String, n: &Component, eyebrow: &str) {
     action_button(out, &n.button, "all", "gallery-primary");
 }
 fn image_tile(out: &mut String, n: &Component, action: &str, preset: &str) {
-    let class = if preset == "amethyst" { "rooms-room" } else { "" };
+    let class = if preset == "amethyst" {
+        "rooms-room"
+    } else {
+        ""
+    };
     write!(
         out,
         "<button type=\"button\" class=\"{class}\" {} {}>{}",
@@ -282,7 +307,14 @@ fn image_tile(out: &mut String, n: &Component, action: &str, preset: &str) {
     }
     out.push_str("</button>");
 }
-fn hero(out: &mut String, n: &Component, design: &Design, profile: &Profile, preset: &str, preview: bool) {
+fn hero(
+    out: &mut String,
+    n: &Component,
+    design: &Design,
+    profile: &Profile,
+    preset: &str,
+    preview: bool,
+) {
     match profile.kind {
         Composition::Rail | Composition::Cover => {
             write!(out,"<section class=\"gallery-banner hero-art\" {}>{}<button type=\"button\" id=\"gallery-prev\" data-banner-step=\"-1\" aria-label=\"Portada anterior\">‹</button><button type=\"button\" id=\"gallery-next\" data-banner-step=\"1\" aria-label=\"Portada siguiente\">›</button>",attrs(n),image(n,true)).unwrap();
@@ -312,7 +344,13 @@ fn hero(out: &mut String, n: &Component, design: &Design, profile: &Profile, pre
             out.push_str("</section>");
         }
         Composition::Rooms => {
-            write!(out, "<section class=\"rooms-hero\" {}><div><p>{}</p>", attrs(n), escape(&n.text)).unwrap();
+            write!(
+                out,
+                "<section class=\"rooms-hero\" {}><div><p>{}</p>",
+                attrs(n),
+                escape(&n.text)
+            )
+            .unwrap();
             if n.title == "Las salas más poderosas" {
                 out.push_str("<h1>Las salas más <strong>poderosas</strong></h1>");
             } else {
@@ -324,9 +362,17 @@ fn hero(out: &mut String, n: &Component, design: &Design, profile: &Profile, pre
         }
         Composition::Experiences => {
             write!(out,"<section class=\"experience-home\" {}><button type=\"button\" {}>{}<div><span>{}</span><h1>{}</h1><strong>{}</strong></div></button>",attrs(n),action_attr("all"),image(n,true),escape(&n.text),escape(&n.title),escape(&n.button)).unwrap();
-            if let Some(categories) = design.lobby.iter().find(|c| c.id == "categories" && visible(c, preview)) {
+            if let Some(categories) = design
+                .lobby
+                .iter()
+                .find(|c| c.id == "categories" && visible(c, preview))
+            {
                 for (i, tile) in profile.tiles.iter().enumerate() {
-                    if let Some(child) = categories.children.iter().find(|c| c.id == format!("category-{i}") && visible(c, preview)) {
+                    if let Some(child) = categories
+                        .children
+                        .iter()
+                        .find(|c| c.id == format!("category-{i}") && visible(c, preview))
+                    {
                         image_tile(out, child, &tile.action, preset);
                     }
                 }
@@ -338,17 +384,34 @@ fn hero(out: &mut String, n: &Component, design: &Design, profile: &Profile, pre
 fn categories(out: &mut String, n: &Component, profile: &Profile, preset: &str, preview: bool) {
     write!(out, "<div {}>", attrs(n)).unwrap();
     if !n.title.is_empty() || !n.text.is_empty() {
-        write!(out, "<h2>{}</h2><p>{}</p>", escape(&n.title), escape(&n.text)).unwrap();
+        write!(
+            out,
+            "<h2>{}</h2><p>{}</p>",
+            escape(&n.title),
+            escape(&n.text)
+        )
+        .unwrap();
     }
     if !profile.tiles.is_empty() && preset != "rose" {
         if preset == "amethyst" {
             out.push_str("<section class=\"rooms-rooms\"><div class=\"rooms-section-heading\"><div><h2>Nuestras salas</h2><p>Distintas experiencias dentro de esta demostración.</p></div><span>Elegí tu zona</span></div><div class=\"rooms-room-grid\">");
         } else {
-            let class = if preset == "garnet" { "family-experiences" } else { "editorial-experiences" };
-            write!(out, "<section class=\"{class}\" aria-label=\"Experiencias\">").unwrap();
+            let class = if preset == "garnet" {
+                "family-experiences"
+            } else {
+                "editorial-experiences"
+            };
+            write!(
+                out,
+                "<section class=\"{class}\" aria-label=\"Experiencias\">"
+            )
+            .unwrap();
         }
         for child in n.children.iter().filter(|c| visible(c, preview)) {
-            let index = child.id.strip_prefix("category-").and_then(|i| i.parse::<usize>().ok());
+            let index = child
+                .id
+                .strip_prefix("category-")
+                .and_then(|i| i.parse::<usize>().ok());
             if let Some(tile) = index.and_then(|i| profile.tiles.get(i)) {
                 image_tile(out, child, &tile.action, preset);
             }
@@ -358,12 +421,27 @@ fn categories(out: &mut String, n: &Component, profile: &Profile, preset: &str, 
         }
         out.push_str("</section>");
     }
-    let quick: Vec<_> = n.children.iter().filter(|c| c.id.starts_with("quick-") && visible(c, preview)).collect();
+    let quick: Vec<_> = n
+        .children
+        .iter()
+        .filter(|c| c.id.starts_with("quick-") && visible(c, preview))
+        .collect();
     if !quick.is_empty() {
         out.push_str("<section class=\"quick-links\" aria-label=\"Explorar casino\">");
         for child in quick {
-            let (icon, _, action) = child.id.strip_prefix("quick-").and_then(|i| i.parse::<usize>().ok()).and_then(|i| QUICK.get(i).copied()).unwrap_or(("✦", "", "demo"));
-            write!(out, "<button type=\"button\" {} {}>", attrs(child), action_attr(action)).unwrap();
+            let (icon, _, action) = child
+                .id
+                .strip_prefix("quick-")
+                .and_then(|i| i.parse::<usize>().ok())
+                .and_then(|i| QUICK.get(i).copied())
+                .unwrap_or(("✦", "", "demo"));
+            write!(
+                out,
+                "<button type=\"button\" {} {}>",
+                attrs(child),
+                action_attr(action)
+            )
+            .unwrap();
             if child.asset.is_some() || child.image.is_some() {
                 out.push_str(&image(child, false));
             } else {
@@ -375,9 +453,20 @@ fn categories(out: &mut String, n: &Component, profile: &Profile, preset: &str, 
         out.push_str("</section>");
     }
     for child in n.children.iter().filter(|c| visible(c, preview)) {
-        let is_profile_tile = child.id.strip_prefix("category-").and_then(|i| i.parse::<usize>().ok()).is_some_and(|i| i < profile.tiles.len());
+        let is_profile_tile = child
+            .id
+            .strip_prefix("category-")
+            .and_then(|i| i.parse::<usize>().ok())
+            .is_some_and(|i| i < profile.tiles.len());
         if !child.id.starts_with("quick-") && !is_profile_tile {
-            write!(out, "<div class=\"gallery-custom-section\" {}>{}<strong>{}</strong></div>",attrs(child),image(child,false),escape(&child.title)).unwrap();
+            write!(
+                out,
+                "<div class=\"gallery-custom-section\" {}>{}<strong>{}</strong></div>",
+                attrs(child),
+                image(child, false),
+                escape(&child.title)
+            )
+            .unwrap();
         }
     }
     out.push_str("</div>");
@@ -395,7 +484,16 @@ fn catalog(out: &mut String, n: &Component, preset: &str) {
         out.push_str("<section class=\"provider-strip\"><span>PROVEEDORES</span><div id=\"gallery-providers\" data-provider-rail></div></section>");
     }
     out.push_str("<section class=\"gallery-discover\"><div class=\"gallery-tabs catalog-controls\"><button type=\"button\" data-catalog-mode=\"all\" class=\"active\">Todos</button>");
-    action_button(out, if preset == "violet" { "Destacados" } else { "Populares" }, "top", "");
+    action_button(
+        out,
+        if preset == "violet" {
+            "Destacados"
+        } else {
+            "Populares"
+        },
+        "top",
+        "",
+    );
     action_button(out, "Favoritos", "favorites", "");
     write!(out,"</div><label>⌕ <input type=\"search\" id=\"gallery-search\" data-search=\"true\" maxlength=\"120\" aria-label=\"Buscar juegos o proveedores\" placeholder=\"{}\"></label></section><div class=\"gallery-section-head\"><h1 data-catalog-title>{}</h1><span data-catalog-count></span></div>",escape(n.style.placeholder.as_deref().unwrap_or("Buscar juegos o proveedores")),escape(&n.title)).unwrap();
     if !n.text.is_empty() {
@@ -407,7 +505,14 @@ fn footer(out: &mut String, n: &Component) {
     write!(out,"<footer {}><strong>{}</strong><p>{}</p><span>18+ · Sin conexión al casino o proveedor original</span></footer>",attrs(n),escape(&n.title),escape(&n.text)).unwrap();
 }
 fn generic(out: &mut String, n: &Component, preview: bool) {
-    write!(out, "<section class=\"gallery-custom-section\" {}><h2>{}</h2><p>{}</p>", attrs(n), escape(&n.title), escape(&n.text)).unwrap();
+    write!(
+        out,
+        "<section class=\"gallery-custom-section\" {}><h2>{}</h2><p>{}</p>",
+        attrs(n),
+        escape(&n.title),
+        escape(&n.text)
+    )
+    .unwrap();
     if n.image.is_some() || n.asset.is_some() {
         out.push_str(&image(n, false));
     }
@@ -415,7 +520,15 @@ fn generic(out: &mut String, n: &Component, preview: bool) {
     if !n.children.is_empty() {
         out.push_str("<div class=\"gallery-custom-grid\">");
         for child in n.children.iter().filter(|c| visible(c, preview)) {
-            write!(out,"<article {}>{}<h3>{}</h3><p>{}</p></article>",attrs(child),image(child,false),escape(&child.title),escape(&child.text)).unwrap();
+            write!(
+                out,
+                "<article {}>{}<h3>{}</h3><p>{}</p></article>",
+                attrs(child),
+                image(child, false),
+                escape(&child.title),
+                escape(&child.text)
+            )
+            .unwrap();
         }
         out.push_str("</div>");
     }
@@ -424,12 +537,28 @@ fn generic(out: &mut String, n: &Component, preview: bool) {
 fn mobile(out: &mut String, preset: &str) {
     out.push_str("<nav class=\"gallery-mobile lobby-mobile\" aria-label=\"Navegación móvil\">");
     let links = if preset == "violet" {
-        vec![("⌂", "Inicio", "all"), ("♠", "Juegos", "top"), ("♡", "Favoritos", "favorites"), ("◉", "Cuenta", "demo")]
+        vec![
+            ("⌂", "Inicio", "all"),
+            ("♠", "Juegos", "top"),
+            ("♡", "Favoritos", "favorites"),
+            ("◉", "Cuenta", "demo"),
+        ]
     } else {
-        vec![("⌂", "Inicio", "all"), ("♠", "Casino", "top"), ("⚽", "Deportes", "demo"), ("♡", "Favoritos", "favorites"), ("◉", "Cuenta", "demo")]
+        vec![
+            ("⌂", "Inicio", "all"),
+            ("♠", "Casino", "top"),
+            ("⚽", "Deportes", "demo"),
+            ("♡", "Favoritos", "favorites"),
+            ("◉", "Cuenta", "demo"),
+        ]
     };
     for (symbol, label, action) in links {
-        write!(out,"<button type=\"button\" {}>{symbol}<small>{label}</small></button>",action_attr(action)).unwrap();
+        write!(
+            out,
+            "<button type=\"button\" {}>{symbol}<small>{label}</small></button>",
+            action_attr(action)
+        )
+        .unwrap();
     }
     out.push_str("</nav>");
 }
@@ -439,7 +568,9 @@ fn css_for(preset: &str) -> &'static str {
         "jade" => include_str!("../frontend/gallery/rows.css"),
         "rose" => include_str!("../frontend/gallery/experience.css"),
         "garnet" | "brass" => include_str!("../frontend/gallery/family.css"),
-        "aurum" | "verdant" | "crimson" | "onyx" => include_str!("../frontend/gallery/editorial.css"),
+        "aurum" | "verdant" | "crimson" | "onyx" => {
+            include_str!("../frontend/gallery/editorial.css")
+        }
         _ => "",
     }
 }
@@ -462,9 +593,19 @@ fn scaled_css(out: &mut String, css: &str, scale: u8) {
     out.push_str(parts.next().unwrap_or(""));
     for part in parts {
         out.push_str("font-size:");
-        let end = part.bytes().take_while(|b| b.is_ascii_digit() || *b == b'.').count();
+        let end = part
+            .bytes()
+            .take_while(|b| b.is_ascii_digit() || *b == b'.')
+            .count();
         if end > 0 && part[end..].starts_with("px") {
-            write!(out,"calc({}px * {}){}", &part[..end], f64::from(scale)/100., &part[end+2..]).unwrap();
+            write!(
+                out,
+                "calc({}px * {}){}",
+                &part[..end],
+                f64::from(scale) / 100.,
+                &part[end + 2..]
+            )
+            .unwrap();
         } else {
             out.push_str(part);
         }
@@ -488,15 +629,28 @@ pub fn document(design: &Design, preset: &str, preview: bool, appearance: &Appea
     } else {
         accent_ink(button)
     };
-    let font = settings.font.or_else(|| (theme.font != defaults.font).then_some(theme.font)).map(font_name).unwrap_or("original");
-    let radius = settings.radius.or_else(|| (theme.radius != defaults.radius).then_some(theme.radius));
+    let font = settings
+        .font
+        .or_else(|| (theme.font != defaults.font).then_some(theme.font))
+        .map(font_name)
+        .unwrap_or("original");
+    let radius = settings
+        .radius
+        .or_else(|| (theme.radius != defaults.radius).then_some(theme.radius));
     let backdrop = settings.enabled && appearance.image.is_some();
     let mut out = String::with_capacity(48_000);
     write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>",escape(&theme.brand)).unwrap();
-    for line in crate::render::SURFACE_CSS.lines().take_while(|line| line.starts_with("@font-face")) {
+    for line in crate::render::SURFACE_CSS
+        .lines()
+        .take_while(|line| line.starts_with("@font-face"))
+    {
         out.push_str(line);
     }
-    scaled_css(&mut out, if preset == "violet" { RAIL } else { BASE }, settings.scale);
+    scaled_css(
+        &mut out,
+        if preset == "violet" { RAIL } else { BASE },
+        settings.scale,
+    );
     scaled_css(&mut out, css_for(preset), settings.scale);
     scaled_css(&mut out, COMPAT, settings.scale);
     write!(out,"</style></head><body data-profile=\"{preset}\" data-gallery=\"true\" data-appearance-font=\"{font}\" data-global-weight=\"{}\" data-global-radius=\"{}\" class=\"{}\" style=\"--accent:{};--accent-ink:{};--button:{button};--button-ink:{button_ink};--page:{};--surface:{};--ink:{};--global-weight:{};--global-radius:{}px;\">",settings.weight.is_some(),radius.is_some(),if backdrop{"gallery-background-enabled"}else{""},theme.accent,accent_ink(&theme.accent),theme.background,theme.surface,theme.ink,settings.weight.unwrap_or(400),radius.unwrap_or(theme.radius)).unwrap();
@@ -511,7 +665,12 @@ pub fn document(design: &Design, preset: &str, preview: bool, appearance: &Appea
         header(&mut out, n, theme, preset);
     }
     out.push_str("<main>");
-    for n in design.lobby.iter().skip(usize::from(header_node.is_some())).filter(|n| visible(n, preview)) {
+    for n in design
+        .lobby
+        .iter()
+        .skip(usize::from(header_node.is_some()))
+        .filter(|n| visible(n, preview))
+    {
         match (n.id.as_str(), n.kind) {
             ("hero", Kind::Hero) => hero(&mut out, n, design, profile, preset, preview),
             ("categories", Kind::Categories) => categories(&mut out, n, profile, preset, preview),
@@ -535,11 +694,19 @@ pub fn card(n: &Component, game: &str, favorite: bool, preview: bool) -> String 
     let game = escape(game);
     let mark = if favorite { "♥" } else { "♡" };
     let extra = if !n.button.is_empty() && n.button != "Ver demo" {
-        format!("<span class=\"gallery-edit-action\">{}</span>", escape(&n.button))
+        format!(
+            "<span class=\"gallery-edit-action\">{}</span>",
+            escape(&n.button)
+        )
     } else {
         String::new()
     };
-    format!("<article class=\"gallery-game catalog-card\" {} data-catalog-card=\"{game}\"><button type=\"button\" class=\"gallery-game-open\" data-game=\"{game}\" aria-label=\"Ver {title}\">{}<h3>{title}</h3><p>{}</p>{extra}</button><button type=\"button\" class=\"gallery-fav\" data-favorite=\"{game}\" aria-label=\"Favorito: {title}\" aria-pressed=\"{favorite}\">{mark}</button></article>",attrs(n),image(n,false),escape(&n.text))
+    format!(
+        "<article class=\"gallery-game catalog-card\" {} data-catalog-card=\"{game}\"><button type=\"button\" class=\"gallery-game-open\" data-game=\"{game}\" aria-label=\"Ver {title}\">{}<h3>{title}</h3><p>{}</p>{extra}</button><button type=\"button\" class=\"gallery-fav\" data-favorite=\"{game}\" aria-label=\"Favorito: {title}\" aria-pressed=\"{favorite}\">{mark}</button></article>",
+        attrs(n),
+        image(n, false),
+        escape(&n.text)
+    )
 }
 #[cfg(test)]
 mod tests {
