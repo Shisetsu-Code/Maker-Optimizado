@@ -1,2 +1,55 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rushybet — muestra</title></head><body><script>location.replace('/muestra/socio.html'+location.search+(location.hash||'#v=1&p=ff5500&b=auto&ba=liso&f=0f0f0f&t=auto&tb=0&s=auto&x=calido&im=1&ic=p&n=Nahuel&vista=lobby&disp=compu&pl=clasica'));</script><noscript><a href="/muestra/socio.html">Abrir la muestra</a></noscript></body></html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#141416"><title>Maker Studio</title>
+<link rel="stylesheet" href="/studio.css">
+</head>
+<body>
+<header class="topbar"><div class="wordmark"><span class="mark">M</span><div><strong>Maker</strong><span>STUDIO</span></div></div><div class="top-actions"><button id="undo" disabled>Deshacer</button><button id="redo" disabled>Rehacer</button><button id="import">Importar</button><button id="export-json">Guardar JSON</button><button id="export-html" class="primary">Exportar HTML</button><input id="file" type="file" accept="application/json,.json" hidden></div></header>
+<main class="studio">
+<aside class="sidebar left" aria-label="Proyecto">
+  <div class="panel-head"><span>PROYECTO</span><strong>Diseño</strong></div>
+  <label>Plantilla<select id="preset" disabled></select></label>
+  <div class="view-tabs"><button id="lobby" aria-pressed="true">Lobby</button><button id="panel" aria-pressed="false">Panel</button></div>
+  <details open><summary>Identidad visual</summary><form id="theme">
+    <label>Marca<input name="brand" maxlength="60" required></label>
+    <div class="color-grid"><label>Principal<input type="color" name="accent"></label><label>Fondo<input type="color" name="background"></label><label>Superficie<input type="color" name="surface"></label><label>Texto<input type="color" name="ink"></label></div>
+    <label>Tipografía<select name="font"><option value="system">Sistema</option><option value="condensed">Condensada</option><option value="editorial">Editorial</option></select></label>
+    <label>Distribución<select name="layout"><option value="rail">Clásica</option><option value="top">Superior</option><option value="compact">Compacta</option><option value="editorial">Editorial</option><option value="rooms">Salas</option><option value="immersive">Inmersiva</option></select></label>
+    <label>Esquinas (px)<input type="number" name="radius" min="0" max="48"></label>
+    <button class="primary" type="submit">Aplicar tema</button>
+  </form></details>
+  <details open><summary>Capas</summary><div id="outline"></div><form id="add-form"><label>Añadir sección<select id="kind"><option value="hero">Portada</option><option value="categories">Categorías</option><option value="catalog">Catálogo</option><option value="live">En vivo</option><option value="text">Texto</option><option value="image">Imagen</option><option value="header">Cabecera</option><option value="footer">Pie</option><option value="metrics">Indicadores</option><option value="activity">Actividad</option></select></label><button type="submit">Añadir</button></form></details>
+  <button id="reset" class="danger">Restaurar plantilla</button>
+</aside>
+<section class="workspace" aria-label="Vista previa">
+  <div class="canvas-toolbar"><div><span class="dot"></span><strong>Vista previa</strong></div><div class="view-tabs"><button data-size="desktop" aria-pressed="true">PC</button><button data-size="tablet" aria-pressed="false">Tablet</button><button data-size="mobile" aria-pressed="false">Móvil</button></div><button id="mode" aria-pressed="true">Editar</button></div>
+  <div class="canvas" id="canvas" data-size="desktop"><iframe id="preview" title="Vista previa del diseño" sandbox="allow-same-origin"></iframe></div>
+  <div class="status-line"><span id="status" role="status">Cargando motor Rust…</span><span>LOCAL · SIN APUESTAS</span></div>
+</section>
+<aside class="sidebar right" aria-label="Inspector">
+  <div class="panel-head"><span>PROPIEDADES</span><strong>Inspector</strong></div>
+  <p id="empty">Seleccioná un componente en la vista previa o en las capas.</p>
+  <form id="inspector" hidden>
+    <div id="component-name" class="component-name"></div>
+    <label>Título<input name="title" maxlength="120"></label><label>Descripción<textarea name="text" maxlength="600" rows="4"></textarea></label><label>Botón<input name="button" maxlength="60"></label>
+    <label class="check"><input name="hidden" type="checkbox"> Ocultar componente</label>
+    <details open><summary>Estilo</summary>
+      <label>Color personalizado (hex)<input name="color" placeholder="#ffffff" pattern="#[0-9a-fA-F]{6}"></label>
+      <label>Fondo personalizado (hex)<input name="background" placeholder="#101010" pattern="#[0-9a-fA-F]{6}"></label>
+      <div class="two-grid"><label>Esquinas<input type="number" name="radius" min="0" max="48"></label><label>Espaciado<input type="number" name="padding" min="0" max="64"></label><label>Texto (px)<input type="number" name="font_size" min="10" max="64"></label><label>Columnas<input type="number" name="columns" min="1" max="8"></label></div>
+      <label>Ilustración<select name="art"></select></label>
+    </details>
+    <button type="submit" class="primary">Aplicar cambios</button>
+    <label class="upload-label">Imagen propia<input id="image-file" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="clear-image">Quitar imagen</button>
+    <div class="two-grid"><button type="button" id="up">Subir</button><button type="button" id="down">Bajar</button></div>
+    <button type="button" id="add-tile" hidden>Añadir tarjeta</button>
+    <button type="button" id="delete" class="danger">Eliminar componente</button>
+  </form>
+  <p class="note">Los diseños e imágenes se guardan en este navegador. Exportá una copia para conservarlos.</p>
+</aside>
+</main>
+<noscript>Maker necesita JavaScript y WebAssembly.</noscript>
+<script type="module" src="/studio.js"></script>
+</body></html>

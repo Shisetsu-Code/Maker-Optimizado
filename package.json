@@ -1,18 +1,21 @@
 {
-  "name": "rushybet-replica",
+  "name": "maker-studio",
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "build:browser": "cargo build --release --target wasm32-unknown-unknown --no-default-features --features browser --lib && wasm-bindgen --target web --out-dir public/muestra/wasm --out-name maker_browser target/wasm32-unknown-unknown/release/maker_optimized.wasm",
+    "build:browser": "cargo build --locked --release --target wasm32-unknown-unknown --no-default-features --features browser --lib && wasm-bindgen --target web --out-dir public/wasm --out-name maker_studio target/wasm32-unknown-unknown/release/maker_studio.wasm",
     "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
-    "test": "npm run build:browser && node --test tests/*.test.mjs",
-    "test:runtime": "node --test tests/runtime-smoke.mjs tests/edge-runtime.test.mjs",
-    "check:assets": "cargo run --release --no-default-features --features asset-cli --bin asset-audit -- public",
-    "check:references": "node scripts/check-assets.mjs",
+    "test": "cargo test --locked --lib && npm run build:browser && node --test tests/unit.test.mjs",
+    "test:runtime": "node --test tests/runtime.test.mjs",
+    "test:browser": "node --test tests/browser.test.mjs",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "wrangler": "4.149.0"
+    "wrangler": "4.168.0",
+    "playwright": "1.65.1"
   }
 }

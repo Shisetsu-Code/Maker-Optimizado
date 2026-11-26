@@ -1,11 +1,8 @@
-name: Maker Rust verification
+name: Maker clean verification
 on:
   push:
   pull_request:
   workflow_dispatch:
-concurrency:
-  group: maker-${{ github.ref }}
-  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -18,61 +15,49 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v5
         with:
-          node-version: '22'
-          cache: npm
-      - name: Rust toolchain
+          node-version: '24'
+      - name: Install pinned Rust
+        run: rustup show
+      - name: Resolve initial dependency lockfiles
         run: |
-          rustup update stable
-          rustup default stable
-          rustup target add wasm32-unknown-unknown
-      - name: Rust unit tests and asset inventory
+          if [ ! -f Cargo.lock ]; then cargo generate-lockfile; fi
+          if [ ! -f package-lock.json ]; then npm install --package-lock-only --ignore-scripts; fi
+      - name: Native and edge tests
         run: |
-          cargo generate-lockfile
           cargo test --locked --lib
           cargo check --locked --target wasm32-unknown-unknown --lib
-          npm run check:assets
-      - name: Preserve resolved Rust dependency lock
+          cargo check --locked --target wasm32-unknown-unknown --no-default-features --features browser --lib
+      - name: Preserve lockfiles
         uses: actions/upload-artifact@v4
         with:
-          name: rust-lockfile
-          path: Cargo.lock
-      - name: Install build tooling
+          name: dependency-locks
+          path: |
+            Cargo.lock
+            package-lock.json
+      - name: Install tooling
         run: |
-          cargo install worker-build --version 0.8.7 --locked
+          cargo install worker-build --version 0.9.0 --locked
           cargo install wasm-bindgen-cli --version 0.2.130 --locked
-      - run: npm ci
-      - name: Browser WASM and original unit tests
+          npm ci
+      - name: WASM tests
         run: npm test
-      - name: Workers bundle
-        run: npx wrangler deploy --dry-run
-      - name: Install Playwright Chromium
-        run: |
-          npm install --no-save --package-lock=false playwright@1.58.2
-          npx playwright install --with-deps chromium
-      - name: Runtime and browser tests
+      - name: Cloudflare dry-run
+        run: npx --no-install wrangler deploy --dry-run
+      - name: Browser runtime
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Runtime and E2E
         env:
           DEMO_ORIGIN: http://127.0.0.1:8787
-          PLAYWRIGHT_CHANNEL: chromium
           WRANGLER_SEND_METRICS: 'false'
-        shell: bash
         run: |
           mkdir -p work
           npm run dev >work/worker.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true; tail -100 work/worker.log' EXIT
-          for i in $(seq 1 180); do
-            if curl -fsS "$DEMO_ORIGIN/api/health"; then break; fi
+          for i in $(seq 1 120); do
+            if curl -fsS "$DEMO_ORIGIN/api/v1/health"; then break; fi
             sleep 2
           done
-          curl -fsS "$DEMO_ORIGIN/api/health"
+          curl -fsS "$DEMO_ORIGIN/api/v1/health"
           npm run test:runtime
-          node tests/editor-browser-smoke.cjs
-          node tests/element-editor-browser-smoke.cjs
-          node tests/element-editor-coverage-browser.cjs
-          node tests/element-overlap-browser.cjs
-          node tests/element-store-browser.cjs
-          node tests/template-picker-browser-smoke.cjs
-          node tests/bateupix-browser-smoke.cjs
-          for slug in cobraya lunabet multisala pinaplay celuapuestas40 bet30 casinotower30 fenarys fortunasjk ravenbet luckrex; do
-            DEMO_TEMPLATE="$slug" node tests/lobby-templates-browser-smoke.cjs
-          done
+          npm run test:browser

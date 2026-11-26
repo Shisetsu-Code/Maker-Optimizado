@@ -1,122 +1,61 @@
-use crate::contract::{self, Route, MAX_BODY_BYTES};
+use crate::{model, presets, render};
 use futures_util::StreamExt;
-use serde_json::{json, Value};
+use serde_json::{Value,json};
 use worker::*;
 
-fn security_headers(headers: &Headers) -> Result<()> {
-    headers.set("x-content-type-options", "nosniff")?;
-    headers.set("referrer-policy", "no-referrer")?;
-    headers.set("x-frame-options", "SAMEORIGIN")?;
-    headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()")?;
-    headers.set("x-robots-tag", "noindex, nofollow")?;
-    Ok(())
-}
+const MAX_REQUEST_BYTES:usize=256*1024;
 
-fn response(value: Value, status: u16, head: bool) -> Result<Response> {
-    let mut result = if head { Response::empty()? } else { Response::from_json(&value)? };
-    let headers = result.headers_mut();
-    headers.set("content-type", "application/json; charset=utf-8")?;
-    headers.set("cache-control", "no-store")?;
-    headers.set("x-demo-mode", "true")?;
-    security_headers(headers)?;
-    Ok(result.with_status(status))
+fn json_response(value:Value,status:u16,head:bool)->Result<Response>{
+    let mut response=if head{Response::empty()?}else{Response::from_json(&value)?};
+    let headers=response.headers_mut();
+    headers.set("content-type","application/json; charset=utf-8")?;
+    headers.set("cache-control","no-store")?;
+    headers.set("x-content-type-options","nosniff")?;
+    headers.set("referrer-policy","no-referrer")?;
+    Ok(response.with_status(status))
 }
-
-fn method_not_allowed(allowed: &str) -> Result<Response> {
-    let mut result = response(contract::error("Método no permitido."),405,false)?;
-    result.headers_mut().set("allow",allowed)?;
-    Ok(result)
-}
-
-async fn bounded_body(req: &mut Request) -> std::result::Result<Vec<u8>, u16> {
-    if let Ok(Some(length)) = req.headers().get("content-length") {
-        if length.parse::<u64>().is_ok_and(|n| n > MAX_BODY_BYTES as u64) { return Err(413); }
+fn error(message:&str,status:u16,head:bool)->Result<Response>{json_response(json!({"ok":false,"error":message}),status,head)}
+fn allow(methods:&str)->Result<Response>{let mut r=error("Método no permitido.",405,false)?;r.headers_mut().set("allow",methods)?;Ok(r)}
+async fn bounded_body(req:&mut Request)->std::result::Result<Vec<u8>,u16>{
+    if let Ok(Some(length))=req.headers().get("content-length"){
+        if length.parse::<u64>().is_ok_and(|n|n>MAX_REQUEST_BYTES as u64){return Err(413);}
     }
-    let mut stream = req.stream().map_err(|_| 400u16)?;
-    let mut bytes = Vec::new();
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|_| 400u16)?;
-        if chunk.len() > MAX_BODY_BYTES.saturating_sub(bytes.len()) { return Err(413); }
+    let mut stream=req.stream().map_err(|_|400u16)?;
+    let mut bytes=Vec::new();
+    while let Some(chunk)=stream.next().await{
+        let chunk=chunk.map_err(|_|400u16)?;
+        if chunk.len()>MAX_REQUEST_BYTES.saturating_sub(bytes.len()){return Err(413);}
         bytes.extend_from_slice(&chunk);
     }
     Ok(bytes)
 }
-
-async fn handle(mut req: Request, env: Env) -> Result<Response> {
-    let path = req.path();
-    let method = req.method();
-    let head = method == Method::Head;
-    match contract::route(&path) {
-        Route::Health | Route::Winners => {
-            if method != Method::Get && !head { return method_not_allowed("GET, HEAD"); }
-            let value = if path == "/api/health" {
-                json!({"ok":true,"demo":true,"version":"maker-rust-0.2.0"})
-            } else { json!({"winners":[],"demo":true}) };
-            response(value,200,head)
+async fn handle(mut req:Request,env:Env)->Result<Response>{
+    let method=req.method();
+    let head=method==Method::Head;
+    match req.path().as_str(){
+        "/api/v1/health"=>{if method!=Method::Get&&!head{return allow("GET, HEAD");}json_response(json!({"ok":true,"version":env!("CARGO_PKG_VERSION"),"runtime":"rust-wasm","schema":model::SCHEMA_VERSION}),200,head)}
+        "/api/v1/templates"=>{if method!=Method::Get&&!head{return allow("GET, HEAD");}json_response(json!({"templates":presets::PRESETS}),200,head)}
+        "/api/v1/validate"=>{if method!=Method::Post{return allow("POST");}let bytes=match bounded_body(&mut req).await{Ok(b)=>b,Err(code)=>return error("Solicitud inválida o demasiado grande.",code,false)};
+            let Ok(body)=std::str::from_utf8(&bytes)else{return error("UTF-8 inválido.",400,false);};
+            match model::decode(body){Ok(_)=>json_response(json!({"ok":true,"schema":model::SCHEMA_VERSION}),200,false),Err(_)=>error("Proyecto inválido.",422,false)}
         }
-        // Legacy panel explicitly probes this demo endpoint. No data is collected.
-        Route::Monitor => {
-            if !matches!(method, Method::Get | Method::Post | Method::Head) {
-                return method_not_allowed("GET, HEAD, POST");
-            }
-            response(json!({"ok":false,"demo":true,"motivo":"demo"}),200,head)
+        "/api/v1/preview"=>{if method!=Method::Get&&!head{return allow("GET, HEAD");}
+            let url=req.url()?;
+            let mut id="ember".to_owned();let mut view=model::View::Lobby;
+            for (key,value) in url.query_pairs(){if key=="template"{id=value.into_owned();}else if key=="view"&&value=="panel"{view=model::View::Panel;}}
+            let Ok(design)=presets::design(&id)else{return error("Plantilla desconocida.",404,head);};
+            let mut response=if head{Response::empty()?}else{Response::from_html(render::document(&design,view,false))?};
+            response.headers_mut().set("content-type","text/html; charset=utf-8")?;
+            response.headers_mut().set("content-security-policy","default-src 'none'; style-src 'unsafe-inline'; img-src data:; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")?;
+            response.headers_mut().set("cache-control","public, max-age=300")?;
+            response.headers_mut().set("x-content-type-options","nosniff")?;
+            Ok(response)
         }
-        Route::DesignEvent => {
-            if method != Method::Post { return method_not_allowed("POST"); }
-            response(json!({"ok":false,"demo":true,"mensaje":contract::DEMO_MESSAGE,"error":contract::DEMO_MESSAGE}),422,false)
-        }
-        Route::Launch => {
-            if method != Method::Post { return method_not_allowed("POST"); }
-            let launch = match bounded_body(&mut req).await.and_then(|bytes| contract::parse_launch(&bytes)) {
-                Ok(launch) => launch,
-                Err(status) => return response(contract::error(if status == 422 {
-                    "En esta muestra solo se abren vistas de demostración."
-                } else { "Solicitud de demostración inválida." }),status,false),
-            };
-            let mut url = req.url()?;
-            url.set_path("/muestra/juego-demo.html");
-            url.set_query(None);
-            url.set_fragment(None);
-            url.query_pairs_mut().append_pair("vendor",&launch.vendor)
-                .append_pair("game",&launch.game).append_pair("channel",launch.channel);
-            response(json!({"ok":true,"demo":true,"url":url.as_str()}),200,false)
-        }
-        Route::UnknownApi => response(contract::error("Ruta no encontrada."),404,head),
-        Route::Asset => {
-            let assets = env.assets("ASSETS")?;
-            let alias = if path == "/" { Some("/index.html") } else if path.starts_with("/muestra/games-cartas/") {
-                Some(&path["/muestra".len()..])
-            } else { None };
-            if let Some(target) = alias {
-                if method != Method::Get && !head { return method_not_allowed("GET, HEAD"); }
-                let mut url = req.url()?;
-                url.set_path(target);
-                let mut forwarded = Request::new(url.as_str(),method)?;
-                for key in ["accept","range","if-range","if-match","if-none-match","if-modified-since","if-unmodified-since"] {
-                    if let Some(value) = req.headers().get(key)? {
-                        forwarded.headers_mut()?.set(key,&value)?;
-                    }
-                }
-                let asset = assets.fetch_request(forwarded).await?;
-                // Clone into a new mutable Headers: a binding response may have an immutable guard.
-                let headers: Headers = asset.headers().entries().collect();
-                security_headers(&headers)?;
-                headers.set("content-security-policy","frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; connect-src 'self'")?;
-                Ok(asset.with_headers(headers))
-            } else {
-                assets.fetch_request(req).await
-            }
-        }
+        path if path=="/api"||path.starts_with("/api/")=>error("Ruta no encontrada.",404,head),
+        _=>env.assets("ASSETS")?.fetch_request(req).await,
     }
 }
-
 #[event(fetch)]
-pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
-    match handle(req,env).await {
-        Ok(result) => Ok(result),
-        Err(_) => {
-            console_error!("maker edge request failed");
-            response(contract::error("No se pudo cargar la demostración."),500,false)
-        }
-    }
+pub async fn main(req:Request,env:Env,_ctx:Context)->Result<Response>{
+    match handle(req,env).await{Ok(response)=>Ok(response),Err(_)=>{console_error!("maker edge error");error("Error interno.",500,false)}}
 }

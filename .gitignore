@@ -1,10 +1,9 @@
-node_modules/
-.wrangler/
 target/
+node_modules/
 build/
-public/muestra/wasm/
+public/wasm/
+.wrangler/
 work/
-*.har
 .env
 .env.*
 .dev.vars
