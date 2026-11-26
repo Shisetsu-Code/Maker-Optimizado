@@ -37,3 +37,9 @@ require tenant authentication, authorization, quotas and storage isolation.
 The reference branch/history remains separate from the clean runtime. Only
 the local, authorized raster library is served; unknown catalogue thumbnails
 remain missing until a trusted source is provided.
+
+The serialized workspace must fit the same 24 MiB limit used on import,
+including after editing or legacy migration. History is bounded by both 32
+entries and 48 MiB of combined serialized snapshots (a conservative weight,
+not a heap measurement). Legacy assets share validated raster buffers and
+the cumulative image budget is checked before applying each replacement.

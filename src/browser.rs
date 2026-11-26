@@ -69,7 +69,9 @@ impl Studio {
     }
     pub fn check_upload(&self, data: &[u8], mime: &str) -> Result<(), JsValue> {
         if !crate::raster::valid_upload(data, mime) {
-            return Err(JsValue::from_str("Imagen inválida, animada o demasiado grande."));
+            return Err(JsValue::from_str(
+                "Imagen inválida, animada o demasiado grande.",
+            ));
         }
         Ok(())
     }

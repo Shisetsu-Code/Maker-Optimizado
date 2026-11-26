@@ -3,6 +3,7 @@
 use crate::{model::*, presets};
 use serde::Serialize;
 use serde_json::{Value, json};
+use std::{collections::BTreeMap, rc::Rc};
 
 #[derive(Debug, Default, Serialize)]
 pub struct Report {
@@ -383,6 +384,8 @@ pub fn convert(input: &str, current: &Workspace) -> ModelResult<(Workspace, Repo
             report.applied += 1;
         }
     }
+    let mut image_bytes = image_payload_bytes(&next);
+    let mut validated_assets: BTreeMap<&str, Rc<str>> = BTreeMap::new();
     let elements = root.get("elementos").or_else(|| settings.get("elementos"));
     if let Some(elements) = elements {
         if elements["assets"].as_object().is_some_and(|a| a.len() > 40)
@@ -473,12 +476,22 @@ pub fn convert(input: &str, current: &Workspace) -> ModelResult<(Workspace, Repo
                     }
                     if let Some(key) = rule["image"].as_str() {
                         if kind == "image" && field == "image" {
-                            if let Some(value) = elements["assets"]
-                                .get(key)
-                                .and_then(Value::as_str)
-                                .filter(|v| valid_image(v))
-                            {
-                                node.image = Some(value.into());
+                            if !validated_assets.contains_key(key) {
+                                if let Some(value) = elements["assets"]
+                                    .get(key)
+                                    .and_then(Value::as_str)
+                                    .filter(|v| valid_image(v))
+                                {
+                                    validated_assets.insert(key, Rc::from(value));
+                                }
+                            }
+                            if let Some(value) = validated_assets.get(key) {
+                                image_bytes = image_bytes
+                                    .saturating_sub(node.image.as_ref().map_or(0, |s| s.len()))
+                                    .checked_add(value.len())
+                                    .filter(|n| *n <= MAX_IMAGES_BYTES)
+                                    .ok_or("El proyecto supera el presupuesto de imágenes.")?;
+                                node.image = Some(value.clone());
                                 node.asset = None;
                                 applied = true;
                             } else {
@@ -511,6 +524,7 @@ pub fn convert(input: &str, current: &Workspace) -> ModelResult<(Workspace, Repo
         }
     }
     validate(&next)?;
+    serialized_size(&next)?;
     Ok((next, report))
 }
 #[cfg(test)]

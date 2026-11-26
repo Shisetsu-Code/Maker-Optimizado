@@ -20,7 +20,7 @@ fn png(data: &[u8]) -> Option<(u32, u32)> {
         return None;
     }
     let size = (be32(data.get(16..20)?)?, be32(data.get(20..24)?)?);
-    let mut pos = 8;
+    let mut pos: usize = 8;
     let mut pixels = false;
     while pos < data.len() {
         let header = data.get(pos..pos.checked_add(8)?)?;
@@ -43,7 +43,7 @@ fn jpeg(data: &[u8]) -> Option<(u32, u32)> {
     if !data.starts_with(b"\xff\xd8") {
         return None;
     }
-    let mut pos = 2;
+    let mut pos: usize = 2;
     while pos < data.len() {
         if *data.get(pos)? != 0xff {
             return None;
@@ -82,11 +82,14 @@ fn jpeg(data: &[u8]) -> Option<(u32, u32)> {
 fn webp(data: &[u8]) -> Option<(u32, u32)> {
     if data.get(..4)? != b"RIFF"
         || data.get(8..12)? != b"WEBP"
-        || usize::try_from(le32(data.get(4..8)?)?).ok()?.checked_add(8)? != data.len()
+        || usize::try_from(le32(data.get(4..8)?)?)
+            .ok()?
+            .checked_add(8)?
+            != data.len()
     {
         return None;
     }
-    let mut pos = 12;
+    let mut pos: usize = 12;
     let mut canvas = None;
     let mut frame = None;
     while pos < data.len() {
@@ -214,9 +217,7 @@ pub fn valid_data_url(value: &str, max: usize) -> bool {
     if !matches!(mime, "image/png" | "image/jpeg" | "image/webp") {
         return false;
     }
-    decode(payload).is_some_and(|data| {
-        within(&data, mime, MAX_PROJECT_SIDE, MAX_PROJECT_PIXELS)
-    })
+    decode(payload).is_some_and(|data| within(&data, mime, MAX_PROJECT_SIDE, MAX_PROJECT_PIXELS))
 }
 
 #[cfg(test)]

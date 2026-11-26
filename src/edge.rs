@@ -18,7 +18,10 @@ fn json_response(value: Value, status: u16, head: bool) -> Result<Response> {
     headers.set("referrer-policy", "no-referrer")?;
     headers.set("cross-origin-resource-policy", "same-origin")?;
     headers.set("x-frame-options", "DENY")?;
-    headers.set("content-security-policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")?;
+    headers.set(
+        "content-security-policy",
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+    )?;
     Ok(response.with_status(status))
 }
 fn error(message: &str, status: u16, head: bool) -> Result<Response> {
@@ -129,11 +132,15 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             response
                 .headers_mut()
                 .set("x-content-type-options", "nosniff")?;
-            response.headers_mut().set("referrer-policy", "no-referrer")?;
+            response
+                .headers_mut()
+                .set("referrer-policy", "no-referrer")?;
             response
                 .headers_mut()
                 .set("cross-origin-resource-policy", "same-origin")?;
-            response.headers_mut().set("x-frame-options", "SAMEORIGIN")?;
+            response
+                .headers_mut()
+                .set("x-frame-options", "SAMEORIGIN")?;
             Ok(response)
         }
         path if path == "/api" || path.starts_with("/api/") => {
