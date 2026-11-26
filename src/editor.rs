@@ -186,9 +186,7 @@ impl Editor {
                     Action::Image { view, id, image } => {
                         let node = find_mut(design.nodes_mut(view), &id)?;
                         node.image = image;
-                        if node.image.is_none() {
-                            node.asset = None;
-                        }
+                        node.asset = None;
                     }
                     Action::Asset { view, id, asset } => {
                         let node = find_mut(design.nodes_mut(view), &id)?;

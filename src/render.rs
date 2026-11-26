@@ -93,6 +93,13 @@ fn artwork(n: &Component) -> String {
         )
     }
 }
+fn optional_artwork(n: &Component, class: &str) -> String {
+    if n.image.is_some() || n.asset.is_some() {
+        format!("<div class=\"{class}\">{}</div>", artwork(n))
+    } else {
+        String::new()
+    }
+}
 fn button(n: &Component) -> String {
     if n.button.is_empty() {
         String::new()
@@ -123,7 +130,7 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
     let text = escape(&n.text);
     match n.kind {
         Kind::Header => {
-            write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\"><span class=\"brand-mark\">M</span>{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categorías</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",escape(&theme.brand),button(n)).unwrap();
+            write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categorías</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
         }
         Kind::Hero => {
             write!(out,"<section class=\"component hero\" {attr}><div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA · DEMO</span><h1>{title}</h1><p>{text}</p>{}</div><div class=\"hero-art\">{}</div></section>",button(n),artwork(n)).unwrap();
@@ -137,6 +144,7 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
                 _ => "activity",
             };
             write!(out,"<section class=\"component group {group}\" {attr}><div class=\"section-head\"><div><h2>{title}</h2><p>{text}</p></div>{}</div>",button(n)).unwrap();
+            out.push_str(&optional_artwork(n, "section-art"));
             if n.kind == Kind::Catalog {
                 out.push_str("<label class=\"search-label\">Buscar <input type=\"search\" class=\"catalog-search\" placeholder=\"Buscar juegos\" data-search=\"true\"></label>");
             }
@@ -147,13 +155,13 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
             out.push_str("</div></section>");
         }
         Kind::Tile => {
-            write!(out,"<article class=\"component tile\" {attr}><div class=\"tile-art\">{}</div><div class=\"tile-copy\"><h3>{title}</h3><p>{text}</p>{}</div></article>",artwork(n),button(n)).unwrap();
+            write!(out,"<article class=\"component tile\" {attr}><div class=\"tile-art{}\">{}</div><div class=\"tile-copy\"><h3>{title}</h3><p>{text}</p>{}</div></article>",if n.image.is_some() || n.asset.is_some() {" has-artwork"} else {""},artwork(n),button(n)).unwrap();
         }
         Kind::Footer => {
-            write!(out,"<footer class=\"component footer\" {attr}><strong>{title}</strong><p>{text}</p>{}</footer>",button(n)).unwrap();
+            write!(out,"<footer class=\"component footer\" {attr}><strong>{title}</strong><p>{text}</p>{}{}</footer>",optional_artwork(n,"section-art"),button(n)).unwrap();
         }
         Kind::Text => {
-            write!(out,"<section class=\"component text-block\" {attr}><h2>{title}</h2><p>{text}</p>{}</section>",button(n)).unwrap();
+            write!(out,"<section class=\"component text-block\" {attr}><h2>{title}</h2><p>{text}</p>{}{}</section>",optional_artwork(n,"section-art"),button(n)).unwrap();
         }
         Kind::Image => {
             write!(out,"<section class=\"component image-block\" {attr}><h2>{title}</h2><div class=\"image-content\">{}</div><p>{text}</p>{}</section>",artwork(n),button(n)).unwrap();

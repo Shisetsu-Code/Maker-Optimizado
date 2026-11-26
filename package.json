@@ -10,6 +10,7 @@
     "build:browser": "cargo build --locked --release --target wasm32-unknown-unknown --no-default-features --features browser --lib && wasm-bindgen --target web --out-dir public/wasm --out-name maker_studio target/wasm32-unknown-unknown/release/maker_studio.wasm",
     "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
     "test": "cargo test --locked --lib && npm run build:browser && node --test tests/unit.test.mjs",
+    "test:media": "node --test tests/media-integrity.test.mjs",
     "test:runtime": "node --test tests/runtime.test.mjs",
     "test:browser": "node --test tests/browser.test.mjs",
     "deploy": "wrangler deploy"

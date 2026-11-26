@@ -132,10 +132,13 @@ function paintMedia(){
 async function loadCollection(){
   const token=++mediaToken,id=$('media-collection').value;
   if(!/^[a-z0-9-]{1,40}$/.test(id))return;
+  $('media-grid').replaceChildren();$('media-prev').disabled=true;$('media-next').disabled=true;
+  $('media-page').textContent='Cargando…';
   const res=await fetch('/media/collections/'+id+'.json');
   if(!res.ok)throw Error('Colección no disponible.');
   const items=await res.json();
   if(token!==mediaToken)return;
+  if(!Array.isArray(items))throw Error('Colección inválida.');
   mediaItems=items.filter(id=>typeof id==='string'&&ASSET_ID.test(id));mediaPage=0;paintMedia();
 }
 async function showLibrary(){
@@ -151,20 +154,49 @@ async function showLibrary(){
     $('media-dialog').showModal();
   }catch(error){say(error.message??String(error),true);}
 }
-async function standaloneHtml(){
-  let html=studio.html(screen,false);
-  const ids=[...new Set(Array.from(html.matchAll(/\/media\/objects\/([a-f0-9]{40}\.(?:webp|png|avif|jpg|gif))/g),m=>m[1]))];
-  let total=0;
-  for(const id of ids){
-    const response=await fetch('/media/objects/'+id);
-    if(!response.ok)throw Error('No se encontró un recurso gráfico: '+id);
-    const blob=await response.blob();total+=blob.size;
-    if(total>24*1024*1024)throw Error('El HTML supera el límite de 24 MiB de imágenes.');
-    if(!/^image\/(?:png|jpeg|webp|avif|gif)$/.test(blob.type))throw Error('Formato de recurso inválido.');
-    const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob);});
-    html=html.replaceAll('/media/objects/'+id,url);
+async function readAsset(id,budget){
+  const response=await fetch('/media/objects/'+id);
+  if(!response.ok)throw Error('No se encontró un recurso gráfico: '+id);
+  const type=response.headers.get('content-type')?.split(';')[0]??'';
+  if(!/^image\/(?:png|jpeg|webp|avif|gif)$/.test(type))throw Error('Formato de recurso inválido.');
+  const length=Number(response.headers.get('content-length'));
+  if(length>budget)throw Error('El HTML supera el límite de 24 MiB de imágenes.');
+  const reader=response.body?.getReader();
+  if(!reader)throw Error('Respuesta gráfica vacía.');
+  let size=0;const chunks=[];
+  try{
+    while(true){
+      const {value,done}=await reader.read();if(done)break;
+      size+=value.byteLength;
+      if(size>budget)throw Error('El HTML supera el límite de 24 MiB de imágenes.');
+      chunks.push(value);
+    }
+  }finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+  const blob=new Blob(chunks,{type});
+  const url=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(blob);});
+  return {url,size};
+}
+async function standaloneHtml(view){
+  // Work exclusively on trusted Rust-rendered HTML; never interpret imported text as markup.
+  const doc=new DOMParser().parseFromString(studio.html(view,false),'text/html');
+  const images=new Map();
+  for(const img of doc.querySelectorAll('img[src]')){
+    const src=img.getAttribute('src');
+    if(!src.startsWith('/media/objects/'))continue;
+    const id=src.slice('/media/objects/'.length);
+    if(!ASSET_ID.test(id))throw Error('Identificador gráfico inválido.');
+    if(!images.has(id))images.set(id,[]);
+    images.get(id).push(img);
   }
-  return html.replace("img-src 'self' data:","img-src data:");
+  let total=0;
+  for(const [id,nodes] of images){
+    const {url,size}=await readAsset(id,24*1024*1024-total);
+    total+=size;
+    for(const img of nodes)img.setAttribute('src',url);
+  }
+  const policy=doc.querySelector('meta[http-equiv="Content-Security-Policy"]');
+  if(policy)policy.content=policy.content.replace("img-src 'self' data:","img-src data:");
+  return '<!doctype html>\n'+doc.documentElement.outerHTML;
 }
 function bind(){
   $('library').onclick=showLibrary;
@@ -199,7 +231,7 @@ function bind(){
     catch(error){say(String(error),true);}finally{event.target.value='';}
   };
   $('export-json').onclick=()=>{try{download(studio.snapshot(),'application/json','maker-project.json');}catch(error){say(String(error),true);}};
-  $('export-html').onclick=async()=>{const view=screen,button=$('export-html');button.disabled=true;try{say('Preparando HTML autónomo…');download(await standaloneHtml(),'text/html;charset=utf-8','maker-'+view+'.html');say('HTML exportado.');}catch(error){say(String(error),true);}finally{button.disabled=false;}};
+  $('export-html').onclick=async()=>{const view=screen,button=$('export-html');button.disabled=true;try{say('Preparando HTML autónomo…');download(await standaloneHtml(view),'text/html;charset=utf-8','maker-'+view+'.html');say('HTML exportado.');}catch(error){say(String(error),true);}finally{button.disabled=false;}};
 }
 async function boot(){
   try{

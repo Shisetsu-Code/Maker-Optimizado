@@ -40,6 +40,8 @@ jobs:
           cargo install worker-build --version 0.9.0 --locked
           cargo install wasm-bindgen-cli --version 0.2.130 --locked
           npm ci
+      - name: Verify restored graphic library
+        run: npm run test:media
       - name: WASM tests
         run: npm test
       - name: Cloudflare dry-run
