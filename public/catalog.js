@@ -40,7 +40,12 @@ function populate(reset=true){
   group.querySelector('[data-catalog-more]').hidden=shown>=total;
   const empty=group.querySelector('[data-catalog-empty]');if(empty)empty.hidden=total!==0;
   const title=group.querySelector('[data-catalog-title]');
-  if(title)title.textContent=state.favorites_only?'Mis favoritos':state.recent_only?'Recientes':state.top?'Juegos destacados':state.provider||current.meta.groups.find(g=>g.id===state.group)?.title||state.category||current.defaultTitle;
+  const resort=doc.body.hasAttribute('data-resort');
+  if(title)title.textContent=state.favorites_only?(resort?'Tus favoritos':'Mis favoritos'):state.recent_only?'Recientes':state.top?'Juegos destacados':state.provider||current.meta.groups.find(g=>g.id===state.group)?.title||(resort&&state.category==='Crash'?'Una nueva emoción':state.category)||current.defaultTitle;
+  if(resort){
+    const spotlight=group.querySelector('#resort-spotlight');
+    if(spotlight){spotlight.hidden=Boolean(state.search||state.provider||state.category||state.group||state.favorites_only||state.recent_only||state.top);spotlight.parentElement.classList.toggle('filtered',spotlight.hidden);}
+  }
   group.dataset.catalogReady='true';group.dataset.catalogPreset=current.preset;
 }
 function controls(doc,meta,state){
@@ -51,7 +56,7 @@ function controls(doc,meta,state){
       select(doc,'category','Todas las categorías',meta.categories,state.category),
       select(doc,'group','Todas las colecciones',meta.groups,state.group),
       button(doc,'Recientes','catalogMode','recent'));
-    const search=group.querySelector('[data-search]');if(search)search.value=state.search;
+    const search=doc.querySelector('[data-search]');if(search)search.value=state.search;
     return;
   }
   const root=doc.createElement('div');root.className='catalog-controls';
@@ -63,12 +68,16 @@ function controls(doc,meta,state){
   const count=doc.createElement('span');count.dataset.catalogCount='true';count.setAttribute('role','status');root.append(count);
   group.querySelector('.items')?.before(root);
   const more=button(doc,'Cargar más','catalogMore','true');more.className='action catalog-more';group.append(more);
-  const search=group.querySelector('[data-search]');if(search)search.value=state.search;
+  const search=doc.querySelector('[data-search]');if(search)search.value=state.search;
 }
 function updateMode(doc,state){
   const mode=state.favorites_only?'favorites':state.recent_only?'recent':state.top?'top':'all';
   for(const b of doc.querySelectorAll('[data-catalog-mode]')){
     const active=b.dataset.catalogMode===mode&&!state.provider&&!state.category&&!state.group;
+    b.setAttribute('aria-pressed',String(active));b.classList.toggle('active',active);
+  }
+  for(const b of doc.querySelectorAll('[data-experience]')){
+    const active=(b.dataset.experience==='live'&&state.category==='En vivo')||(b.dataset.experience==='crash'&&state.category==='Crash')||(b.dataset.experience==='slots'&&state.category==='Slots')||(b.dataset.experience==='sports'&&state.category==='Deportes');
     b.setAttribute('aria-pressed',String(active));b.classList.toggle('active',active);
   }
   for(const b of doc.querySelectorAll('[data-provider-nav],[data-group-nav]')){
@@ -178,10 +187,10 @@ export function catalogClick(doc,target,notice){
   }
   if(b?.hasAttribute('data-group-nav')||b?.hasAttribute('data-experience')){
     const experience=b.dataset.experience;
-    const pattern=experience==='live'?/vivo|live/i:experience==='crash'?/crash/i:/slot/i;
+    const pattern=experience==='live'?/vivo|live/i:experience==='crash'?/crash/i:experience==='sports'?/deportes|sports/i:/slot/i;
     const group=b.dataset.groupNav??(experience?meta.groups.find(g=>pattern.test(g.title))?.id:undefined);
-    const category=experience==='live'?'En vivo':experience==='crash'?'Crash':'Slots';
-    if(!group&&(!experience||!meta.categories.includes(category))){notice('Categoría','No hay una categoría equivalente en este catálogo.');return true;}
+    const category=experience==='live'?'En vivo':experience==='crash'?'Crash':experience==='sports'?'Deportes':'Slots';
+    if(!group&&(!experience||(!meta.categories.includes(category)&&experience!=='sports'))){notice('Categoría','No hay una categoría equivalente en este catálogo.');return true;}
     clearFilters(doc,state);state.favorites_only=false;state.recent_only=false;state.top=false;
     if(group)state.group=group;else state.category=category;
     for(const s of doc.querySelectorAll('[data-catalog-filter]'))s.value=state[s.dataset.catalogFilter]??'';

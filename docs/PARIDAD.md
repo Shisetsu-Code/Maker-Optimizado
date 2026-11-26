@@ -114,3 +114,12 @@ La auditoría exige que el catálogo de referencia esté inicializado y registra
 dimensiones del viewport y posibles imágenes fallidas. El umbral de 1% y las
 68 capturas permanecen intactos. No se declara equivalencia por la existencia
 de esta implementación.
+
+La composición editorial Ivory se reconstruyó con su estructura original de
+dos carteles, portada, navegación, búsqueda, selección destacada, grilla y
+sección final. Los carteles se resuelven por los IDs locales del catálogo,
+no mediante imágenes de pantalla. El diseño sigue siendo editable y se
+mantienen las operaciones de demostración del motor. El nombre de marca
+predeterminado es neutral y la prueba configura el mismo nombre en la
+referencia. La espera de la referencia descarta las pantallas de carga sin
+recortar ni enmascarar los píxeles comparados.

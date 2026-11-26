@@ -70,6 +70,15 @@ try{
      // A static shell is not an initialized catalogue; wait for actual cards.
      if(view==='lobby'&&templates.slice(5).some(([id])=>id===preset))
        await original.locator('.bp-game').first().waitFor({timeout:15000});
+     // Wait for the original splash to disappear; never compare a loading logo.
+     await original.waitForFunction(()=>![...document.querySelectorAll('div[style]')].some(el=>{
+       const style=getComputedStyle(el),r=el.getBoundingClientRect();
+       return style.position==='fixed'&&Number(style.zIndex)>=100&&style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)>0&&r.width>=innerWidth*.95&&r.height>=innerHeight*.95;
+     }),{},{timeout:15000});
+     if(view==='lobby'&&preset==='ivory'){
+       // Same neutral brand input as the reconstructed default, not a pixel mask.
+       await original.evaluate(()=>window.__demo?.disc?.({nombre:'Tu casino'}));
+     }
      await prepare(original);
      const before=await original.screenshot({animations:'disabled',caret:'hide',timeout:15000});
      await writeFile(DIR+'/'+key+'-reference.png',before);

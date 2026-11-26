@@ -381,6 +381,9 @@ pub fn design(id: &str) -> ModelResult<Design> {
     ];
     crate::media::apply_defaults(id, &mut lobby);
     crate::gallery::defaults(id, &mut theme, &mut lobby);
+    if id == "ivory" {
+        crate::resort::defaults(&mut theme, &mut lobby);
+    }
     if p.layout == Layout::Rooms && !crate::gallery::has_profile(id) {
         lobby.swap(1, 2);
     }

@@ -10,6 +10,7 @@ pub mod model;
 pub mod presets;
 pub mod raster;
 pub mod render;
+pub mod resort;
 
 #[cfg(all(target_arch = "wasm32", feature = "browser"))]
 mod browser;

@@ -267,7 +267,9 @@ impl Catalog {
                     .unwrap_or(usize::MAX)
             });
         }
-        let render_card = if crate::gallery::enabled(&self.preset, design) {
+        let render_card = if crate::resort::enabled(&self.preset, design) {
+            crate::resort::card
+        } else if crate::gallery::enabled(&self.preset, design) {
             crate::gallery::card
         } else {
             crate::render::catalog_card

@@ -141,10 +141,10 @@ pub fn defaults(preset: &str, theme: &mut Theme, nodes: &mut [Component]) {
     }
 }
 
-fn visible(n: &Component, preview: bool) -> bool {
+pub(crate) fn visible(n: &Component, preview: bool) -> bool {
     !n.hidden || preview
 }
-fn attrs(n: &Component) -> String {
+pub(crate) fn attrs(n: &Component) -> String {
     format!(
         "id=\"{}\" data-component=\"{}\" style=\"{}\"{}",
         escape(&n.id),
@@ -178,7 +178,7 @@ fn image(n: &Component, primary: bool) -> String {
         "<span class=\"gallery-missing\" role=\"img\" aria-label=\"Imagen no disponible\">Sin imagen</span>".into()
     }
 }
-fn action_attr(action: &str) -> &'static str {
+pub(crate) fn action_attr(action: &str) -> &'static str {
     match action {
         "all" => "data-catalog-mode=\"all\" data-catalog-scroll=\"catalog\"",
         "top" => "data-catalog-mode=\"top\" data-catalog-scroll=\"catalog\"",
@@ -504,7 +504,7 @@ fn catalog(out: &mut String, n: &Component, preset: &str) {
 fn footer(out: &mut String, n: &Component) {
     write!(out,"<footer {}><strong>{}</strong><p>{}</p><span>18+ · Sin conexión al casino o proveedor original</span></footer>",attrs(n),escape(&n.title),escape(&n.text)).unwrap();
 }
-fn generic(out: &mut String, n: &Component, preview: bool) {
+pub(crate) fn generic(out: &mut String, n: &Component, preview: bool) {
     write!(
         out,
         "<section class=\"gallery-custom-section\" {}><h2>{}</h2><p>{}</p>",
@@ -574,7 +574,7 @@ fn css_for(preset: &str) -> &'static str {
         _ => "",
     }
 }
-fn font_name(font: Font) -> &'static str {
+pub(crate) fn font_name(font: Font) -> &'static str {
     match font {
         Font::System => "system",
         Font::Condensed => "condensed",
@@ -584,7 +584,7 @@ fn font_name(font: Font) -> &'static str {
         Font::Oswald => "oswald",
     }
 }
-fn scaled_css(out: &mut String, css: &str, scale: u8) {
+pub(crate) fn scaled_css(out: &mut String, css: &str, scale: u8) {
     if scale == 100 {
         out.push_str(css);
         return;
