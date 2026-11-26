@@ -474,7 +474,9 @@ impl Panel {
                     .unwrap();
                 }
                 if count == 0 {
-                    out.push_str("<p class=\"panel-empty\">No hay movimientos de ejemplo que coincidan.</p>");
+                    out.push_str(
+                        "<p class=\"panel-empty\">No hay movimientos de ejemplo que coincidan.</p>",
+                    );
                 }
                 out.push_str("</div>");
             }

@@ -8,7 +8,16 @@ on:
         default: false
   push:
     branches: [rebuild/clean]
-    paths: ['.github/workflows/visual-parity.yml','tests/visual-audit.mjs']
+    paths:
+      - '.github/workflows/visual-parity.yml'
+      - 'tests/visual-audit.mjs'
+      - 'src/**'
+      - 'frontend/**'
+      - 'public/*.js'
+      - 'public/*.css'
+      - 'public/index.html'
+      - 'public/catalogs/**'
+      - 'assets/preset-artwork.json'
 permissions:
   contents: read
 jobs:

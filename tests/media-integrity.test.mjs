@@ -48,3 +48,32 @@ test('Every original graphic is byte-preserved, deduplicated and indexed',{timeo
  }
  console.log('Verified '+originals.length+' original paths, '+deployed.size+' raster objects, '+archived.size+' archived objects.');
 });
+
+test('All catalogue references resolve to local graphics; missing coverage is explicit',async()=>{
+ const inventory=await readJson('docs/catalog-parity.json');
+ const ids=new Set(await readdir(ROOT+'/objects'));
+ const paths=(await readdir('public/catalogs')).filter(p=>p.endsWith('.json')).sort();
+ assert.deepEqual(paths,Object.keys(inventory.catalogs).map(p=>p+'.json').sort());
+ const missingIdentities=new Set();let missing=0,records=0;
+ for(const path of paths){
+   const catalogue=await readJson('public/catalogs/'+path);
+   const report=inventory.catalogs[catalogue.preset];
+   assert.equal(catalogue.items.length,report.normalized_records,path);
+   assert.equal(catalogue.items.length,report.source_records,path);
+   assert.equal(catalogue.items.filter(i=>i.asset===null).length,report.without_local_image,path);
+   for(const item of catalogue.items){
+     records++;
+     if(item.asset===null){
+       missing++;missingIdentities.add(JSON.stringify([item.provider,item.title]));
+       continue;
+     }
+     assert.match(item.asset,idPattern);
+     assert.ok(ids.has(item.asset),path+': '+item.id+' has a dangling graphic');
+   }
+   for(const banner of catalogue.banners){
+     assert.ok(ids.has(banner.desktop),path+': missing desktop banner');
+     if(banner.mobile!==null)assert.ok(ids.has(banner.mobile),path+': missing mobile banner');
+   }
+ }
+ console.log('Catalogue coverage: '+records+' records, '+missing+' missing graphic references, '+missingIdentities.size+' distinct exact title/provider pairs.');
+});

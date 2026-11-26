@@ -64,6 +64,14 @@ hay coincidencias. La navegación y los registros siguen siendo exclusivamente
 locales y ficticios.
 
 Las miniaturas originales pendientes siguen contabilizadas (3.065 referencias
-en Ember y 3.065 en Cobalt). Las tarjetas sin imagen conservan su representación
-local sin solicitudes externas. No se inventan asociaciones ni se certifica
-paridad visual 1:1.
+en Ember y 3.065 en Cobalt; 3.062 pares distintos de proveedor y título exactos).
+La CI verifica todos los registros, las referencias gráficas locales y el número
+de faltantes por catálogo. Las tarjetas sin imagen conservan su representación
+local sin solicitudes externas. No se inventan asociaciones.
+
+La auditoría histórica 45854061871 comparó 68 casos; ninguno alcanzó el umbral
+del 1% (17,91%–99,98% de píxeles diferentes). Corresponde a la revisión
+1adff1f37711b225a6ab067ca10cdca53524ae4a, anterior a las correcciones del panel.
+El éxito del workflow en modo diagnóstico no implica paridad. La revisión
+visual debe repetirse después de cambios en el renderizador, los componentes
+o los estilos; no se certifica equivalencia 1:1.
