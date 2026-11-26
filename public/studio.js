@@ -1,5 +1,6 @@
 import init,{Studio} from './wasm/maker_studio.js';
 import {load,save} from './storage.js';
+import {attachCatalog,catalogInput,catalogClick,exportCatalog} from './catalog.js';
 
 const $=id=>document.getElementById(id);
 const status=$('status'),frame=$('preview'),themeForm=$('theme'),inspector=$('inspector');
@@ -66,15 +67,26 @@ function paintControls(){
   put(inspector,{title:n.title,text:n.text,button:n.button,hidden:n.hidden,art:n.art,...n.style});
   $('clear-image').disabled=!n.has_image;
   $('add-tile').hidden=!n.group;
+  $('up').disabled=Boolean(n.catalog_item);$('down').disabled=Boolean(n.catalog_item);
+}
+function notice(title,message){
+  $('demo-title').textContent=title;$('demo-message').textContent=message;
+  if(!$('demo-dialog').open)$('demo-dialog').showModal();
 }
 function attachFrame(){
   const doc=frame.contentDocument;if(!doc?.getElementById('surface'))return;
+  const preset=describe().active;
+  if(screen==='lobby')attachCatalog(doc,studio,preset,()=>editing,()=>frame.contentDocument===doc&&screen==='lobby'&&describe().active===preset)
+    .then(()=>highlight()).catch(error=>say(error.message??String(error),true));
   doc.addEventListener('click',event=>{
     const node=event.target.closest?.('[data-component]');
     if(editing&&node){event.preventDefault();event.stopPropagation();choose(node.dataset.component);return;}
-    if(event.target.closest?.('[data-demo]')){event.preventDefault();say('Vista de demostración local. No se crean cuentas ni se realizan apuestas.');}
+    if(catalogClick(doc,event.target,notice)){event.preventDefault();return;}
+    if(event.target.closest?.('[data-demo]')){event.preventDefault();notice('Demostración','Esta opción es una demostración. No se crean cuentas ni se realizan apuestas.');}
   },true);
+  doc.addEventListener('change',event=>{if(event.target.matches?.('[data-catalog-filter]'))catalogInput(doc,event.target);});
   doc.addEventListener('input',event=>{
+    if(event.target.matches?.('[data-search]')&&catalogInput(doc,event.target))return;
     if(!event.target.matches?.('[data-search]'))return;
     const term=event.target.value.trim().toLocaleLowerCase('es');
     const group=event.target.closest('.catalog');
@@ -103,7 +115,7 @@ async function imageData(file){
       canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
       canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
       const url=canvas.toDataURL('image/webp',quality);
-      if(url.length<=450000&&/^data:image\/(?:webp|png|jpeg);base64,/.test(url))return url;
+      if(url.length<=600000&&/^data:image\/(?:webp|png|jpeg);base64,/.test(url))return url;
     }
     throw Error('La imagen supera el límite. Reducí su tamaño.');
   }finally{bitmap.close();}
@@ -179,6 +191,7 @@ async function readAsset(id,budget){
 async function standaloneHtml(view){
   // Work exclusively on trusted Rust-rendered HTML; never interpret imported text as markup.
   const doc=new DOMParser().parseFromString(studio.html(view,false),'text/html');
+  if(view==='lobby')exportCatalog(doc,studio,describe().active);
   const images=new Map();
   for(const img of doc.querySelectorAll('img[src]')){
     const src=img.getAttribute('src');
@@ -199,6 +212,12 @@ async function standaloneHtml(view){
   return '<!doctype html>\n'+doc.documentElement.outerHTML;
 }
 function bind(){
+  $('close-demo').onclick=()=>$('demo-dialog').close();
+  $('restore-component').onclick=()=>{if(selected)dispatch({type:'restore',view:screen,id:selected});};
+  $('reset-view').onclick=()=>{if(confirm('¿Restaurar esta pantalla?')){selected='';dispatch({type:'reset_view',view:screen});}};
+  $('full-preview').onclick=()=>{document.body.dataset.fullPreview='true';editing=false;$('mode').setAttribute('aria-pressed','false');$('mode').textContent='Explorar';refresh();};
+  $('exit-preview').onclick=()=>{delete document.body.dataset.fullPreview;};
+  addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('demo-dialog').open&&!$('media-dialog').open){delete document.body.dataset.fullPreview;if(editing){editing=false;$('mode').setAttribute('aria-pressed','false');$('mode').textContent='Explorar';refresh();}}});
   $('library').onclick=showLibrary;
   $('close-library').onclick=()=>$('media-dialog').close();
   $('media-collection').onchange=()=>loadCollection().catch(e=>say(String(e),true));
@@ -227,7 +246,7 @@ function bind(){
   $('reset').onclick=()=>{if(confirm('¿Restaurar la plantilla actual? Podés deshacer este cambio.')){selected='';dispatch({type:'reset'});}};
   $('import').onclick=()=>$('file').click();
   $('file').onchange=async event=>{
-    try{const file=event.target.files?.[0];if(!file)return;if(file.size>8*1024*1024)throw Error('El proyecto supera 8 MiB.');studio.import_project(await file.text());selected='';refresh();persist();}
+    try{const file=event.target.files?.[0];if(!file)return;if(file.size>24*1024*1024)throw Error('El proyecto supera 24 MiB.');studio.import_project(await file.text());selected='';refresh();persist();}
     catch(error){say(String(error),true);}finally{event.target.value='';}
   };
   $('export-json').onclick=()=>{try{download(studio.snapshot(),'application/json','maker-project.json');}catch(error){say(String(error),true);}};

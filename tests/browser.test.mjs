@@ -52,8 +52,9 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
    await hero.waitFor();
    await preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').waitFor();
    assert.ok(await hero.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.naturalHeight>0;}),preset);
+   await preview.locator('#catalog[data-catalog-ready=true]').waitFor();
    const cards=preview.locator('#catalog img');
-   assert.equal(await cards.count(),art.cards.length,preset);
+   assert.ok(await cards.count()>0,preset);
    assert.ok(await cards.evaluateAll(async imgs=>{await Promise.all(imgs.map(img=>img.decode()));return imgs.every(img=>img.naturalWidth>0);}),preset);
    await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   }
@@ -92,5 +93,34 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   assert.ok(await offline.locator('#hero img').evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
   assert.ok(await offline.locator('#header img').evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
   assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
+ }finally{await browser.close();}
+});
+
+test('full catalogue interactions and sparse editing',{timeout:120000},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1440,height:900}});await page.goto(origin);
+  await page.locator('html[data-ready=true]').waitFor();
+  await page.locator('#preset').selectOption('violet');
+  const frame=page.frameLocator('#preview');
+  await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
+  const cards=frame.locator('#catalog .catalog-card');assert.equal(await cards.count(),48);
+  const virtual=cards.nth(25);await virtual.locator('h3').click();
+  await page.locator('#inspector [name=title]').fill('Tarjeta personalizada');
+  await page.locator('#inspector button[type=submit]').click();
+  await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
+  await frame.getByRole('heading',{name:'Tarjeta personalizada',exact:true}).waitFor();
+  await page.locator('#mode').click();
+  await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
+  await frame.locator('[data-catalog-more]').click();assert.equal(await cards.count(),96);
+  await cards.first().locator('[data-favorite]').click();
+  await frame.locator('[data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
+  await cards.first().locator('[data-game]').click();await page.locator('#demo-dialog[open]').waitFor();
+  await page.locator('#close-demo').click();
+  await frame.locator('[data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
+  await frame.locator('[data-catalog-mode=all]').click();
+  await frame.locator('[data-search]').fill('Tarjeta personalizada');assert.equal(await cards.count(),1);
+  await page.locator('#full-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),'true');
+  await page.locator('#exit-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),null);
  }finally{await browser.close();}
 });

@@ -41,3 +41,7 @@ Ver [arquitectura](docs/ARCHITECTURE.md) y [procedencia](docs/PROVENANCE.md). La
 La importación reproducible se realiza una vez con `scripts/import-media.py` usando la revisión fijada. La biblioteca se sirve desde `public/media/objects` y se consulta por colecciones paginadas; no se cargan todas las imágenes al abrir el editor. Los recursos gráficos originales quedan disponibles sin recomprimir. `docs/asset-provenance.json` registra la correspondencia con sus rutas originales. El exportador HTML incorpora las imágenes seleccionadas como datos, con un límite de 24 MiB de recursos externos al proyecto para evitar agotamiento de memoria.
 
 Verificación gráfica: `npm run test:media` comprueba la integridad de todos los archivos restaurados y sus referencias. Las pruebas E2E verifican portadas, tarjetas, biblioteca, logotipos y HTML autónomo sin red.
+
+## Catálogos normalizados
+
+Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo incluye la primera página de la selección actual, con imágenes embebidas y sin motor de juego.

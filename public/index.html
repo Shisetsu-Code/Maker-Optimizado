@@ -21,10 +21,10 @@
     <button class="primary" type="submit">Aplicar tema</button>
   </form></details>
   <details open><summary>Capas</summary><div id="outline"></div><form id="add-form"><label>Añadir sección<select id="kind"><option value="hero">Portada</option><option value="categories">Categorías</option><option value="catalog">Catálogo</option><option value="live">En vivo</option><option value="text">Texto</option><option value="image">Imagen</option><option value="header">Cabecera</option><option value="footer">Pie</option><option value="metrics">Indicadores</option><option value="activity">Actividad</option></select></label><button type="submit">Añadir</button></form></details>
-  <button id="reset" class="danger">Restaurar plantilla</button>
+  <button id="reset-view">Restaurar pantalla</button><button id="reset" class="danger">Restaurar plantilla</button>
 </aside>
 <section class="workspace" aria-label="Vista previa">
-  <div class="canvas-toolbar"><div><span class="dot"></span><strong>Vista previa</strong></div><div class="view-tabs"><button data-size="desktop" aria-pressed="true">PC</button><button data-size="tablet" aria-pressed="false">Tablet</button><button data-size="mobile" aria-pressed="false">Móvil</button></div><button id="mode" aria-pressed="true">Editar</button></div>
+  <div class="canvas-toolbar"><div><span class="dot"></span><strong>Vista previa</strong></div><div class="view-tabs"><button data-size="desktop" aria-pressed="true">PC</button><button data-size="tablet" aria-pressed="false">Tablet</button><button data-size="mobile" aria-pressed="false">Móvil</button></div><button id="mode" aria-pressed="true">Editar</button><button id="full-preview">Mostrar diseño</button><button id="exit-preview" type="button">Salir de vista completa</button></div>
   <div class="canvas" id="canvas" data-size="desktop"><iframe id="preview" title="Vista previa del diseño" sandbox="allow-same-origin"></iframe></div>
   <div class="status-line"><span id="status" role="status">Cargando motor Rust…</span><span>LOCAL · SIN APUESTAS</span></div>
 </section>
@@ -45,12 +45,13 @@
     <label class="upload-label">Imagen propia<input id="image-file" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="clear-image">Quitar imagen</button><button type="button" id="library">Biblioteca gráfica</button>
     <div class="two-grid"><button type="button" id="up">Subir</button><button type="button" id="down">Bajar</button></div>
     <button type="button" id="add-tile" hidden>Añadir tarjeta</button>
-    <button type="button" id="delete" class="danger">Eliminar componente</button>
+    <button type="button" id="restore-component">Restaurar elemento</button><button type="button" id="delete" class="danger">Eliminar componente</button>
   </form>
   <p class="note">Los diseños e imágenes se guardan en este navegador. Exportá una copia para conservarlos.</p>
 </aside>
 </main>
 <dialog id="media-dialog" aria-labelledby="media-title"><div class="media-head"><h2 id="media-title">Biblioteca gráfica</h2><button id="close-library" type="button">Cerrar</button></div><label>Colección<select id="media-collection"></select></label><div id="media-grid" aria-label="Imágenes"></div><div class="media-pagination"><button id="media-prev" type="button">Anterior</button><span id="media-page"></span><button id="media-next" type="button">Siguiente</button></div></dialog>
+<dialog id="demo-dialog" aria-labelledby="demo-title"><h2 id="demo-title"></h2><p id="demo-message"></p><button type="button" id="close-demo">Cerrar</button></dialog>
 <noscript>Maker necesita JavaScript y WebAssembly.</noscript>
 <script type="module" src="/studio.js"></script>
 </body></html>

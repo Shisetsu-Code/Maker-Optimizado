@@ -43,7 +43,9 @@ jobs:
       - name: Verify restored graphic library
         run: npm run test:media
       - name: WASM tests
-        run: npm test
+        run: |
+          npm test
+          node --test tests/catalog.test.mjs
       - name: Cloudflare dry-run
         run: npx --no-install wrangler deploy --dry-run
       - name: Browser runtime
