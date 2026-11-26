@@ -169,6 +169,13 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
     }
 }
 
+pub fn catalog_card(n:&Component,game:&str,favorite:bool,preview:bool)->String{
+    if n.hidden&&!preview{return String::new();}
+    let hidden=if n.hidden{" data-hidden=\"true\""}else{""};
+    let id=escape(&n.id);let game=escape(game);let pressed=if favorite{"true"}else{"false"};let mark=if favorite{"♥"}else{"♡"};
+    let action=if n.button.is_empty(){"Ver demo".to_owned()}else{escape(&n.button)};
+    format!("<article class=\"component tile catalog-card\" id=\"{id}\" data-component=\"{id}\" data-catalog-card=\"{game}\" style=\"{}\"{hidden}><div class=\"tile-art\">{}</div><div class=\"tile-copy\"><h3>{}</h3><p>{}</p><button type=\"button\" class=\"action\" data-game=\"{game}\">{action}</button></div><button type=\"button\" class=\"favorite\" data-favorite=\"{game}\" aria-label=\"Favorito: {}\" aria-pressed=\"{pressed}\">{mark}</button></article>",node_style(n),artwork(n),escape(&n.title),escape(&n.text),escape(&n.title))
+}
 pub fn document(design: &Design, view: View, preview: bool) -> String {
     let t = &design.theme;
     let mut out = String::with_capacity(16_000);

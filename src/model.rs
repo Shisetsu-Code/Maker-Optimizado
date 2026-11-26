@@ -6,12 +6,12 @@ use std::{
 
 pub type ModelResult<T> = Result<T, String>;
 pub const SCHEMA_VERSION: u32 = 1;
-pub const MAX_PROJECT_BYTES: usize = 8 * 1024 * 1024;
-pub const MAX_IMAGE_BYTES: usize = 450_000;
-pub const MAX_IMAGES_BYTES: usize = 4 * 1024 * 1024;
+pub const MAX_PROJECT_BYTES: usize = 24 * 1024 * 1024;
+pub const MAX_IMAGE_BYTES: usize = 600_000;
+pub const MAX_IMAGES_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_ROOTS: usize = 32;
-pub const MAX_NODES: usize = 160;
-pub const MAX_CHILDREN: usize = 40;
+pub const MAX_NODES: usize = 512;
+pub const MAX_CHILDREN: usize = 200;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
