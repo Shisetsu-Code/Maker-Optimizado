@@ -257,6 +257,8 @@ pub fn design(id: &str) -> ModelResult<Design> {
     let theme = Theme {
         brand: "Mi casino".into(),
         accent: p.accent.into(),
+        button_color: None,
+        glow_color: None,
         background: p.background.into(),
         surface: p.surface.into(),
         ink: p.ink.into(),
@@ -435,6 +437,7 @@ pub fn workspace(id: &str) -> ModelResult<Workspace> {
         version: SCHEMA_VERSION,
         active: id.into(),
         designs: BTreeMap::from([(id.into(), design(id)?)]),
+        appearance: Appearance::default(),
     })
 }
 #[cfg(test)]

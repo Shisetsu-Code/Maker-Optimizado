@@ -51,7 +51,7 @@ impl Studio {
         Ok(data.to_string())
     }
     pub fn dispatch(&mut self, input: &str) -> Result<(), JsValue> {
-        if input.len() > crate::model::MAX_IMAGE_BYTES + 16_384 {
+        if input.len() > crate::model::MAX_BACKGROUND_BYTES + 16_384 {
             return Err(JsValue::from_str("Acción demasiado grande."));
         }
         let action: Action =
@@ -105,10 +105,11 @@ impl Studio {
         self.editor.redo()
     }
     pub fn html(&self, screen: &str, preview: bool) -> Result<String, JsValue> {
-        Ok(render::document(
+        Ok(render::document_with_appearance(
             self.editor.active(),
             view(screen)?,
             preview,
+            &self.editor.workspace().appearance,
         ))
     }
 }

@@ -27,3 +27,5 @@ The media-integrity test hashes every restored object against its original Git b
 ## Catalog model
 
 Static normalized catalogues contain the full recovered records where structured source data is available. Rust validates and queries immutable records; only the edited cards are materialized into the project document. Existing seed IDs are mapped without rewriting user changes. Catalog interaction state is session-local; the browser bridge creates only filter controls, attaches event handlers and inserts typed Rust-generated card markup. The complete catalogue is not cloned into undo history or IndexedDB.
+
+Appearance is a shared, versioned workspace setting; all CSS is emitted from validated enums, bounds and colors. Original local fonts are served with their OFL notices. Standalone HTML exports embed the referenced fonts and licenses. Component styles remain sparse and typed; no arbitrary CSS is accepted.

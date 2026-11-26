@@ -60,6 +60,9 @@ pub enum Action {
         id: String,
         before: String,
     },
+    Appearance { settings: AppearanceSettings },
+    Backdrop { image: Option<Rc<str>> },
+    ResetAppearance,
     Restore {
         view: View,
         id: String,
@@ -199,6 +202,9 @@ impl Editor {
                 next.designs
                     .insert(next.active.clone(), presets::design(&next.active)?);
             }
+            Action::Appearance { settings } => next.appearance.settings=settings,
+            Action::Backdrop { image } => next.appearance.image=image,
+            Action::ResetAppearance => next.appearance=Appearance::default(),
             Action::ResetView { view } => {
                 let original = presets::design(&next.active)?;
                 let design = next.designs.get_mut(&next.active).ok_or("No hay diseño.")?;
@@ -312,7 +318,7 @@ impl Editor {
                             .ok_or("Destino inválido.")?;
                         group.insert(dest, node);
                     }
-                    Action::Switch { .. } | Action::ResetView { .. } | Action::Reset => {
+                    Action::Switch { .. } | Action::Appearance { .. } | Action::Backdrop { .. } | Action::ResetAppearance | Action::ResetView { .. } | Action::Reset => {
                         return Err("Acción inválida.".into());
                     }
                 }
@@ -324,7 +330,7 @@ impl Editor {
         let design = self.active();
         let nodes = design.nodes(view);
         let selected = nodes.iter().find_map(|n| n.find(id)).map(component_info);
-        json!({"version":SCHEMA_VERSION,"active":self.current.active,"theme":design.theme,"outline":nodes.iter().map(outline).collect::<Vec<_>>(),"selected":selected,"undo":!self.past.is_empty(),"redo":!self.future.is_empty()})
+        json!({"version":SCHEMA_VERSION,"active":self.current.active,"theme":design.theme,"appearance":{"settings":self.current.appearance.settings,"has_image":self.current.appearance.image.is_some()},"outline":nodes.iter().map(outline).collect::<Vec<_>>(),"selected":selected,"undo":!self.past.is_empty(),"redo":!self.future.is_empty()})
     }
 }
 impl Default for Editor {

@@ -39,3 +39,19 @@ test('library asset IDs cannot escape the static asset namespace',()=>{
   assert.match(studio.html('lobby',true),new RegExp('/media/objects/'+id));
   studio.free();
 });
+
+test('advanced appearance is shared, bounded and rendered by Rust',()=>{
+ const studio=new Studio();
+ studio.dispatch(JSON.stringify({type:'appearance',settings:{font:'barlow',scale:120,weight:700,radius:20,enabled:true,shade:60,fit:'contain',position:'top'}}));
+ studio.dispatch(JSON.stringify({type:'backdrop',image:'data:image/png;base64,YWJj'}));
+ studio.dispatch(JSON.stringify({type:'switch',preset:'cobalt'}));
+ assert.match(studio.html('lobby',false),/font-barlow/);
+ assert.match(studio.html('panel',false),/--text-scale:1\.2/);
+ assert.match(studio.html('lobby',false),/page-backdrop/);
+ const before=studio.snapshot();
+ assert.throws(()=>studio.dispatch(JSON.stringify({type:'appearance',settings:{scale:200}})));
+ assert.equal(studio.snapshot(),before);
+ studio.dispatch(JSON.stringify({type:'edit',view:'lobby',id:'catalog',patch:{title:'Catálogo',text:'',button:'',hidden:false,art:0,style:{font_size:110,font_weight:900,align:'right',border_color:'#abcdef',border_width:12,width:80,height:500,fit:'contain',position:'top',placeholder:'Buscar a medida'}}}));
+ const html=studio.html('lobby',false);assert.match(html,/--node-weight:900/);assert.match(html,/placeholder="Buscar a medida"/);assert.match(html,/min-height:500px/);
+ studio.free();
+});

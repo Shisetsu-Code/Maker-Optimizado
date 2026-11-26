@@ -8,6 +8,7 @@ pub type ModelResult<T> = Result<T, String>;
 pub const SCHEMA_VERSION: u32 = 1;
 pub const MAX_PROJECT_BYTES: usize = 24 * 1024 * 1024;
 pub const MAX_IMAGE_BYTES: usize = 600_000;
+pub const MAX_BACKGROUND_BYTES: usize = 1_600_000;
 pub const MAX_IMAGES_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_ROOTS: usize = 32;
 pub const MAX_NODES: usize = 512;
@@ -37,6 +38,9 @@ pub enum Font {
     System,
     Condensed,
     Editorial,
+    Barlow,
+    Archivo,
+    Oswald,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -84,12 +88,51 @@ impl Kind {
 pub struct Theme {
     pub brand: String,
     pub accent: String,
+    #[serde(default)]
+    pub button_color: Option<String>,
+    #[serde(default)]
+    pub glow_color: Option<String>,
     pub background: String,
     pub surface: String,
     pub ink: String,
     pub radius: u8,
     pub font: Font,
     pub layout: Layout,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Fit { #[default] Cover, Contain }
+impl Fit { pub fn css(self)->&'static str{match self{Self::Cover=>"cover",Self::Contain=>"contain"}} }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Position { #[default] Center, Top, Bottom, Left, Right }
+impl Position { pub fn css(self)->&'static str{match self{Self::Center=>"center",Self::Top=>"top",Self::Bottom=>"bottom",Self::Left=>"left",Self::Right=>"right"}} }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Align { Left, Center, Right }
+impl Align { pub fn css(self)->&'static str{match self{Self::Left=>"left",Self::Center=>"center",Self::Right=>"right"}} }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default,deny_unknown_fields)]
+pub struct AppearanceSettings {
+    pub font: Option<Font>,
+    pub scale: u8,
+    pub weight: Option<u16>,
+    pub radius: Option<u8>,
+    pub enabled: bool,
+    pub shade: u8,
+    pub fit: Fit,
+    pub position: Position,
+}
+impl Default for AppearanceSettings {
+    fn default()->Self{Self{font:None,scale:100,weight:None,radius:None,enabled:true,shade:55,fit:Fit::Cover,position:Position::Center}}
+}
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[serde(default,deny_unknown_fields)]
+pub struct Appearance {
+    pub settings: AppearanceSettings,
+    pub image: Option<Rc<str>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -101,6 +144,15 @@ pub struct Style {
     pub padding: Option<u8>,
     pub font_size: Option<u8>,
     pub columns: Option<u8>,
+    pub font_weight: Option<u16>,
+    pub align: Option<Align>,
+    pub border_color: Option<String>,
+    pub border_width: Option<u8>,
+    pub width: Option<u8>,
+    pub height: Option<u16>,
+    pub fit: Option<Fit>,
+    pub position: Option<Position>,
+    pub placeholder: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -179,6 +231,8 @@ pub struct Workspace {
     pub version: u32,
     pub active: String,
     pub designs: BTreeMap<String, Design>,
+    #[serde(default)]
+    pub appearance: Appearance,
 }
 
 pub fn valid_color(s: &str) -> bool {
@@ -196,8 +250,9 @@ pub fn valid_text(s: &str, max: usize) -> bool {
             .chars()
             .any(|c| c.is_control() && !matches!(c, '\n' | '\t' | '\r'))
 }
-pub fn valid_image(s: &str) -> bool {
-    if s.len() > MAX_IMAGE_BYTES {
+pub fn valid_image(s: &str) -> bool { valid_raster(s, MAX_IMAGE_BYTES) }
+pub fn valid_raster(s:&str,max:usize)->bool {
+    if s.len() > max {
         return false;
     }
     let Some(data) = [
@@ -236,9 +291,9 @@ fn validate_node(
     {
         return Err("Jerarquía de componentes inválida.".into());
     }
-    if !valid_text(&node.title, 120)
-        || !valid_text(&node.text, 600)
-        || !valid_text(&node.button, 60)
+    if !valid_text(&node.title, 1800)
+        || !valid_text(&node.text, 1800)
+        || !valid_text(&node.button, 1800)
         || node.art > 11
     {
         return Err("Texto o estilo de ilustración fuera de límite.".into());
@@ -246,9 +301,15 @@ fn validate_node(
     let s = &node.style;
     if s.color.as_ref().is_some_and(|s| !valid_color(s))
         || s.background.as_ref().is_some_and(|s| !valid_color(s))
-        || s.radius.is_some_and(|n| n > 48)
-        || s.padding.is_some_and(|n| n > 64)
-        || s.font_size.is_some_and(|n| !(10..=64).contains(&n))
+        || s.radius.is_some_and(|n| n > 80)
+        || s.padding.is_some_and(|n| n > 100)
+        || s.font_size.is_some_and(|n| !(8..=110).contains(&n))
+        || s.font_weight.is_some_and(|n| ![400,500,600,700,800,900].contains(&n))
+        || s.border_color.as_ref().is_some_and(|s| !valid_color(s))
+        || s.border_width.is_some_and(|n| n>12)
+        || s.width.is_some_and(|n| !(10..=100).contains(&n))
+        || s.height.is_some_and(|n| !(20..=1200).contains(&n))
+        || s.placeholder.as_ref().is_some_and(|s| !valid_text(s,1800))
         || s.columns.is_some_and(|n| !(1..=8).contains(&n))
     {
         return Err("Estilo no permitido.".into());
@@ -283,7 +344,10 @@ pub fn validate(workspace: &Workspace) -> ModelResult<()> {
     {
         return Err("Versión o plantilla de proyecto inválida.".into());
     }
-    let mut images = 0;
+    let appearance=&workspace.appearance;
+    let settings=&appearance.settings;
+    if !(85..=120).contains(&settings.scale)||settings.shade>90||settings.radius.is_some_and(|n|n>30)||settings.weight.is_some_and(|w|![400,600,700].contains(&w))||appearance.image.as_deref().is_some_and(|image|!valid_raster(image,MAX_BACKGROUND_BYTES)) {return Err("Apariencia global inválida.".into());}
+    let mut images = appearance.image.as_ref().map_or(0,|image|image.len());
     for (id, design) in &workspace.designs {
         if crate::presets::get(id).is_none() {
             return Err("Plantilla desconocida.".into());
@@ -292,6 +356,8 @@ pub fn validate(workspace: &Workspace) -> ModelResult<()> {
         if theme.brand.trim().is_empty()
             || !valid_text(&theme.brand, 60)
             || theme.radius > 48
+            || theme.button_color.as_ref().is_some_and(|s|!valid_color(s))
+            || theme.glow_color.as_ref().is_some_and(|s|!valid_color(s))
             || [&theme.accent, &theme.background, &theme.surface, &theme.ink]
                 .iter()
                 .any(|c| !valid_color(c))

@@ -3,7 +3,7 @@ import {load,save} from './storage.js';
 import {attachCatalog,catalogInput,catalogClick,exportCatalog} from './catalog.js';
 
 const $=id=>document.getElementById(id);
-const status=$('status'),frame=$('preview'),themeForm=$('theme'),inspector=$('inspector');
+const status=$('status'),frame=$('preview'),themeForm=$('theme'),appearanceForm=$('appearance'),inspector=$('inspector');
 let mediaIndex,mediaItems=[],mediaPage=0,mediaTarget=null,mediaToken=0;
 let studio,screen='lobby',selected='',editing=true,revision=null,queue=Promise.resolve(),conflict=false,dragged='',paintToken=0;
 const say=(message,error=false)=>{status.textContent=message;status.dataset.error=String(error);};
@@ -56,7 +56,7 @@ function paintOutline(nodes,container,depth=0){
 function paintControls(){
   const data=describe();
   $('preset').value=data.active;
-  put(themeForm,data.theme);
+  put(themeForm,data.theme);put(appearanceForm,data.appearance.settings);$('clear-background').disabled=!data.appearance.has_image;
   $('undo').disabled=!data.undo;$('redo').disabled=!data.redo;
   $('lobby').setAttribute('aria-pressed',String(screen==='lobby'));$('panel').setAttribute('aria-pressed',String(screen==='panel'));
   const outline=$('outline');outline.replaceChildren();paintOutline(data.outline,outline);
@@ -102,10 +102,10 @@ function refresh(){
   const html=studio.html(screen,editing);
   if(token===paintToken)frame.srcdoc=html;
 }
-function readTheme(){const f=Object.fromEntries(new FormData(themeForm));return{...f,radius:Number(f.radius)};}
-function readPatch(){const f=new FormData(inspector),number=name=>f.get(name)===''?null:Number(f.get(name)),color=name=>String(f.get(name)||'')||null;return{title:String(f.get('title')),text:String(f.get('text')),button:String(f.get('button')),hidden:inspector.elements.hidden.checked,art:Number(f.get('art')),style:{color:color('color'),background:color('background'),radius:number('radius'),padding:number('padding'),font_size:number('font_size'),columns:number('columns')}};}
+function readTheme(){const f=Object.fromEntries(new FormData(themeForm));return{...f,radius:Number(f.radius),button_color:f.button_color||null,glow_color:f.glow_color||null};}
+function readPatch(){const f=new FormData(inspector),number=name=>f.get(name)===''?null:Number(f.get(name)),color=name=>String(f.get(name)||'')||null;return{title:String(f.get('title')),text:String(f.get('text')),button:String(f.get('button')),hidden:inspector.elements.hidden.checked,art:Number(f.get('art')),style:{color:color('color'),background:color('background'),radius:number('radius'),padding:number('padding'),font_size:number('font_size'),columns:number('columns'),font_weight:number('font_weight'),align:color('align'),border_color:color('border_color'),border_width:number('border_width'),width:number('width'),height:number('height'),fit:color('fit'),position:color('position'),placeholder:color('placeholder')}};}
 function randomId(){return 'component-'+crypto.randomUUID();}
-async function imageData(file){
+async function imageData(file,limit=600000){
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8*1024*1024)throw Error('Elegí JPG, PNG o WebP de hasta 8 MB.');
   const bitmap=await createImageBitmap(file);
   try{
@@ -115,7 +115,7 @@ async function imageData(file){
       canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
       canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
       const url=canvas.toDataURL('image/webp',quality);
-      if(url.length<=600000&&/^data:image\/(?:webp|png|jpeg);base64,/.test(url))return url;
+      if(url.length<=limit&&/^data:image\/(?:webp|png|jpeg);base64,/.test(url))return url;
     }
     throw Error('La imagen supera el límite. Reducí su tamaño.');
   }finally{bitmap.close();}
@@ -207,8 +207,22 @@ async function standaloneHtml(view){
     total+=size;
     for(const img of nodes)img.setAttribute('src',url);
   }
+  // Embed the licensed local fonts so the static document also works offline.
+  for(const style of doc.querySelectorAll('style')){
+    const urls=[...new Set([...style.textContent.matchAll(/\/fonts\/[a-z0-9-]+-[a-f0-9]{8}\.woff2/g)].map(m=>m[0]))];
+    for(const url of urls){
+      const response=await fetch(url);if(!response.ok)throw Error('Fuente local no disponible.');
+      const bytes=await response.arrayBuffer();if(bytes.byteLength>256000)throw Error('Fuente local demasiado grande.');
+      const encoded=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(new Blob([bytes],{type:'font/woff2'}));});
+      style.textContent=style.textContent.replaceAll(url,encoded);
+    }
+    if(urls.length){
+      const notices=await Promise.all(['barlow','archivo','oswald'].map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
+      doc.head.append(doc.createComment(notices.join('\n\n').replaceAll('--','—')));
+    }
+  }
   const policy=doc.querySelector('meta[http-equiv="Content-Security-Policy"]');
-  if(policy)policy.content=policy.content.replace("img-src 'self' data:","img-src data:");
+  if(policy)policy.content=policy.content.replace("img-src 'self' data:","img-src data:").replace("font-src 'self' data:","font-src data:");
   return '<!doctype html>\n'+doc.documentElement.outerHTML;
 }
 function bind(){
@@ -229,6 +243,18 @@ function bind(){
   for(const button of document.querySelectorAll('button[data-size]'))button.onclick=()=>{ $('canvas').dataset.size=button.dataset.size;for(const b of document.querySelectorAll('button[data-size]'))b.setAttribute('aria-pressed',String(b===button)); };
   $('mode').onclick=()=>{editing=!editing;$('mode').setAttribute('aria-pressed',String(editing));$('mode').textContent=editing?'Editar':'Explorar';refresh();};
   themeForm.onsubmit=event=>{event.preventDefault();dispatch({type:'theme',theme:readTheme()});};
+  appearanceForm.onsubmit=event=>{
+    event.preventDefault();const f=new FormData(appearanceForm);
+    const optionalNumber=name=>f.get(name)===''?null:Number(f.get(name));
+    dispatch({type:'appearance',settings:{font:f.get('font')||null,scale:Number(f.get('scale')),weight:optionalNumber('weight'),radius:optionalNumber('radius'),enabled:appearanceForm.elements.enabled.checked,shade:Number(f.get('shade')),fit:f.get('fit'),position:f.get('position')}});
+  };
+  $('background-file').onchange=async event=>{
+    try{const file=event.target.files?.[0];if(file)dispatch({type:'backdrop',image:await imageData(file,1600000)});}
+    catch(error){say(error.message??String(error),true);}finally{event.target.value='';}
+  };
+  $('clear-background').onclick=()=>dispatch({type:'backdrop',image:null});
+  $('reset-appearance').onclick=()=>dispatch({type:'reset_appearance'});
+
   inspector.onsubmit=event=>{event.preventDefault();if(selected)dispatch({type:'edit',view:screen,id:selected,patch:readPatch()});};
   $('add-form').onsubmit=event=>{event.preventDefault();const id=randomId();selected=id;dispatch({type:'add',view:screen,parent:null,id,kind:$('kind').value});};
   $('add-tile').onclick=()=>{const parent=selected,id=randomId();selected=id;dispatch({type:'add',view:screen,parent,id,kind:'tile'});};

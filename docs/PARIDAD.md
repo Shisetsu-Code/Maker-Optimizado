@@ -36,3 +36,7 @@ normalizados. No hay apuestas reales ni cuentas reales. Las interacciones
 complejas del panel, las opciones de estilo avanzadas, la migración de JSON
 antiguo y la comparación visual exacta continúan pendientes. No se certifica
 paridad 1:1 hasta superar todas las puertas de aceptación.
+
+## Apariencia recuperada
+
+La nueva estructura admite el alcance global de fuente, escala 85–120%, peso, esquinas y fondo (mostrar/ocultar, ajuste, posición y oscurecimiento), además de color de botones/brillos por plantilla. Los estilos por componente incluyen tamaño 8–110 px, peso, alineación, bordes, dimensiones y ajuste/posición de imágenes. Se restauran las fuentes locales Barlow, Archivo y Oswald con sus avisos SIL OFL. La edición de fragmentos arbitrarios del DOM y los fondos independientes por subelemento todavía requieren correspondencia adicional.
