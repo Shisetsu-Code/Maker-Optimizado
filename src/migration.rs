@@ -12,6 +12,8 @@ pub struct Report {
 }
 impl Report {
     fn unresolved(&mut self, scope: &str, label: &str, reason: &str) {
+        let scope: String = scope.chars().take(80).collect();
+        let label: String = label.chars().take(100).collect();
         self.unresolved
             .push(json!({"scope":scope,"label":label,"reason":reason}));
     }
@@ -198,6 +200,9 @@ pub fn convert(input: &str, current: &Workspace) -> ModelResult<(Workspace, Repo
         return Err("Archivo anterior demasiado grande.".into());
     }
     let root: Value = serde_json::from_str(input).map_err(|_| "JSON inválido.")?;
+    if root.get("designs").is_some() || root.get("active").is_some() {
+        return Err("Proyecto actual inválido; no se intenta migrarlo como anterior.".into());
+    }
     let legacy_design = root["formato"] == "rushybet-diseno-1";
     let settings = root.get("ajustes").unwrap_or(&root);
     let recognized = legacy_design
@@ -380,6 +385,15 @@ pub fn convert(input: &str, current: &Workspace) -> ModelResult<(Workspace, Repo
     }
     let elements = root.get("elementos").or_else(|| settings.get("elementos"));
     if let Some(elements) = elements {
+        if elements["assets"].as_object().is_some_and(|a| a.len() > 40)
+            || elements["pages"].as_object().is_some_and(|p| {
+                p.len() > 50
+                    || p.values()
+                        .any(|rules| rules.as_array().is_some_and(|r| r.len() > 150))
+            })
+        {
+            return Err("El archivo anterior supera los límites de elementos.".into());
+        }
         if let Some(pages) = elements["pages"].as_object() {
             for (page, rules) in pages {
                 let Some((old, screen)) = page.split_once(':') else {

@@ -1,5 +1,6 @@
 /*
   X-Content-Type-Options: nosniff
+  Cross-Origin-Resource-Policy: same-origin
   Referrer-Policy: no-referrer
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()

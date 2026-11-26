@@ -305,25 +305,7 @@ pub fn valid_image(s: &str) -> bool {
     valid_raster(s, MAX_IMAGE_BYTES)
 }
 pub fn valid_raster(s: &str, max: usize) -> bool {
-    if s.len() > max {
-        return false;
-    }
-    let Some(data) = [
-        "data:image/webp;base64,",
-        "data:image/png;base64,",
-        "data:image/jpeg;base64,",
-    ]
-    .iter()
-    .find_map(|prefix| s.strip_prefix(prefix)) else {
-        return false;
-    };
-    let padding = data.bytes().rev().take_while(|b| *b == b'=').count();
-    data.len() >= 4
-        && data.len().is_multiple_of(4)
-        && padding <= 2
-        && data.as_bytes()[..data.len() - padding]
-            .iter()
-            .all(|b| b.is_ascii_alphanumeric() || *b == b'+' || *b == b'/')
+    crate::raster::valid_data_url(s, max)
 }
 
 fn validate_node(
@@ -460,7 +442,7 @@ mod tests {
     use super::*;
     #[test]
     fn image_types_and_color() {
-        assert!(valid_image("data:image/png;base64,YWJj"));
+        assert!(!valid_image("data:image/png;base64,YWJj"));
         assert!(!valid_image("data:image/svg+xml;base64,YWJj"));
         assert!(!valid_image("data:image/png;base64,A==="));
         assert!(!valid_image("data:image/png;base64,AA=A"));

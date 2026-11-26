@@ -67,6 +67,12 @@ impl Studio {
         });
         self.editor.apply_catalog(action, base).map_err(err)
     }
+    pub fn check_upload(&self, data: &[u8], mime: &str) -> Result<(), JsValue> {
+        if !crate::raster::valid_upload(data, mime) {
+            return Err(JsValue::from_str("Imagen inválida, animada o demasiado grande."));
+        }
+        Ok(())
+    }
     pub fn set_catalog(&mut self, input: &str) -> Result<(), JsValue> {
         self.catalog = Some(
             crate::catalog::Catalog::parse(input, &self.editor.workspace().active).map_err(err)?,

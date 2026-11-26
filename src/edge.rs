@@ -16,6 +16,9 @@ fn json_response(value: Value, status: u16, head: bool) -> Result<Response> {
     headers.set("cache-control", "no-store")?;
     headers.set("x-content-type-options", "nosniff")?;
     headers.set("referrer-policy", "no-referrer")?;
+    headers.set("cross-origin-resource-policy", "same-origin")?;
+    headers.set("x-frame-options", "DENY")?;
+    headers.set("content-security-policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")?;
     Ok(response.with_status(status))
 }
 fn error(message: &str, status: u16, head: bool) -> Result<Response> {
@@ -70,6 +73,14 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             if method != Method::Post {
                 return allow("POST");
             }
+            let content_type = req.headers().get("content-type")?.unwrap_or_default();
+            if !content_type
+                .split(';')
+                .next()
+                .is_some_and(|v| v.trim().eq_ignore_ascii_case("application/json"))
+            {
+                return error("Se requiere application/json.", 415, false);
+            }
             let bytes = match bounded_body(&mut req).await {
                 Ok(b) => b,
                 Err(code) => return error("Solicitud inválida o demasiado grande.", code, false),
@@ -118,6 +129,11 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             response
                 .headers_mut()
                 .set("x-content-type-options", "nosniff")?;
+            response.headers_mut().set("referrer-policy", "no-referrer")?;
+            response
+                .headers_mut()
+                .set("cross-origin-resource-policy", "same-origin")?;
+            response.headers_mut().set("x-frame-options", "SAMEORIGIN")?;
             Ok(response)
         }
         path if path == "/api" || path.starts_with("/api/") => {

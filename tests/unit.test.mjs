@@ -43,7 +43,7 @@ test('library asset IDs cannot escape the static asset namespace',()=>{
 test('advanced appearance is shared, bounded and rendered by Rust',()=>{
  const studio=new Studio();
  studio.dispatch(JSON.stringify({type:'appearance',settings:{font:'barlow',scale:120,weight:700,radius:20,enabled:true,shade:60,fit:'contain',position:'top'}}));
- studio.dispatch(JSON.stringify({type:'backdrop',image:'data:image/png;base64,YWJj'}));
+ studio.dispatch(JSON.stringify({type:'backdrop',image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII='}));
  studio.dispatch(JSON.stringify({type:'switch',preset:'cobalt'}));
  assert.match(studio.html('lobby',false),/font-barlow/);
  assert.match(studio.html('panel',false),/--text-scale:1\.2/);
@@ -80,5 +80,22 @@ test('administrative preview uses isolated synthetic Rust state',()=>{
  assert.equal(JSON.parse(studio.panel_metadata()).maintenance,true);
  studio.panel_action(JSON.stringify({type:'reset'}));
  assert.equal(JSON.parse(studio.panel_metadata()).maintenance,false);
+ studio.free();
+});
+
+test('untrusted raster headers and malformed legacy projects are rejected atomically',()=>{
+ const studio=new Studio(),original=studio.snapshot();
+ const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=','base64');
+ studio.check_upload(pixel,'image/png');
+ assert.throws(()=>studio.check_upload(pixel,'image/webp'));
+ const huge=Buffer.from(pixel);huge.writeUInt32BE(100000,16);
+ assert.throws(()=>studio.check_upload(huge,'image/png'));
+ assert.throws(()=>studio.dispatch(JSON.stringify({type:'backdrop',image:'data:image/png;base64,'+huge.toString('base64')})));
+ assert.throws(()=>studio.dispatch(JSON.stringify({type:'image',view:'lobby',id:'hero',image:'data:image/png;base64,YWJj'})));
+ const current=JSON.parse(original);current.appearance.settings.scale=200;current.font='barlow';
+ assert.throws(()=>studio.import_project(JSON.stringify(current)));
+ const legacy={font:'archivo',elementos:{pages:{'bateupix:lobby':Array.from({length:151},()=>({}))}}};
+ assert.throws(()=>studio.import_project(JSON.stringify(legacy)));
+ assert.equal(studio.snapshot(),original);
  studio.free();
 });

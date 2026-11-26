@@ -115,6 +115,8 @@ function readPatch(){const f=new FormData(inspector),number=name=>f.get(name)===
 function randomId(){return 'component-'+crypto.randomUUID();}
 async function imageData(file,limit=600000){
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8*1024*1024)throw Error('Elegí JPG, PNG o WebP de hasta 8 MB.');
+  // Validate declared format and pixel dimensions before allocating a decoder.
+  studio.check_upload(new Uint8Array(await file.arrayBuffer()),file.type);
   const bitmap=await createImageBitmap(file);
   try{
     if(bitmap.width*bitmap.height>40_000_000)throw Error('La imagen tiene demasiados píxeles.');
