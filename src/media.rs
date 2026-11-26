@@ -19,6 +19,8 @@ struct Artwork {
 struct Card {
     asset: String,
     title: String,
+    #[serde(default)]
+    provider: String,
 }
 
 pub fn valid_asset(value: &str) -> bool {
@@ -38,6 +40,9 @@ fn assign_cards(nodes: &mut [Component], cards: &[Card]) {
             node.asset = Some(card.asset.clone());
             if crate::model::valid_text(&card.title, 120) && !card.title.is_empty() {
                 node.title.clone_from(&card.title);
+            }
+            if !card.provider.is_empty() && crate::model::valid_text(&card.provider, 120) {
+                node.text.clone_from(&card.provider);
             }
         }
     }

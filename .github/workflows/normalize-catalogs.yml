@@ -1,0 +1,38 @@
+name: Import normalized catalogue data
+on:
+  push:
+    branches: [rebuild/clean]
+    paths: ['.github/workflows/normalize-catalogs.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Project immutable source records
+        run: |
+          git fetch --depth=1 origin 8a8b09cfdda55d8233b2d61c4d878bb112f4f591
+          python3 scripts/import-catalogs.py
+      - name: Format and verify Rust
+        run: |
+          cargo fmt --all
+          cargo test --locked --lib
+          cargo check --locked --target wasm32-unknown-unknown --no-default-features --features browser --lib
+      - name: Record normalized data and remove bootstrap
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/catalogs assets/preset-artwork.json docs/catalog-parity.json src
+          git rm .github/workflows/normalize-catalogs.yml
+          git commit -m 'Normalize original catalogue records and preserve source coverage report'
+          git push origin HEAD:rebuild/clean
+      - name: Verify complete normalized tree
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref rebuild/clean
