@@ -102,19 +102,59 @@ pub struct Theme {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Fit { #[default] Cover, Contain }
-impl Fit { pub fn css(self)->&'static str{match self{Self::Cover=>"cover",Self::Contain=>"contain"}} }
+pub enum Fit {
+    #[default]
+    Cover,
+    Contain,
+}
+impl Fit {
+    pub fn css(self) -> &'static str {
+        match self {
+            Self::Cover => "cover",
+            Self::Contain => "contain",
+        }
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Position { #[default] Center, Top, Bottom, Left, Right }
-impl Position { pub fn css(self)->&'static str{match self{Self::Center=>"center",Self::Top=>"top",Self::Bottom=>"bottom",Self::Left=>"left",Self::Right=>"right"}} }
+pub enum Position {
+    #[default]
+    Center,
+    Top,
+    Bottom,
+    Left,
+    Right,
+}
+impl Position {
+    pub fn css(self) -> &'static str {
+        match self {
+            Self::Center => "center",
+            Self::Top => "top",
+            Self::Bottom => "bottom",
+            Self::Left => "left",
+            Self::Right => "right",
+        }
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Align { Left, Center, Right }
-impl Align { pub fn css(self)->&'static str{match self{Self::Left=>"left",Self::Center=>"center",Self::Right=>"right"}} }
+pub enum Align {
+    Left,
+    Center,
+    Right,
+}
+impl Align {
+    pub fn css(self) -> &'static str {
+        match self {
+            Self::Left => "left",
+            Self::Center => "center",
+            Self::Right => "right",
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(default,deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct AppearanceSettings {
     pub font: Option<Font>,
     pub scale: u8,
@@ -126,10 +166,21 @@ pub struct AppearanceSettings {
     pub position: Position,
 }
 impl Default for AppearanceSettings {
-    fn default()->Self{Self{font:None,scale:100,weight:None,radius:None,enabled:true,shade:55,fit:Fit::Cover,position:Position::Center}}
+    fn default() -> Self {
+        Self {
+            font: None,
+            scale: 100,
+            weight: None,
+            radius: None,
+            enabled: true,
+            shade: 55,
+            fit: Fit::Cover,
+            position: Position::Center,
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
-#[serde(default,deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 pub struct Appearance {
     pub settings: AppearanceSettings,
     pub image: Option<Rc<str>>,
@@ -250,8 +301,10 @@ pub fn valid_text(s: &str, max: usize) -> bool {
             .chars()
             .any(|c| c.is_control() && !matches!(c, '\n' | '\t' | '\r'))
 }
-pub fn valid_image(s: &str) -> bool { valid_raster(s, MAX_IMAGE_BYTES) }
-pub fn valid_raster(s:&str,max:usize)->bool {
+pub fn valid_image(s: &str) -> bool {
+    valid_raster(s, MAX_IMAGE_BYTES)
+}
+pub fn valid_raster(s: &str, max: usize) -> bool {
     if s.len() > max {
         return false;
     }
@@ -304,12 +357,13 @@ fn validate_node(
         || s.radius.is_some_and(|n| n > 80)
         || s.padding.is_some_and(|n| n > 100)
         || s.font_size.is_some_and(|n| !(8..=110).contains(&n))
-        || s.font_weight.is_some_and(|n| ![400,500,600,700,800,900].contains(&n))
+        || s.font_weight
+            .is_some_and(|n| ![400, 500, 600, 700, 800, 900].contains(&n))
         || s.border_color.as_ref().is_some_and(|s| !valid_color(s))
-        || s.border_width.is_some_and(|n| n>12)
+        || s.border_width.is_some_and(|n| n > 12)
         || s.width.is_some_and(|n| !(10..=100).contains(&n))
         || s.height.is_some_and(|n| !(20..=1200).contains(&n))
-        || s.placeholder.as_ref().is_some_and(|s| !valid_text(s,1800))
+        || s.placeholder.as_ref().is_some_and(|s| !valid_text(s, 1800))
         || s.columns.is_some_and(|n| !(1..=8).contains(&n))
     {
         return Err("Estilo no permitido.".into());
@@ -344,10 +398,22 @@ pub fn validate(workspace: &Workspace) -> ModelResult<()> {
     {
         return Err("Versión o plantilla de proyecto inválida.".into());
     }
-    let appearance=&workspace.appearance;
-    let settings=&appearance.settings;
-    if !(85..=120).contains(&settings.scale)||settings.shade>90||settings.radius.is_some_and(|n|n>30)||settings.weight.is_some_and(|w|![400,600,700].contains(&w))||appearance.image.as_deref().is_some_and(|image|!valid_raster(image,MAX_BACKGROUND_BYTES)) {return Err("Apariencia global inválida.".into());}
-    let mut images = appearance.image.as_ref().map_or(0,|image|image.len());
+    let appearance = &workspace.appearance;
+    let settings = &appearance.settings;
+    if !(85..=120).contains(&settings.scale)
+        || settings.shade > 90
+        || settings.radius.is_some_and(|n| n > 30)
+        || settings
+            .weight
+            .is_some_and(|w| ![400, 600, 700].contains(&w))
+        || appearance
+            .image
+            .as_deref()
+            .is_some_and(|image| !valid_raster(image, MAX_BACKGROUND_BYTES))
+    {
+        return Err("Apariencia global inválida.".into());
+    }
+    let mut images = appearance.image.as_ref().map_or(0, |image| image.len());
     for (id, design) in &workspace.designs {
         if crate::presets::get(id).is_none() {
             return Err("Plantilla desconocida.".into());
@@ -356,8 +422,8 @@ pub fn validate(workspace: &Workspace) -> ModelResult<()> {
         if theme.brand.trim().is_empty()
             || !valid_text(&theme.brand, 60)
             || theme.radius > 48
-            || theme.button_color.as_ref().is_some_and(|s|!valid_color(s))
-            || theme.glow_color.as_ref().is_some_and(|s|!valid_color(s))
+            || theme.button_color.as_ref().is_some_and(|s| !valid_color(s))
+            || theme.glow_color.as_ref().is_some_and(|s| !valid_color(s))
             || [&theme.accent, &theme.background, &theme.surface, &theme.ink]
                 .iter()
                 .any(|c| !valid_color(c))

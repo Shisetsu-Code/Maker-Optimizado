@@ -8,7 +8,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 3,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "saffron": {
       "source_records": 1434,
@@ -17,7 +18,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 7,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "midnight": {
       "source_records": 144,
@@ -26,7 +28,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 2,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "amethyst": {
       "source_records": 270,
@@ -35,7 +38,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 1,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "jade": {
       "source_records": 571,
@@ -44,7 +48,8 @@
       "without_local_image": 0,
       "groups": 28,
       "banners": 4,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "rose": {
       "source_records": 1122,
@@ -53,7 +58,8 @@
       "without_local_image": 0,
       "groups": 29,
       "banners": 1,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "garnet": {
       "source_records": 145,
@@ -62,7 +68,8 @@
       "without_local_image": 0,
       "groups": 3,
       "banners": 7,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "brass": {
       "source_records": 1804,
@@ -71,7 +78,8 @@
       "without_local_image": 0,
       "groups": 2,
       "banners": 3,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "aurum": {
       "source_records": 153,
@@ -80,7 +88,8 @@
       "without_local_image": 0,
       "groups": 10,
       "banners": 1,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "verdant": {
       "source_records": 273,
@@ -89,7 +98,8 @@
       "without_local_image": 0,
       "groups": 8,
       "banners": 2,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "crimson": {
       "source_records": 129,
@@ -98,7 +108,8 @@
       "without_local_image": 0,
       "groups": 5,
       "banners": 9,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "onyx": {
       "source_records": 2028,
@@ -107,25 +118,28 @@
       "without_local_image": 0,
       "groups": 12,
       "banners": 4,
-      "mapped_editable_seeds": 12
+      "mapped_editable_seeds": 12,
+      "cross_collection_matches": 0
     },
     "ember": {
       "source_records": 5007,
       "normalized_records": 5007,
       "method": "literal-provider-groups",
-      "without_local_image": 4118,
+      "without_local_image": 3065,
       "groups": 0,
       "banners": 1,
-      "mapped_editable_seeds": 0
+      "mapped_editable_seeds": 0,
+      "cross_collection_matches": 1053
     },
     "cobalt": {
       "source_records": 5007,
       "normalized_records": 5007,
       "method": "literal-provider-groups",
-      "without_local_image": 4118,
+      "without_local_image": 3065,
       "groups": 0,
       "banners": 1,
-      "mapped_editable_seeds": 0
+      "mapped_editable_seeds": 0,
+      "cross_collection_matches": 1053
     },
     "flare": {
       "source_records": 28,
@@ -134,7 +148,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 1,
-      "mapped_editable_seeds": 0
+      "mapped_editable_seeds": 0,
+      "cross_collection_matches": 0
     },
     "coal": {
       "source_records": 21,
@@ -143,7 +158,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 1,
-      "mapped_editable_seeds": 0
+      "mapped_editable_seeds": 0,
+      "cross_collection_matches": 0
     },
     "ivory": {
       "source_records": 8,
@@ -152,7 +168,8 @@
       "without_local_image": 0,
       "groups": 0,
       "banners": 1,
-      "mapped_editable_seeds": 0
+      "mapped_editable_seeds": 0,
+      "cross_collection_matches": 0
     }
   }
 }

@@ -72,14 +72,30 @@ fn node_style(n: &Component) -> String {
     if let Some(s) = n.style.columns {
         write!(css, "--columns:{s};").unwrap();
     }
-    if let Some(s)=n.style.font_weight {write!(css,"--node-weight:{s};").unwrap();}
-    if let Some(s)=n.style.align {write!(css,"text-align:{};",s.css()).unwrap();}
-    if let Some(s)=&n.style.border_color {write!(css,"border-color:{s};border-style:solid;").unwrap();}
-    if let Some(s)=n.style.border_width {write!(css,"border-width:{s}px;border-style:solid;").unwrap();}
-    if let Some(s)=n.style.width {write!(css,"width:{s}%;").unwrap();}
-    if let Some(s)=n.style.height {write!(css,"min-height:{s}px;").unwrap();}
-    if let Some(s)=n.style.fit {write!(css,"--node-fit:{};",s.css()).unwrap();}
-    if let Some(s)=n.style.position {write!(css,"--node-position:{};",s.css()).unwrap();}
+    if let Some(s) = n.style.font_weight {
+        write!(css, "--node-weight:{s};").unwrap();
+    }
+    if let Some(s) = n.style.align {
+        write!(css, "text-align:{};", s.css()).unwrap();
+    }
+    if let Some(s) = &n.style.border_color {
+        write!(css, "border-color:{s};border-style:solid;").unwrap();
+    }
+    if let Some(s) = n.style.border_width {
+        write!(css, "border-width:{s}px;border-style:solid;").unwrap();
+    }
+    if let Some(s) = n.style.width {
+        write!(css, "width:{s}%;").unwrap();
+    }
+    if let Some(s) = n.style.height {
+        write!(css, "min-height:{s}px;").unwrap();
+    }
+    if let Some(s) = n.style.fit {
+        write!(css, "--node-fit:{};", s.css()).unwrap();
+    }
+    if let Some(s) = n.style.position {
+        write!(css, "--node-position:{};", s.css()).unwrap();
+    }
     css
 }
 fn artwork(n: &Component) -> String {
@@ -207,26 +223,57 @@ pub fn catalog_card(n: &Component, game: &str, favorite: bool, preview: bool) ->
         escape(&n.title)
     )
 }
-pub fn document(design:&Design,view:View,preview:bool)->String{
-    document_with_appearance(design,view,preview,&Appearance::default())
+pub fn document(design: &Design, view: View, preview: bool) -> String {
+    document_with_appearance(design, view, preview, &Appearance::default())
 }
-pub fn document_with_appearance(design:&Design,view:View,preview:bool,appearance:&Appearance)->String{
-    let t=&design.theme;
-    let settings=&appearance.settings;
-    let mut out=String::with_capacity(16_000);
-    let button=t.button_color.as_deref().unwrap_or(&t.accent);
-    let glow=t.glow_color.as_deref().unwrap_or(&t.accent);
-    let mut css=format!("--accent:{};--accent-ink:{};--button:{};--button-ink:{};--glow:{};--page:{};--surface:{};--ink:{};--radius:{}px;--text-scale:{};",t.accent,accent_ink(&t.accent),button,accent_ink(button),glow,t.background,t.surface,t.ink,settings.radius.unwrap_or(t.radius),f64::from(settings.scale)/100.);
-    if let Some(weight)=settings.weight{write!(css,"--global-weight:{weight};").unwrap();}
+pub fn document_with_appearance(
+    design: &Design,
+    view: View,
+    preview: bool,
+    appearance: &Appearance,
+) -> String {
+    let t = &design.theme;
+    let settings = &appearance.settings;
+    let mut out = String::with_capacity(16_000);
+    let button = t.button_color.as_deref().unwrap_or(&t.accent);
+    let glow = t.glow_color.as_deref().unwrap_or(&t.accent);
+    let mut css = format!(
+        "--accent:{};--accent-ink:{};--button:{};--button-ink:{};--glow:{};--page:{};--surface:{};--ink:{};--radius:{}px;--text-scale:{};",
+        t.accent,
+        accent_ink(&t.accent),
+        button,
+        accent_ink(button),
+        glow,
+        t.background,
+        t.surface,
+        t.ink,
+        settings.radius.unwrap_or(t.radius),
+        f64::from(settings.scale) / 100.
+    );
+    if let Some(weight) = settings.weight {
+        write!(css, "--global-weight:{weight};").unwrap();
+    }
     write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
     if settings.enabled {
-        if let Some(image)=&appearance.image{
+        if let Some(image) = &appearance.image {
             write!(out,"<div class=\"page-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
         }
     }
-    write!(out,"<main id=\"surface\" class=\"{}\">",if view==View::Lobby{"lobby"}else{"panel"}).unwrap();
-    for n in design.nodes(view){render_node(&mut out,n,t,preview);}
-    out.push_str("</main></body></html>");out
+    write!(
+        out,
+        "<main id=\"surface\" class=\"{}\">",
+        if view == View::Lobby {
+            "lobby"
+        } else {
+            "panel"
+        }
+    )
+    .unwrap();
+    for n in design.nodes(view) {
+        render_node(&mut out, n, t, preview);
+    }
+    out.push_str("</main></body></html>");
+    out
 }
 
 #[cfg(test)]

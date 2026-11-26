@@ -60,8 +60,12 @@ pub enum Action {
         id: String,
         before: String,
     },
-    Appearance { settings: AppearanceSettings },
-    Backdrop { image: Option<Rc<str>> },
+    Appearance {
+        settings: AppearanceSettings,
+    },
+    Backdrop {
+        image: Option<Rc<str>>,
+    },
     ResetAppearance,
     Restore {
         view: View,
@@ -154,7 +158,9 @@ impl Editor {
         }
         Ok(())
     }
-    pub(crate) fn replace_workspace(&mut self,workspace:Workspace)->ModelResult<()>{self.commit(workspace)}
+    pub(crate) fn replace_workspace(&mut self, workspace: Workspace) -> ModelResult<()> {
+        self.commit(workspace)
+    }
     pub fn restore(&mut self, input: &str) -> ModelResult<()> {
         self.commit(decode(input)?)
     }
@@ -203,9 +209,9 @@ impl Editor {
                 next.designs
                     .insert(next.active.clone(), presets::design(&next.active)?);
             }
-            Action::Appearance { settings } => next.appearance.settings=settings,
-            Action::Backdrop { image } => next.appearance.image=image,
-            Action::ResetAppearance => next.appearance=Appearance::default(),
+            Action::Appearance { settings } => next.appearance.settings = settings,
+            Action::Backdrop { image } => next.appearance.image = image,
+            Action::ResetAppearance => next.appearance = Appearance::default(),
             Action::ResetView { view } => {
                 let original = presets::design(&next.active)?;
                 let design = next.designs.get_mut(&next.active).ok_or("No hay diseño.")?;
@@ -319,7 +325,12 @@ impl Editor {
                             .ok_or("Destino inválido.")?;
                         group.insert(dest, node);
                     }
-                    Action::Switch { .. } | Action::Appearance { .. } | Action::Backdrop { .. } | Action::ResetAppearance | Action::ResetView { .. } | Action::Reset => {
+                    Action::Switch { .. }
+                    | Action::Appearance { .. }
+                    | Action::Backdrop { .. }
+                    | Action::ResetAppearance
+                    | Action::ResetView { .. }
+                    | Action::Reset => {
                         return Err("Acción inválida.".into());
                     }
                 }

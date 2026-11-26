@@ -95,14 +95,17 @@ impl Studio {
     pub fn load(&mut self, input: &str) -> Result<(), JsValue> {
         self.editor.load(input).map_err(err)
     }
-    pub fn import_project(&mut self,input:&str)->Result<String,JsValue>{
-        if let Ok(workspace)=crate::model::decode(input){
+    pub fn import_project(&mut self, input: &str) -> Result<String, JsValue> {
+        if let Ok(workspace) = crate::model::decode(input) {
             self.editor.replace_workspace(workspace).map_err(err)?;
-            return Ok(serde_json::json!({"converted":false,"applied":0,"unresolved":[]}).to_string());
+            return Ok(
+                serde_json::json!({"converted":false,"applied":0,"unresolved":[]}).to_string(),
+            );
         }
-        let (workspace,report)=crate::migration::convert(input,self.editor.workspace()).map_err(err)?;
+        let (workspace, report) =
+            crate::migration::convert(input, self.editor.workspace()).map_err(err)?;
         self.editor.replace_workspace(workspace).map_err(err)?;
-        serde_json::to_string(&report).map_err(|e|JsValue::from_str(&e.to_string()))
+        serde_json::to_string(&report).map_err(|e| JsValue::from_str(&e.to_string()))
     }
     pub fn undo(&mut self) -> bool {
         self.editor.undo()
