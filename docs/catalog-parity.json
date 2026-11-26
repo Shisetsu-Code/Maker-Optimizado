@@ -1,0 +1,158 @@
+{
+  "source_commit": "8a8b09cfdda55d8233b2d61c4d878bb112f4f591",
+  "catalogs": {
+    "violet": {
+      "source_records": 1004,
+      "normalized_records": 1004,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 3,
+      "mapped_editable_seeds": 12
+    },
+    "saffron": {
+      "source_records": 1434,
+      "normalized_records": 1434,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 7,
+      "mapped_editable_seeds": 12
+    },
+    "midnight": {
+      "source_records": 144,
+      "normalized_records": 144,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 2,
+      "mapped_editable_seeds": 12
+    },
+    "amethyst": {
+      "source_records": 270,
+      "normalized_records": 270,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 1,
+      "mapped_editable_seeds": 12
+    },
+    "jade": {
+      "source_records": 571,
+      "normalized_records": 571,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 28,
+      "banners": 4,
+      "mapped_editable_seeds": 12
+    },
+    "rose": {
+      "source_records": 1122,
+      "normalized_records": 1122,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 29,
+      "banners": 1,
+      "mapped_editable_seeds": 12
+    },
+    "garnet": {
+      "source_records": 145,
+      "normalized_records": 145,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 3,
+      "banners": 7,
+      "mapped_editable_seeds": 12
+    },
+    "brass": {
+      "source_records": 1804,
+      "normalized_records": 1804,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 2,
+      "banners": 3,
+      "mapped_editable_seeds": 12
+    },
+    "aurum": {
+      "source_records": 153,
+      "normalized_records": 153,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 10,
+      "banners": 1,
+      "mapped_editable_seeds": 12
+    },
+    "verdant": {
+      "source_records": 273,
+      "normalized_records": 273,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 8,
+      "banners": 2,
+      "mapped_editable_seeds": 12
+    },
+    "crimson": {
+      "source_records": 129,
+      "normalized_records": 129,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 5,
+      "banners": 9,
+      "mapped_editable_seeds": 12
+    },
+    "onyx": {
+      "source_records": 2028,
+      "normalized_records": 2028,
+      "method": "structured-exact",
+      "without_local_image": 0,
+      "groups": 12,
+      "banners": 4,
+      "mapped_editable_seeds": 12
+    },
+    "ember": {
+      "source_records": 5007,
+      "normalized_records": 5007,
+      "method": "literal-provider-groups",
+      "without_local_image": 4118,
+      "groups": 0,
+      "banners": 1,
+      "mapped_editable_seeds": 0
+    },
+    "cobalt": {
+      "source_records": 5007,
+      "normalized_records": 5007,
+      "method": "literal-provider-groups",
+      "without_local_image": 4118,
+      "groups": 0,
+      "banners": 1,
+      "mapped_editable_seeds": 0
+    },
+    "flare": {
+      "source_records": 28,
+      "normalized_records": 28,
+      "method": "literal-blaze",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 1,
+      "mapped_editable_seeds": 0
+    },
+    "coal": {
+      "source_records": 21,
+      "normalized_records": 21,
+      "method": "literal-brasa",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 1,
+      "mapped_editable_seeds": 0
+    },
+    "ivory": {
+      "source_records": 8,
+      "normalized_records": 8,
+      "method": "literal-resort",
+      "without_local_image": 0,
+      "groups": 0,
+      "banners": 1,
+      "mapped_editable_seeds": 0
+    }
+  }
+}

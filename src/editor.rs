@@ -60,21 +60,29 @@ pub enum Action {
         id: String,
         before: String,
     },
-    Restore { view: View, id: String },
-    ResetView { view: View },
+    Restore {
+        view: View,
+        id: String,
+    },
+    ResetView {
+        view: View,
+    },
     Reset,
 }
 
 impl Action {
     pub fn target(&self) -> Option<(View, &str)> {
         match self {
-            Self::Edit { view, id, .. } | Self::Image { view, id, .. }
-            | Self::Asset { view, id, .. } | Self::Remove { view, id }
-            | Self::Restore { view, id } => Some((*view,id)), _=>None
+            Self::Edit { view, id, .. }
+            | Self::Image { view, id, .. }
+            | Self::Asset { view, id, .. }
+            | Self::Remove { view, id }
+            | Self::Restore { view, id } => Some((*view, id)),
+            _ => None,
         }
     }
 }
-pub fn component_info(n:&Component)->Value {
+pub fn component_info(n: &Component) -> Value {
     json!({"id":n.id,"kind":n.kind,"title":n.title,"text":n.text,"button":n.button,"hidden":n.hidden,"style":n.style,"art":n.art,"has_image":n.image.is_some()||n.asset.is_some(),"asset":n.asset,"group":n.kind.group()})
 }
 #[derive(Serialize)]
@@ -171,9 +179,13 @@ impl Editor {
         }
     }
     pub fn apply(&mut self, action: Action) -> ModelResult<()> {
-        self.apply_catalog(action,None)
+        self.apply_catalog(action, None)
     }
-    pub fn apply_catalog(&mut self, action: Action, catalog_default: Option<Component>) -> ModelResult<()> {
+    pub fn apply_catalog(
+        &mut self,
+        action: Action,
+        catalog_default: Option<Component>,
+    ) -> ModelResult<()> {
         let mut next = self.current.clone();
         match action {
             Action::Switch { preset } => {
@@ -188,17 +200,24 @@ impl Editor {
                     .insert(next.active.clone(), presets::design(&next.active)?);
             }
             Action::ResetView { view } => {
-                let original=presets::design(&next.active)?;
-                let design=next.designs.get_mut(&next.active).ok_or("No hay diseño.")?;
-                *design.nodes_mut(view)=original.nodes(view).clone();
+                let original = presets::design(&next.active)?;
+                let design = next.designs.get_mut(&next.active).ok_or("No hay diseño.")?;
+                *design.nodes_mut(view) = original.nodes(view).clone();
             }
             other => {
-                let original=if matches!(&other,Action::Restore{..}){Some(presets::design(&next.active)?)}else{None};
+                let original = if matches!(&other, Action::Restore { .. }) {
+                    Some(presets::design(&next.active)?)
+                } else {
+                    None
+                };
                 let design = next.designs.get_mut(&next.active).ok_or("No hay diseño.")?;
-                if let Some(base)=&catalog_default{
-                    let nodes=design.nodes_mut(View::Lobby);
-                    if !nodes.iter().any(|n|n.find(&base.id).is_some()){
-                        let parent=nodes.iter_mut().find(|n|n.id=="catalog"&&n.kind==Kind::Catalog).ok_or("Catálogo no encontrado.")?;
+                if let Some(base) = &catalog_default {
+                    let nodes = design.nodes_mut(View::Lobby);
+                    if !nodes.iter().any(|n| n.find(&base.id).is_some()) {
+                        let parent = nodes
+                            .iter_mut()
+                            .find(|n| n.id == "catalog" && n.kind == Kind::Catalog)
+                            .ok_or("Catálogo no encontrado.")?;
                         parent.children.push(base.clone());
                     }
                 }
@@ -241,15 +260,24 @@ impl Editor {
                             nodes.push(node);
                         }
                     }
-                    Action::Restore { view,id }=>{
-                        let default=catalog_default.as_ref().or_else(||original.as_ref().and_then(|d|d.nodes(view).iter().find_map(|n|n.find(&id)))).ok_or("No existe un componente original.")?;
-                        *find_mut(design.nodes_mut(view),&id)?=default.clone();
+                    Action::Restore { view, id } => {
+                        let default = catalog_default
+                            .as_ref()
+                            .or_else(|| {
+                                original
+                                    .as_ref()
+                                    .and_then(|d| d.nodes(view).iter().find_map(|n| n.find(&id)))
+                            })
+                            .ok_or("No existe un componente original.")?;
+                        *find_mut(design.nodes_mut(view), &id)? = default.clone();
                     }
                     Action::Remove { view, id } => {
-                        if catalog_default.is_some(){find_mut(design.nodes_mut(view),&id)?.hidden=true;}else{
-                        let group = siblings_mut(design.nodes_mut(view), &id)
-                            .ok_or("Componente no encontrado.")?;
-                        group.retain(|n| n.id != id);
+                        if catalog_default.is_some() {
+                            find_mut(design.nodes_mut(view), &id)?.hidden = true;
+                        } else {
+                            let group = siblings_mut(design.nodes_mut(view), &id)
+                                .ok_or("Componente no encontrado.")?;
+                            group.retain(|n| n.id != id);
                         }
                     }
                     Action::Move { view, id, offset } => {
@@ -284,7 +312,9 @@ impl Editor {
                             .ok_or("Destino inválido.")?;
                         group.insert(dest, node);
                     }
-                    Action::Switch { .. } | Action::ResetView { .. } | Action::Reset => return Err("Acción inválida.".into()),
+                    Action::Switch { .. } | Action::ResetView { .. } | Action::Reset => {
+                        return Err("Acción inválida.".into());
+                    }
                 }
             }
         }
@@ -293,7 +323,7 @@ impl Editor {
     pub fn describe(&self, view: View, id: &str) -> Value {
         let design = self.active();
         let nodes = design.nodes(view);
-        let selected=nodes.iter().find_map(|n|n.find(id)).map(component_info);
+        let selected = nodes.iter().find_map(|n| n.find(id)).map(component_info);
         json!({"version":SCHEMA_VERSION,"active":self.current.active,"theme":design.theme,"outline":nodes.iter().map(outline).collect::<Vec<_>>(),"selected":selected,"undo":!self.past.is_empty(),"redo":!self.future.is_empty()})
     }
 }
