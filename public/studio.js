@@ -110,7 +110,7 @@ async function imageData(file){
 function bind(){
   $('preset').addEventListener('change',()=>{selected='';dispatch({type:'switch',preset:$('preset').value});});
   for(const view of ['lobby','panel'])$(view).onclick=()=>{screen=view;selected='';refresh();};
-  for(const button of document.querySelectorAll('[data-size]'))button.onclick=()=>{ $('canvas').dataset.size=button.dataset.size;for(const b of document.querySelectorAll('[data-size]'))b.setAttribute('aria-pressed',String(b===button)); };
+  for(const button of document.querySelectorAll('button[data-size]'))button.onclick=()=>{ $('canvas').dataset.size=button.dataset.size;for(const b of document.querySelectorAll('button[data-size]'))b.setAttribute('aria-pressed',String(b===button)); };
   $('mode').onclick=()=>{editing=!editing;$('mode').setAttribute('aria-pressed',String(editing));$('mode').textContent=editing?'Editar':'Explorar';refresh();};
   themeForm.onsubmit=event=>{event.preventDefault();dispatch({type:'theme',theme:readTheme()});};
   inspector.onsubmit=event=>{event.preventDefault();if(selected)dispatch({type:'edit',view:screen,id:selected,patch:readPatch()});};

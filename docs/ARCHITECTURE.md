@@ -16,4 +16,4 @@ No arbitrary HTML, JS, CSS or remote image URLs enter the model. Preview is an i
 
 Cloudflare serves static resources directly; the API is stateless and does not require D1, KV, R2, Durable Objects, Queues or paid add-ons. Future remote publishing should use authenticated metadata in D1 and hash-addressed R2 assets, optimistic concurrency, tenant isolation and explicit quotas. It is not part of this implementation.
 
-Reproducibility: Rust version and direct dependencies are exact. CI generates initial lockfiles if absent and exposes them as artifacts. Check in both before production. Dependabot proposes updates, not automatic deployments. No claim of zero defects or performance improvements without measurements.
+Reproducibility: Rust version and direct dependencies are exact. Both lockfiles are committed from the first verification run. CI checks their presence and builds with --locked / npm ci. Dependabot proposes updates, not automatic deployments. No claim of zero defects or performance improvements without measurements.

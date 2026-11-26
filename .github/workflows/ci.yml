@@ -18,10 +18,11 @@ jobs:
           node-version: '24'
       - name: Install pinned Rust
         run: rustup show
-      - name: Resolve initial dependency lockfiles
+      - name: Check committed lockfiles and formatting
         run: |
-          if [ ! -f Cargo.lock ]; then cargo generate-lockfile; fi
-          if [ ! -f package-lock.json ]; then npm install --package-lock-only --ignore-scripts; fi
+          test -s Cargo.lock
+          test -s package-lock.json
+          cargo fmt --all -- --check
       - name: Native and edge tests
         run: |
           cargo test --locked --lib

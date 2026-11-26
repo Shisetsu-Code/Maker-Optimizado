@@ -16,7 +16,7 @@ Constructor visual local-first para interfaces de entretenimiento de demostraci�
 
 Requiere Rust 1.100.0 (fijado en rust-toolchain.toml), Node 24 y npm.
 
-En el primer checkout, si faltan los lockfiles, generarlos con `cargo generate-lockfile` y `npm install --package-lock-only --ignore-scripts`. Las revisiones posteriores deben conservar los archivos de bloqueo.
+Los lockfiles generados por la primera verificación se incorporaron al repositorio. Usá `cargo build --locked` y `npm ci`; no regeneres los lockfiles salvo para una actualización explícita de dependencias.
 
 ```sh
 cargo install worker-build --version 0.9.0 --locked
