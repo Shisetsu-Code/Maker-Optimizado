@@ -154,6 +154,7 @@ impl Editor {
         }
         Ok(())
     }
+    pub(crate) fn replace_workspace(&mut self,workspace:Workspace)->ModelResult<()>{self.commit(workspace)}
     pub fn restore(&mut self, input: &str) -> ModelResult<()> {
         self.commit(decode(input)?)
     }

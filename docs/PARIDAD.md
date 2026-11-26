@@ -40,3 +40,7 @@ paridad 1:1 hasta superar todas las puertas de aceptación.
 ## Apariencia recuperada
 
 La nueva estructura admite el alcance global de fuente, escala 85–120%, peso, esquinas y fondo (mostrar/ocultar, ajuste, posición y oscurecimiento), además de color de botones/brillos por plantilla. Los estilos por componente incluyen tamaño 8–110 px, peso, alineación, bordes, dimensiones y ajuste/posición de imágenes. Se restauran las fuentes locales Barlow, Archivo y Oswald con sus avisos SIL OFL. La edición de fragmentos arbitrarios del DOM y los fondos independientes por subelemento todavía requieren correspondencia adicional.
+
+## Migración anterior
+
+Se recuperan los ajustes globales, colores y nombre de marca, portada y orden de secciones Resort, y reglas con correspondencia semántica única. Los selectores arbitrarios de DOM, logos descargados como archivo separado, perillas sin equivalente y estilos de fragmentos no se aplican por aproximación: el importador descarga un informe de los elementos pendientes. El JSON original no se modifica. Las miniaturas ausentes solo se reconcilian cuando una colección autorizada contiene una coincidencia inequívoca de título y proveedor.

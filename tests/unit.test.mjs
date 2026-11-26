@@ -55,3 +55,12 @@ test('advanced appearance is shared, bounded and rendered by Rust',()=>{
  const html=studio.html('lobby',false);assert.match(html,/--node-weight:900/);assert.match(html,/placeholder="Buscar a medida"/);assert.match(html,/min-height:500px/);
  studio.free();
 });
+
+test('legacy JSON import reports ambiguous rules instead of silently discarding them',()=>{
+ const studio=new Studio(),old={version:2,ajustes:{font:'archivo',scale:115,weight:'600',shade:30},elementos:{version:1,assets:{},pages:{'bateupix:lobby':[{target:{type:'field',selector:'#bp-search',label:'Buscar'},text:'Buscar a medida'},{target:{type:'text',selector:'body>div:nth-of-type(19)',original:'Texto no encontrado',label:'Texto perdido'},text:'Nuevo'}]}}};
+ const report=JSON.parse(studio.import_project(JSON.stringify(old)));
+ assert.equal(report.converted,true);assert.equal(report.unresolved.length,1);
+ studio.dispatch(JSON.stringify({type:'switch',preset:'violet'}));assert.match(studio.html('lobby',false),/placeholder="Buscar a medida"/);
+ assert.match(studio.html('lobby',false),/font-archivo/);
+ studio.free();
+});

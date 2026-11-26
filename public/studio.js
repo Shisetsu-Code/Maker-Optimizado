@@ -218,7 +218,7 @@ async function standaloneHtml(view){
     }
     if(urls.length){
       const notices=await Promise.all(['barlow','archivo','oswald'].map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
-      doc.head.append(doc.createComment(notices.join('\n\n').replaceAll('--','—')));
+      const license=doc.createElement('pre');license.hidden=true;license.id='font-license-notices';license.textContent=notices.join('\n\n');doc.body.append(license);
     }
   }
   const policy=doc.querySelector('meta[http-equiv="Content-Security-Policy"]');
@@ -272,7 +272,7 @@ function bind(){
   $('reset').onclick=()=>{if(confirm('¿Restaurar la plantilla actual? Podés deshacer este cambio.')){selected='';dispatch({type:'reset'});}};
   $('import').onclick=()=>$('file').click();
   $('file').onchange=async event=>{
-    try{const file=event.target.files?.[0];if(!file)return;if(file.size>24*1024*1024)throw Error('El proyecto supera 24 MiB.');studio.import_project(await file.text());selected='';refresh();persist();}
+    try{const file=event.target.files?.[0];if(!file)return;if(file.size>24*1024*1024)throw Error('El proyecto supera 24 MiB.');const report=JSON.parse(studio.import_project(await file.text()));selected='';refresh();persist();if(report.converted){if(report.unresolved.length)download(JSON.stringify(report,null,2),'application/json','maker-migration-report.json');notice('Migración de diseño anterior',report.applied+' ajustes recuperados. '+report.unresolved.length+' elementos requieren revisión manual. '+(report.unresolved.length?'Se descargó el informe de correspondencias.':''));}}
     catch(error){say(String(error),true);}finally{event.target.value='';}
   };
   $('export-json').onclick=()=>{try{download(studio.snapshot(),'application/json','maker-project.json');}catch(error){say(String(error),true);}};

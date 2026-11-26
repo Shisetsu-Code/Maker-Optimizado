@@ -212,6 +212,11 @@ impl Catalog {
                     .unwrap_or(usize::MAX)
             });
         }
+        // Seed cards from the initial beta must not inflate the original catalogue.
+        // Retain only unmatched seeds actually modified by a user.
+        let defaults=crate::presets::design(&self.preset).ok();
+        let original_nodes=defaults.as_ref().and_then(Self::nodes).unwrap_or_default();
+        let is_placeholder=|n:&Component|n.id.starts_with("game-")&&original_nodes.iter().any(|original|original==n);
         let custom: Vec<_> = if query.provider.is_empty()
             && query.category.is_empty()
             && query.group.is_empty()
@@ -222,7 +227,7 @@ impl Catalog {
             nodes
                 .iter()
                 .filter(|n| {
-                    !consumed.contains(n.id.as_str())
+                    !consumed.contains(n.id.as_str()) && !is_placeholder(n)
                         && (query.preview || !n.hidden)
                         && (search.is_empty()
                             || format!("{} {}", n.title, n.text)

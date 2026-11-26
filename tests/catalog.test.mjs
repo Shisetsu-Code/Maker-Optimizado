@@ -12,7 +12,7 @@ test('17 data catalogues validate and paginate in Rust',async()=>{
    const data=JSON.parse(source),meta=JSON.parse(studio.catalog_metadata());
    assert.equal(meta.total,data.items.length);assert.ok(data.items.length>0,preset.id);
    const page=JSON.parse(studio.catalog_page('{}'));
-   assert.ok(page.shown<=48);assert.ok(page.total>=data.items.length);assert.match(page.html,/data-catalog-card/);
+   assert.ok(page.shown<=48);assert.equal(page.total,data.items.length);assert.match(page.html,/data-catalog-card/);
    const item=data.items.find(i=>!i.seed)??data.items[0];
    const id=item.seed??item.id;
    const selected=JSON.parse(studio.describe('lobby',id)).selected;assert.ok(selected.catalog_item);

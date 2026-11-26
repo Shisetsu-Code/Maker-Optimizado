@@ -3,6 +3,7 @@
 pub mod catalog;
 pub mod editor;
 pub mod media;
+pub mod migration;
 pub mod model;
 pub mod presets;
 pub mod render;

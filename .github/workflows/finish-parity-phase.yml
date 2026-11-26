@@ -1,0 +1,34 @@
+name: Normalize and format parity changes
+on:
+  push:
+    branches: [rebuild/clean]
+    paths: ['.github/workflows/finish-parity-phase.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 scripts/reconcile-catalog-media.py
+      - name: Format and native validation
+        run: |
+          cargo fmt --all
+          cargo test --locked --lib
+          cargo check --locked --target wasm32-unknown-unknown --lib
+          cargo check --locked --target wasm32-unknown-unknown --no-default-features --features browser --lib
+      - name: Commit normalized results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src public/catalogs docs/catalog-parity.json docs/catalog-media-reconciliation.json
+          git rm .github/workflows/finish-parity-phase.yml
+          git commit -m 'Format advanced parity engine and reconcile unambiguous local graphics'
+          git push origin HEAD:rebuild/clean
+      - name: Run complete verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref rebuild/clean

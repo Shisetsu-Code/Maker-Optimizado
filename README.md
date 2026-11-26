@@ -45,3 +45,5 @@ Verificación gráfica: `npm run test:media` comprueba la integridad de todos lo
 ## Catálogos normalizados
 
 Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo incluye la primera página de la selección actual, con imágenes embebidas y sin motor de juego.
+
+Compatibilidad: la importación admite los formatos de ajustes y diseño anteriores, migra los campos conocidos y descarga un informe de las reglas sin correspondencia semántica. No se sobrescriben los archivos originales.
