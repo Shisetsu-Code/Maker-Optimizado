@@ -97,11 +97,12 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
                         forwarded.headers_mut()?.set(key,&value)?;
                     }
                 }
-                let mut asset = assets.fetch_request(forwarded).await?;
-                security_headers(asset.headers_mut())?;
-                // Headers returned through the binding may not inherit _headers.
-                asset.headers_mut().set("content-security-policy","frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; connect-src 'self'")?;
-                Ok(asset)
+                let asset = assets.fetch_request(forwarded).await?;
+                // Clone into a new mutable Headers: a binding response may have an immutable guard.
+                let headers: Headers = asset.headers().entries().collect();
+                security_headers(&headers)?;
+                headers.set("content-security-policy","frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; connect-src 'self'")?;
+                Ok(asset.with_headers(headers))
             } else {
                 assets.fetch_request(req).await
             }

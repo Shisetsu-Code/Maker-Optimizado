@@ -9,35 +9,12 @@ concurrency:
 permissions:
   contents: read
 jobs:
-  import:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      sha: ${{ steps.source.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v5
-      - id: source
-        shell: bash
-        run: |
-          if [[ ! -f public/muestra/socio.js || ! -f package-lock.json ]]; then
-            [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_EVENT_NAME" != pull_request ]]
-            bash scripts/import-upstream.sh
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public docs outputs scripts tests package-lock.json
-            git commit -m "Import pinned Maker templates and assets"
-            git push origin HEAD:main
-          fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   verify:
-    needs: import
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ needs.import.outputs.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v5
         with:
@@ -50,8 +27,15 @@ jobs:
           rustup target add wasm32-unknown-unknown
       - name: Rust unit tests and asset inventory
         run: |
-          cargo test --lib
+          cargo generate-lockfile
+          cargo test --locked --lib
+          cargo check --locked --target wasm32-unknown-unknown --lib
           npm run check:assets
+      - name: Preserve resolved Rust dependency lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-lockfile
+          path: Cargo.lock
       - name: Install build tooling
         run: |
           cargo install worker-build --version 0.8.7 --locked
@@ -86,6 +70,7 @@ jobs:
           node tests/element-editor-browser-smoke.cjs
           node tests/element-editor-coverage-browser.cjs
           node tests/element-overlap-browser.cjs
+          node tests/element-store-browser.cjs
           node tests/template-picker-browser-smoke.cjs
           node tests/bateupix-browser-smoke.cjs
           for slug in cobraya lunabet multisala pinaplay celuapuestas40 bet30 casinotower30 fenarys fortunasjk ravenbet luckrex; do

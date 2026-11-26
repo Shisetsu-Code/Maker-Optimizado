@@ -12,3 +12,6 @@
 
 ## Pendiente de validación
 Las pruebas históricas del repositorio fuente no prueban este build. Revisar los resultados de la nueva CI antes de publicar. No se presume una mejora porcentual de latencia sin benchmark. La identificación de elementos heredados sigue dependiendo del DOM: se recomienda migrar gradualmente las plantillas a componentes con identificadores estables. La documentación antigua de publicación y pruebas corresponde a la implementación anterior.
+
+## Importación completada
+El historial contiene el commit de importación de la revisión de origen. Se retiró de CI la escritura automática de archivos; las comprobaciones ordinarias usan permisos de solo lectura. El script de importación queda disponible para reproducir la base, sin alterar el repositorio original. La CI conserva el Cargo.lock resuelto como artefacto para revisión.
