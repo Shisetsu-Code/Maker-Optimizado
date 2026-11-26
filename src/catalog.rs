@@ -183,8 +183,9 @@ impl Catalog {
             if let Some(n) = effective {
                 consumed.insert(n.id.as_str());
             }
-            let n = effective.cloned().unwrap_or_else(|| item.component());
-            if (!query.preview && n.hidden)
+            let title = effective.map_or(item.title.as_str(), |n| n.title.as_str());
+            let detail = effective.map_or(item.provider.as_str(), |n| n.text.as_str());
+            if (!query.preview && effective.is_some_and(|n| n.hidden))
                 || (query.favorites_only && !favorites.contains(item.id.as_str()))
                 || (query.recent_only && !recent.contains(item.id.as_str()))
                 || (!query.provider.is_empty() && query.provider != item.provider)
@@ -192,13 +193,13 @@ impl Catalog {
                 || (!query.group.is_empty()
                     && !group.as_ref().is_some_and(|g| g.contains(item.id.as_str())))
                 || (!search.is_empty()
-                    && !format!("{} {} {} {}", n.title, n.text, item.title, item.provider)
+                    && !format!("{} {} {} {}", title, detail, item.title, item.provider)
                         .to_lowercase()
                         .contains(&search))
             {
                 continue;
             }
-            rows.push((item, n));
+            rows.push((item, effective));
         }
         if query.top {
             rows.truncate(12);
@@ -246,9 +247,17 @@ impl Catalog {
         let end = (offset + PAGE_SIZE).min(total);
         let mut html = String::new();
         for index in offset..end {
-            if let Some((item, n)) = rows.get(index) {
+            if let Some((item, effective)) = rows.get(index) {
+                let fallback;
+                let node = match effective {
+                    Some(node) => *node,
+                    None => {
+                        fallback = item.component();
+                        &fallback
+                    }
+                };
                 html.push_str(&crate::render::catalog_card(
-                    n,
+                    node,
                     &item.id,
                     favorites.contains(item.id.as_str()),
                     query.preview,

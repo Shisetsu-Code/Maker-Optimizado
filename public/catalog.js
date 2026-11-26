@@ -38,7 +38,7 @@ function populate(reset=true){
   state.shown=Math.max(48,shown);
   group.querySelector('[data-catalog-count]').textContent=total?shown+' de '+total+' juegos':'No encontramos juegos.';
   group.querySelector('[data-catalog-more]').hidden=shown>=total;
-  group.dataset.catalogReady='true';
+  group.dataset.catalogReady='true';group.dataset.catalogPreset=current.preset;
 }
 function controls(doc,meta,state){
   const group=doc.querySelector('#catalog');if(!group)return;

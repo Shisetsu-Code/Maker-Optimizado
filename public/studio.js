@@ -76,6 +76,8 @@ function notice(title,message){
 function attachFrame(){
   const doc=frame.contentDocument;if(!doc?.getElementById('surface'))return;
   const preset=describe().active;
+  doc.documentElement.dataset.preset=preset;
+  doc.documentElement.dataset.screen=screen;
   if(screen==='lobby')attachCatalog(doc,studio,preset,()=>editing,()=>frame.contentDocument===doc&&screen==='lobby'&&describe().active===preset)
     .then(()=>highlight()).catch(error=>say(error.message??String(error),true));
   doc.addEventListener('click',event=>{

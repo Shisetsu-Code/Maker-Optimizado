@@ -52,10 +52,20 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
    await hero.waitFor();
    await preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').waitFor();
    assert.ok(await hero.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.naturalHeight>0;}),preset);
-   await preview.locator('#catalog[data-catalog-ready=true]').waitFor();
-   const cards=preview.locator('#catalog img');
-   assert.ok(await cards.count()>0,preset);
-   assert.ok(await cards.evaluateAll(async imgs=>{await Promise.all(imgs.map(img=>img.decode()));return imgs.every(img=>img.naturalWidth>0);}),preset);
+   await preview.locator('#catalog[data-catalog-ready=true][data-catalog-preset="'+preset+'"]').waitFor();
+   const source=JSON.parse(await readFile('public/catalogs/'+preset+'.json','utf8'));
+   const first=source.items.slice(0,48);
+   const cards=preview.locator('#catalog .catalog-card');
+   assert.equal(await cards.count(),first.length,preset);
+   for(const [index,item] of first.entries()){
+     const card=cards.nth(index);assert.equal(await card.getAttribute('data-catalog-card'),item.id,preset);
+     if(item.asset){
+       const img=card.locator('img');assert.equal(await img.getAttribute('src'),'/media/objects/'+item.asset,preset+': '+item.title);
+       assert.ok(await img.evaluate(async el=>{await el.decode();return el.naturalWidth>0;}),preset+': '+item.title);
+     }else{
+       assert.equal(await card.locator('img').count(),0,preset+': missing original thumbnail');
+     }
+   }
    await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   }
   await page.locator('#preset').selectOption('ember');
@@ -103,7 +113,7 @@ test('full catalogue interactions and sparse editing',{timeout:120000},async()=>
   await page.locator('html[data-ready=true]').waitFor();
   await page.locator('#preset').selectOption('violet');
   const frame=page.frameLocator('#preview');
-  await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
+  await frame.locator('#catalog[data-catalog-ready=true][data-catalog-preset=violet]').waitFor();
   const cards=frame.locator('#catalog .catalog-card');assert.equal(await cards.count(),48);
   const virtual=cards.nth(25);await virtual.locator('h3').click();
   await page.locator('#inspector [name=title]').fill('Tarjeta personalizada');
