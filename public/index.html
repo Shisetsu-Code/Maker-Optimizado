@@ -42,7 +42,7 @@
       <label>Ilustración<select name="art"></select></label>
     </details>
     <button type="submit" class="primary">Aplicar cambios</button>
-    <label class="upload-label">Imagen propia<input id="image-file" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="clear-image">Quitar imagen</button>
+    <label class="upload-label">Imagen propia<input id="image-file" type="file" accept="image/png,image/jpeg,image/webp"></label><button type="button" id="clear-image">Quitar imagen</button><button type="button" id="library">Biblioteca gráfica</button>
     <div class="two-grid"><button type="button" id="up">Subir</button><button type="button" id="down">Bajar</button></div>
     <button type="button" id="add-tile" hidden>Añadir tarjeta</button>
     <button type="button" id="delete" class="danger">Eliminar componente</button>
@@ -50,6 +50,7 @@
   <p class="note">Los diseños e imágenes se guardan en este navegador. Exportá una copia para conservarlos.</p>
 </aside>
 </main>
+<dialog id="media-dialog" aria-labelledby="media-title"><div class="media-head"><h2 id="media-title">Biblioteca gráfica</h2><button id="close-library" type="button">Cerrar</button></div><label>Colección<select id="media-collection"></select></label><div id="media-grid" aria-label="Imágenes"></div><div class="media-pagination"><button id="media-prev" type="button">Anterior</button><span id="media-page"></span><button id="media-next" type="button">Siguiente</button></div></dialog>
 <noscript>Maker necesita JavaScript y WebAssembly.</noscript>
 <script type="module" src="/studio.js"></script>
 </body></html>

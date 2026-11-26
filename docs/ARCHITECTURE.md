@@ -17,3 +17,7 @@ No arbitrary HTML, JS, CSS or remote image URLs enter the model. Preview is an i
 Cloudflare serves static resources directly; the API is stateless and does not require D1, KV, R2, Durable Objects, Queues or paid add-ons. Future remote publishing should use authenticated metadata in D1 and hash-addressed R2 assets, optimistic concurrency, tenant isolation and explicit quotas. It is not part of this implementation.
 
 Reproducibility: Rust version and direct dependencies are exact. Both lockfiles are committed from the first verification run. CI checks their presence and builds with --locked / npm ci. Dependabot proposes updates, not automatic deployments. No claim of zero defects or performance improvements without measurements.
+
+## Graphic library
+
+Raster media are byte-preserved under immutable Git-content-addressed IDs. Rust validates the ID shape and chooses default artwork from the compiled preset map. The browser loads collection indexes on demand and renders at most 24 thumbnails per page. The original source path map is documentation, not a served runtime dependency. Non-raster or unrecognized content is preserved outside Static Assets. HTML exports inline referenced library images with a bounded byte budget. The initial restore workflow imports only graphical data from a pinned source commit; normal CI remains read-only.

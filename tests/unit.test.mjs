@@ -29,3 +29,13 @@ test('WASM editing, export, undo, redo and atomic rejection',()=>{
   studio.load(original);assert.equal(studio.snapshot(),original);
   studio.free();
 });
+
+test('library asset IDs cannot escape the static asset namespace',()=>{
+  const studio=new Studio(),id='a'.repeat(40)+'.webp';
+  const original=studio.snapshot();
+  assert.throws(()=>studio.dispatch(JSON.stringify({type:'asset',view:'lobby',id:'hero',asset:'../../private.png'})));
+  assert.equal(studio.snapshot(),original);
+  studio.dispatch(JSON.stringify({type:'asset',view:'lobby',id:'hero',asset:id}));
+  assert.match(studio.html('lobby',true),new RegExp('/media/objects/'+id));
+  studio.free();
+});

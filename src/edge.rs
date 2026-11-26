@@ -111,7 +111,7 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             response
                 .headers_mut()
                 .set("content-type", "text/html; charset=utf-8")?;
-            response.headers_mut().set("content-security-policy","default-src 'none'; style-src 'unsafe-inline'; img-src data:; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")?;
+            response.headers_mut().set("content-security-policy","default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")?;
             response
                 .headers_mut()
                 .set("cache-control", "public, max-age=300")?;

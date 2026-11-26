@@ -78,6 +78,12 @@ fn artwork(n: &Component) -> String {
             escape(&n.title),
             escape(image)
         )
+    } else if let Some(asset) = &n.asset {
+        format!(
+            "<img class=\"art-image\" alt=\"{}\" src=\"/media/objects/{}\" loading=\"lazy\" decoding=\"async\">",
+            escape(&n.title),
+            escape(asset)
+        )
     } else {
         let symbols = ["✦", "◆", "♠", "◈", "☀", "✧", "♛", "◉", "◇", "❖", "●", "✺"];
         format!(
@@ -158,7 +164,7 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
 pub fn document(design: &Design, view: View, preview: bool) -> String {
     let t = &design.theme;
     let mut out = String::with_capacity(16_000);
-    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body class=\"layout-{} font-{}\" style=\"--accent:{};--accent-ink:{};--page:{};--surface:{};--ink:{};--radius:{}px\"><main id=\"surface\" class=\"{}\">",escape(&t.brand),layout(t.layout),font(t.font),t.accent,accent_ink(&t.accent),t.background,t.surface,t.ink,t.radius,if view==View::Lobby{"lobby"}else{"panel"}).unwrap();
+    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body class=\"layout-{} font-{}\" style=\"--accent:{};--accent-ink:{};--page:{};--surface:{};--ink:{};--radius:{}px\"><main id=\"surface\" class=\"{}\">",escape(&t.brand),layout(t.layout),font(t.font),t.accent,accent_ink(&t.accent),t.background,t.surface,t.ink,t.radius,if view==View::Lobby{"lobby"}else{"panel"}).unwrap();
     for n in design.nodes(view) {
         render_node(&mut out, n, t, preview);
     }

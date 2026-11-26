@@ -355,6 +355,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         live,
         footer.clone(),
     ];
+    crate::media::apply_defaults(id, &mut lobby);
     if p.layout == Layout::Rooms {
         lobby.swap(1, 2);
     }

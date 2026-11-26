@@ -115,6 +115,8 @@ pub struct Component {
     pub art: u8,
     pub style: Style,
     pub image: Option<Rc<str>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset: Option<String>,
     pub children: Vec<Component>,
 }
 impl Component {
@@ -129,6 +131,7 @@ impl Component {
             art: 0,
             style: Style::default(),
             image: None,
+            asset: None,
             children: Vec::new(),
         }
     }
@@ -249,6 +252,9 @@ fn validate_node(
         || s.columns.is_some_and(|n| !(1..=8).contains(&n))
     {
         return Err("Estilo no permitido.".into());
+    }
+    if node.asset.as_deref().is_some_and(|id| !crate::media::valid_asset(id)) {
+        return Err("Recurso gráfico inválido.".into());
     }
     if let Some(image) = &node.image {
         if !valid_image(image) {

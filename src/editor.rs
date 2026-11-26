@@ -35,6 +35,11 @@ pub enum Action {
         id: String,
         image: Option<Rc<str>>,
     },
+    Asset {
+        view: View,
+        id: String,
+        asset: Option<String>,
+    },
     Add {
         view: View,
         parent: Option<String>,
@@ -179,7 +184,16 @@ impl Editor {
                         node.art = patch.art;
                     }
                     Action::Image { view, id, image } => {
-                        find_mut(design.nodes_mut(view), &id)?.image = image
+                        let node = find_mut(design.nodes_mut(view), &id)?;
+                        node.image = image;
+                        if node.image.is_none() {
+                            node.asset = None;
+                        }
+                    }
+                    Action::Asset { view, id, asset } => {
+                        let node = find_mut(design.nodes_mut(view), &id)?;
+                        node.asset = asset;
+                        node.image = None;
                     }
                     Action::Add {
                         view,
@@ -245,7 +259,7 @@ impl Editor {
     pub fn describe(&self, view: View, id: &str) -> Value {
         let design = self.active();
         let nodes = design.nodes(view);
-        let selected=nodes.iter().find_map(|n|n.find(id)).map(|n|json!({"id":n.id,"kind":n.kind,"title":n.title,"text":n.text,"button":n.button,"hidden":n.hidden,"style":n.style,"art":n.art,"has_image":n.image.is_some(),"group":n.kind.group()}));
+        let selected=nodes.iter().find_map(|n|n.find(id)).map(|n|json!({"id":n.id,"kind":n.kind,"title":n.title,"text":n.text,"button":n.button,"hidden":n.hidden,"style":n.style,"art":n.art,"has_image":n.image.is_some()||n.asset.is_some(),"asset":n.asset,"group":n.kind.group()}));
         json!({"version":SCHEMA_VERSION,"active":self.current.active,"theme":design.theme,"outline":nodes.iter().map(outline).collect::<Vec<_>>(),"selected":selected,"undo":!self.past.is_empty(),"redo":!self.future.is_empty()})
     }
 }

@@ -7,3 +7,5 @@
   X-Robots-Tag: noindex, nofollow
 /wasm/*
   Cache-Control: public, max-age=3600
+/media/objects/*
+  Cache-Control: public, max-age=31536000, immutable

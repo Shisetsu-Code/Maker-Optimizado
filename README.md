@@ -7,7 +7,7 @@ Constructor visual local-first para interfaces de entretenimiento de demostraci�
 - 17 presets propios basados en las familias de color y distribución de la edición anterior.
 - Un renderizador, componentes tipados con identificadores permanentes, lobby y panel separados.
 - Edición de tema, selección visual, capas, arrastrar para ordenar dentro del grupo, añadir/eliminar/reordenar componentes y tarjetas.
-- Imágenes raster propias, estilos acotados, historial, importación/exportación JSON y exportación HTML autónoma (vista estática; no integra motores de juego).
+- Biblioteca gráfica original deduplicada, imágenes raster propias, estilos acotados, historial, importación/exportación JSON y exportación HTML autónoma (vista estática; no integra motores de juego).
 - IndexedDB con guardado transaccional y rechazo de sobrescrituras concurrentes.
 - API Rust versionada: salud, presets, validación acotada y previsualización estática.
 - Workers Static Assets sirve el frontend sin invocar el Worker para cada archivo.
@@ -32,6 +32,10 @@ Publicación: `npx wrangler deploy --dry-run`, después `npx wrangler login` y `
 
 ## Alcance
 
-Esta es una reconstrucción independiente. No reproduce píxel a píxel cada diseño anterior: conserva paletas, jerarquías visuales y familias de distribución, usa ilustraciones CSS originales y evita marcas/recursos sin licencia comprobada. Los archivos de proyecto antiguos no son compatibles automáticamente con el esquema nuevo. No hay apuestas, pagos, cuentas reales ni sesiones de terceros. El editor funciona localmente; D1/R2 se reservan para una eventual publicación con autenticación y almacenamiento remoto. La API de validación limita el cuerpo a 256 KiB; imágenes y proyectos grandes se validan localmente.
+Esta es una reconstrucción independiente. No reproduce píxel a píxel cada diseño anterior: conserva paletas, jerarquías visuales y familias de distribución, reutiliza la biblioteca gráfica original autorizada por el propietario, con identificadores por contenido y sin bundles heredados. Los archivos de proyecto antiguos no son compatibles automáticamente con el esquema nuevo. No hay apuestas, pagos, cuentas reales ni sesiones de terceros. El editor funciona localmente; D1/R2 se reservan para una eventual publicación con autenticación y almacenamiento remoto. La API de validación limita el cuerpo a 256 KiB; imágenes y proyectos grandes se validan localmente.
 
 Ver [arquitectura](docs/ARCHITECTURE.md) y [procedencia](docs/PROVENANCE.md). La edición anterior está preservada en el historial de Git y la rama principal mientras esta reconstrucción se verifica.
+
+## Biblioteca gráfica
+
+La importación reproducible se realiza una vez con `scripts/import-media.py` usando la revisión fijada. La biblioteca se sirve desde `public/media/objects` y se consulta por colecciones paginadas; no se cargan todas las imágenes al abrir el editor. Los recursos gráficos originales quedan disponibles sin recomprimir. `docs/asset-provenance.json` registra la correspondencia con sus rutas originales. El exportador HTML incorpora las imágenes seleccionadas como datos, con un límite de 24 MiB de recursos externos al proyecto para evitar agotamiento de memoria.
