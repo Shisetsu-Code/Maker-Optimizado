@@ -150,8 +150,15 @@ impl Catalog {
     }
     pub fn metadata(&self) -> serde_json::Value {
         let providers: BTreeSet<_> = self.items.iter().map(|i| &i.provider).collect();
+        let mut seen = BTreeSet::new();
+        let provider_order: Vec<_> = self
+            .items
+            .iter()
+            .map(|i| &i.provider)
+            .filter(|p| seen.insert(*p))
+            .collect();
         let categories: BTreeSet<_> = self.items.iter().map(|i| &i.category).collect();
-        serde_json::json!({"total":self.items.len(),"providers":providers,"categories":categories,
+        serde_json::json!({"total":self.items.len(),"providers":providers,"provider_order":provider_order,"categories":categories,
             "groups":self.groups.iter().map(|g|serde_json::json!({"id":g.id,"title":g.title})).collect::<Vec<_>>(),"banners":self.banners})
     }
     pub fn page(&self, design: &Design, query: &Query) -> Page {
@@ -260,6 +267,11 @@ impl Catalog {
                     .unwrap_or(usize::MAX)
             });
         }
+        let render_card = if crate::gallery::enabled(&self.preset, design) {
+            crate::gallery::card
+        } else {
+            crate::render::catalog_card
+        };
         let mut html = String::new();
         for &index in &order[offset..end] {
             if let Some((item, effective)) = rows.get(index) {
@@ -271,14 +283,14 @@ impl Catalog {
                         &fallback
                     }
                 };
-                html.push_str(&crate::render::catalog_card(
+                html.push_str(&render_card(
                     node,
                     &item.id,
                     favorites.contains(item.id.as_str()),
                     query.preview,
                 ));
             } else if let Some(n) = custom.get(index - rows.len()) {
-                html.push_str(&crate::render::catalog_card(
+                html.push_str(&render_card(
                     n,
                     &n.id,
                     favorites.contains(n.id.as_str()),

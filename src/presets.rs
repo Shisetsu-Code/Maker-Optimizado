@@ -254,7 +254,7 @@ const TITLES: [&str; 12] = [
 
 pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
-    let theme = Theme {
+    let mut theme = Theme {
         brand: "Mi casino".into(),
         accent: p.accent.into(),
         button_color: None,
@@ -380,7 +380,8 @@ pub fn design(id: &str) -> ModelResult<Design> {
         footer.clone(),
     ];
     crate::media::apply_defaults(id, &mut lobby);
-    if p.layout == Layout::Rooms {
+    crate::gallery::defaults(id, &mut theme, &mut lobby);
+    if p.layout == Layout::Rooms && !crate::gallery::has_profile(id) {
         lobby.swap(1, 2);
     }
     let mut metrics = section(

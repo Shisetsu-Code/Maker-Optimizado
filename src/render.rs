@@ -17,7 +17,7 @@ pub fn escape(input: &str) -> String {
     }
     out
 }
-fn accent_ink(color: &str) -> &'static str {
+pub(crate) fn accent_ink(color: &str) -> &'static str {
     let channel = |start| {
         let n = u8::from_str_radix(&color[start..start + 2], 16).unwrap_or(0) as f64 / 255.;
         if n <= 0.04045 {
@@ -52,7 +52,7 @@ fn font(f: Font) -> &'static str {
         Font::Oswald => "oswald",
     }
 }
-fn node_style(n: &Component) -> String {
+pub(crate) fn node_style(n: &Component) -> String {
     let mut css = String::new();
     if let Some(s) = &n.style.color {
         write!(css, "--node-ink:{s};").unwrap();
@@ -267,6 +267,9 @@ pub fn document_with_profile(
     let profile = preset
         .filter(|id| crate::presets::get(id).is_some_and(|p| p.layout == t.layout))
         .unwrap_or("custom");
+    if view == View::Lobby && crate::gallery::enabled(profile, design) {
+        return crate::gallery::document(design, profile, preview, appearance);
+    }
     let settings = &appearance.settings;
     let mut out = String::with_capacity(16_000);
     let button = t.button_color.as_deref().unwrap_or(&t.accent);

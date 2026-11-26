@@ -98,3 +98,19 @@ recodifica y registra los nuevos recursos, deduplicados por contenido. No
 incluye un contrato de API desconocido ni completa los faltantes con imágenes
 de otros juegos. El inventario de 6.130 referencias permanece hasta recibir
 material autorizado.
+
+## Composiciones de catálogo recuperadas
+
+Los doce perfiles de catálogo utilizan una composición propia en Rust y hojas
+de estilo de geometría normalizadas, con el mismo modelo editable, IDs estables,
+búsqueda, filtros, favoritos e historial. No se ejecuta ningún bundle anterior.
+La portada, imágenes de experiencias, salas, menús, carrusel, tarjetas, grupos y
+navegación móvil utilizan recursos verificados de la biblioteca. Los controles
+adicionales se mantienen accesibles bajo «Más filtros y recientes». La
+composición común permanece disponible si se cambia la distribución de base.
+Los diseños guardados no se modifican automáticamente.
+
+La auditoría exige que el catálogo de referencia esté inicializado y registra
+dimensiones del viewport y posibles imágenes fallidas. El umbral de 1% y las
+68 capturas permanecen intactos. No se declara equivalencia por la existencia
+de esta implementación.

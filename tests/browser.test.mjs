@@ -48,9 +48,8 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   const preview=page.frameLocator('#preview');
   for(const [preset,art] of Object.entries(defaults)){
    await page.locator('#preset').selectOption(preset);
-   const hero=preview.locator('#hero img');
+   const hero=preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').first();
    await hero.waitFor();
-   await preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').waitFor();
    assert.ok(await hero.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.naturalHeight>0;}),preset);
    await preview.locator('#catalog[data-catalog-ready=true][data-catalog-preset="'+preset+'"]').waitFor();
    const source=JSON.parse(await readFile('public/catalogs/'+preset+'.json','utf8'));
@@ -124,11 +123,13 @@ test('full catalogue interactions and sparse editing',{timeout:120000},async()=>
   await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
   await frame.locator('[data-catalog-more]').click();assert.equal(await cards.count(),96);
   await cards.first().locator('[data-favorite]').click();
-  await frame.locator('[data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
+  await frame.locator('#catalog .catalog-controls [data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
   await cards.first().locator('[data-game]').click();await page.locator('#demo-dialog[open]').waitFor();
   await page.locator('#close-demo').click();
-  await frame.locator('[data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
-  await frame.locator('[data-catalog-mode=all]').click();
+  const details=frame.locator('.gallery-extra-filters summary');
+  if(await details.count())await details.click();
+  await frame.locator('#catalog [data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
+  await frame.locator('#catalog .catalog-controls [data-catalog-mode=all]').click();
   await frame.locator('[data-search]').fill('Tarjeta personalizada');assert.equal(await cards.count(),1);
   await page.locator('#full-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),'true');
   await page.locator('#exit-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),null);
@@ -210,14 +211,16 @@ test('reference cover profiles and mobile navigation operate in the new renderer
   const frame=page.frameLocator('#preview');
   await frame.locator('#catalog[data-catalog-preset=violet]').waitFor();
   assert.equal(await frame.locator('body').getAttribute('data-profile'),'violet');
+  assert.equal(await frame.locator('body').getAttribute('data-gallery'),'true');
   assert.equal(await frame.locator('#hero').evaluate(el=>getComputedStyle(el).aspectRatio),'2.75 / 1');
-  await frame.locator('.lobby-rail [data-provider-nav]').first().click();
-  assert.notEqual(await frame.locator('[data-catalog-filter=provider]').inputValue(),'');
+  const provider=frame.locator('.lobby-rail [data-provider-nav]').first();
+  await provider.click();
+  assert.equal(await provider.getAttribute('aria-pressed'),'true');
   await page.locator('[data-size=mobile]').click();
   await frame.locator('.lobby-mobile').waitFor({state:'visible'});
   await frame.locator('.lobby-mobile [data-catalog-mode=all][data-catalog-scroll=catalog]').click();
-  assert.equal(await frame.locator('[data-catalog-filter=provider]').inputValue(),'');
-  await frame.locator('#categories [data-category-nav=Favoritos]').click();
+  assert.equal(await provider.getAttribute('aria-pressed'),'false');
+  await frame.locator('.lobby-mobile [data-catalog-mode=favorites]').click();
   assert.equal(await frame.locator('.catalog-controls [data-catalog-mode=favorites]').getAttribute('aria-pressed'),'true');
  }finally{await browser.close();}
 });

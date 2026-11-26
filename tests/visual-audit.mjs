@@ -67,6 +67,9 @@ try{
      const legacyPath=view==='panel'?'vista-socio-panel':legacy;
      await original.goto(LEGACY+'/muestra/'+legacyPath+'.html',{waitUntil:'domcontentloaded',timeout:15000});
      await original.waitForFunction(()=>document.body&&document.body.innerText.trim().length>60,{},{timeout:10000});
+     // A static shell is not an initialized catalogue; wait for actual cards.
+     if(view==='lobby'&&templates.slice(5).some(([id])=>id===preset))
+       await original.locator('.bp-game').first().waitFor({timeout:15000});
      await prepare(original);
      const before=await original.screenshot({animations:'disabled',caret:'hide',timeout:15000});
      await writeFile(DIR+'/'+key+'-reference.png',before);
@@ -80,8 +83,7 @@ try{
      const iframe=fresh.frameLocator('#preview');
      await iframe.locator('html[data-preset="'+preset+'"][data-screen="'+view+'"]').waitFor({timeout:15000});
      if(view==='lobby')await iframe.locator('#catalog[data-catalog-preset="'+preset+'"]').waitFor({timeout:15000});
-     const content=await fresh.locator('#preview').contentFrame();
-     // frameLocator provides locator/evaluate access in all supported Playwright versions.
+     // Capture the actual initialized renderer at the same viewport.
      await iframe.locator('html').evaluate(async()=>{
        await document.fonts.ready;
        await Promise.race([Promise.allSettled([...document.images].filter(img=>img.getBoundingClientRect().top<innerHeight).map(img=>img.decode())),new Promise(r=>setTimeout(r,4000))]);
@@ -89,6 +91,9 @@ try{
      });
      const after=await fresh.screenshot({animations:'disabled',caret:'hide',timeout:15000});
      await writeFile(DIR+'/'+key+'-new.png',after);
+     const metrics=await iframe.locator('html').evaluate(()=>({width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,visibleImages:[...document.images].filter(img=>img.getBoundingClientRect().top<innerHeight&&img.getBoundingClientRect().bottom>0).length,missingImages:[...document.images].filter(img=>img.complete&&!img.naturalWidth).length}));
+     result.candidateMetrics=metrics;
+     if(metrics.width!==width||metrics.height!==height)throw Error('Candidate viewport mismatch');
      const delta=await difference(before,after);
      if(delta.diff){await writeFile(DIR+'/'+key+'-diff.png',Buffer.from(delta.diff,'base64'));delete delta.diff;}
      Object.assign(result,delta);

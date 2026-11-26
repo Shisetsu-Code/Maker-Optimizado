@@ -18,6 +18,7 @@ on:
       - 'public/index.html'
       - 'public/catalogs/**'
       - 'assets/preset-artwork.json'
+      - 'assets/gallery-layouts.json'
 permissions:
   contents: read
 concurrency:

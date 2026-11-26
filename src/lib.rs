@@ -3,6 +3,7 @@
 pub mod catalog;
 pub mod demo_panel;
 pub mod editor;
+pub mod gallery;
 pub mod media;
 pub mod migration;
 pub mod model;
