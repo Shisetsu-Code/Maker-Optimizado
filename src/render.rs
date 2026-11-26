@@ -137,13 +137,7 @@ fn button(n: &Component) -> String {
         )
     }
 }
-fn render_node(
-    out: &mut String,
-    n: &Component,
-    theme: &Theme,
-    preview: bool,
-    category_tile: bool,
-) {
+fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool, category_tile: bool) {
     if n.hidden && !preview {
         return;
     }
@@ -166,7 +160,7 @@ fn render_node(
             write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categorías</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
         }
         Kind::Hero => {
-            write!(out,"<section class=\"component hero\" {attr}>").unwrap();
+            write!(out, "<section class=\"component hero\" {attr}>").unwrap();
             if !n.title.is_empty() || !n.text.is_empty() || !n.button.is_empty() {
                 write!(out,"<div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA · DEMO</span><h1>{title}</h1><p>{text}</p>").unwrap();
                 if !n.button.is_empty() {
@@ -174,7 +168,12 @@ fn render_node(
                 }
                 out.push_str("</div>");
             }
-            write!(out,"<div class=\"hero-art\">{}</div></section>",artwork(n)).unwrap();
+            write!(
+                out,
+                "<div class=\"hero-art\">{}</div></section>",
+                artwork(n)
+            )
+            .unwrap();
         }
         Kind::Categories | Kind::Catalog | Kind::Live | Kind::Metrics | Kind::Activity => {
             let group = match n.kind {

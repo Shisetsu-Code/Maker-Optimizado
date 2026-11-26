@@ -43,7 +43,7 @@ test('library asset IDs cannot escape the static asset namespace',()=>{
 test('advanced appearance is shared, bounded and rendered by Rust',()=>{
  const studio=new Studio();
  studio.dispatch(JSON.stringify({type:'appearance',settings:{font:'barlow',scale:120,weight:700,radius:20,enabled:true,shade:60,fit:'contain',position:'top'}}));
- studio.dispatch(JSON.stringify({type:'backdrop',image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII='}));
+ studio.dispatch(JSON.stringify({type:'backdrop',image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFElEQVR4nGNcZSTCwMDAxMDAgKAAEroA9oAvBx4AAAAASUVORK5CYII='}));
  studio.dispatch(JSON.stringify({type:'switch',preset:'cobalt'}));
  assert.match(studio.html('lobby',false),/font-barlow/);
  assert.match(studio.html('panel',false),/--text-scale:1\.2/);
@@ -85,7 +85,7 @@ test('administrative preview uses isolated synthetic Rust state',()=>{
 
 test('untrusted raster headers and malformed legacy projects are rejected atomically',()=>{
  const studio=new Studio(),original=studio.snapshot();
- const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=','base64');
+ const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFElEQVR4nGNcZSTCwMDAxMDAgKAAEroA9oAvBx4AAAAASUVORK5CYII=','base64');
  studio.check_upload(pixel,'image/png');
  assert.throws(()=>studio.check_upload(pixel,'image/webp'));
  const huge=Buffer.from(pixel);huge.writeUInt32BE(100000,16);

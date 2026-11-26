@@ -206,7 +206,7 @@ test('reference cover profiles and mobile navigation operate in the new renderer
   const page=await browser.newPage({viewport:{width:1440,height:900}});await page.goto(origin);
   await page.locator('html[data-ready=true]').waitFor();
   await page.locator('#preset').selectOption('violet');
-  await page.locator('#mode').click();
+  await page.locator('#full-preview').click();
   const frame=page.frameLocator('#preview');
   await frame.locator('#catalog[data-catalog-preset=violet]').waitFor();
   assert.equal(await frame.locator('body').getAttribute('data-profile'),'violet');
@@ -230,9 +230,15 @@ test('offline thumbnail import re-encodes a validated image and rejects invalid 
  try{
   const context=await browser.newContext({offline:true});
   const page=await context.newPage();
-  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=','base64');
+  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFElEQVR4nGNcZSTCwMDAxMDAgKAAEroA9oAvBx4AAAAASUVORK5CYII=','base64');
   const result=await encodeThumbnail(page,studio,png);
   assert.equal(result.subarray(8,12).toString(),'WEBP');
+  for(const mime of ['image/jpeg','image/webp']){
+    const encoded=await page.evaluate(type=>{const c=document.createElement('canvas');c.width=2;c.height=3;const ctx=c.getContext('2d');ctx.fillStyle='#ab3214';ctx.fillRect(0,0,2,3);return c.toDataURL(type).split(',')[1];},mime);
+    const bytes=Buffer.from(encoded,'base64');
+    studio.check_upload(bytes,mime);
+    assert.equal((await encodeThumbnail(page,studio,bytes)).subarray(8,12).toString(),'WEBP');
+  }
   const huge=Buffer.from(png);huge.writeUInt32BE(100000,16);
   await assert.rejects(encodeThumbnail(page,studio,huge));
  }finally{studio.free();await browser.close();}

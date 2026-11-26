@@ -64,9 +64,9 @@ export async function encodeThumbnail(page,studio,data){
  studio.check_upload(new Uint8Array(output),'image/webp');
  return output;
 }
-async function atomicJson(path,value){
+async function atomicJson(path,value,indent){
  const temp=path+'.'+randomUUID()+'.tmp';
- try{await writeFile(temp,JSON.stringify(value,null,2)+'\n',{flag:'wx'});await rename(temp,path);}
+ try{await writeFile(temp,JSON.stringify(value,null,indent)+'\n',{flag:'wx'});await rename(temp,path);}
  finally{await rm(temp,{force:true});}
 }
 async function main(args){
@@ -103,6 +103,7 @@ async function main(args){
   const deployed=collections.get('all');
   const bySource=new Map();
   let changed=0,totalNewBytes=0;
+  const changedPresets=new Set();
   for(const entry of plan){
    let id=bySource.get(entry.sha256);
    if(!id){
@@ -125,6 +126,7 @@ async function main(args){
    }
    for(const target of entry.targets){
     target.item.asset=id;collections.get(target.preset).add(id);changed++;
+    changedPresets.add(target.preset);
     const row=report.catalogs[target.preset];row.authorized_import_matches=(row.authorized_import_matches??0)+1;
    }
   }
@@ -138,11 +140,12 @@ async function main(args){
   // All input validation and decoding finished before touching the served tree.
   // Individual writes are atomic; use a clean branch and review the Git diff.
   for(const id of objects.keys())await writeFile(join(mediaRoot,'objects',id),await readFile(join(staging,id)),{flag:'wx'});
-  for(const [preset,data] of catalog)await atomicJson(join(root,'public/catalogs',preset+'.json'),data);
-  for(const [id,values] of collections)await atomicJson(join(mediaRoot,'collections',id+'.json'),id==='all'?[...values].sort():[...values]);
+  for(const preset of changedPresets)await atomicJson(join(root,'public/catalogs',preset+'.json'),catalog.get(preset));
+  for(const preset of changedPresets)await atomicJson(join(mediaRoot,'collections',preset+'.json'),[...collections.get(preset)]);
+  if(objects.size)await atomicJson(join(mediaRoot,'collections/all.json'),[...deployed].sort());
   await atomicJson(join(mediaRoot,'index.json'),index);
-  await atomicJson(importedPath,imported);
-  await atomicJson(join(root,'docs/catalog-parity.json'),report);
+  await atomicJson(importedPath,imported,2);
+  await atomicJson(join(root,'docs/catalog-parity.json'),report,2);
  }finally{
   if(browser)await browser.close();
   studio.free();

@@ -224,7 +224,7 @@ pub fn valid_data_url(value: &str, max: usize) -> bool {
 mod tests {
     use super::*;
 
-    const PIXEL: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=";
+    const PIXEL: &str = "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFElEQVR4nGNcZSTCwMDAxMDAgKAAEroA9oAvBx4AAAAASUVORK5CYII=";
 
     #[test]
     fn rejects_type_mismatch_and_oversized_png_before_decode() {

@@ -20,6 +20,9 @@ on:
       - 'assets/preset-artwork.json'
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   compare:
     runs-on: ubuntu-latest
