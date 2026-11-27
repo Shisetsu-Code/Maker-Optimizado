@@ -281,7 +281,9 @@ impl Catalog {
         }
         let render_card = if crate::resort::enabled(&self.preset, design) {
             crate::resort::card
-        } else if crate::gallery::enabled(&self.preset, design) {
+        } else if crate::gallery::enabled(&self.preset, design)
+            || crate::classic_view::enabled(&self.preset, design)
+        {
             crate::gallery::card
         } else {
             crate::render::catalog_card

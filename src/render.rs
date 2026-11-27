@@ -270,6 +270,9 @@ pub fn document_with_profile(
     let profile = preset
         .filter(|id| crate::presets::get(id).is_some_and(|p| p.layout == t.layout))
         .unwrap_or("custom");
+    if view == View::Lobby && crate::classic_view::enabled(profile, design) {
+        return crate::classic_view::document(design, profile, preview, appearance);
+    }
     if view == View::Lobby && crate::resort::enabled(profile, design) {
         return crate::resort::document(design, preview, appearance);
     }

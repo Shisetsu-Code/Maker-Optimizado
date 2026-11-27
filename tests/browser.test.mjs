@@ -19,7 +19,7 @@ test('all presets, editing, mobile, persistence, export and conflict',{timeout:1
   await page.locator('#inspector [name=title]').fill('Edición propia');
   await page.locator('#inspector button[type=submit]').click();
   await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
-  await page.locator('#undo').click();await preview.getByRole('heading',{name:'Un nuevo nivel de entretenimiento',exact:true}).waitFor();
+  await page.locator('#undo').click();await preview.getByRole('heading',{name:'ARS 11.052,00',exact:true}).waitFor();
   await page.locator('#redo').click();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   await page.locator('[data-size=mobile]').click();

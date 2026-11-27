@@ -144,3 +144,6 @@ editables conservan su modelo Rust y sus IDs. Los estilos base del panel no
 dependen del perfil del lobby; los colores personalizados explícitamente
 siguen aplicándose. La tipografía Figtree original se recupera localmente
 con su licencia OFL. Se vuelve a medir la composición sin relajar el umbral.
+
+### Familias clásicas
+Se reemplaza la composición genérica de Ember, Cobalt, Flare y Coal por renderizadores nativos específicos con las geometrías de referencia: lateral, portadas, tarjetas de experiencia, recomendaciones y cartera de demostración. Se preservan los componentes editables y la navegación local. Las imágenes provienen exclusivamente de la biblioteca verificada. Se recuperan diez referencias de miniaturas faltantes (cinco títulos exactos de Pragmatic Play repetidos en ambos catálogos) a partir de la tira original de recomendaciones Cobalt; no se rellenan las coincidencias ambiguas. Las filas de recomendaciones se generan con Rust y mantienen el orden explícito, también en exportación autónoma. Estas composiciones requieren nueva medición visual; no se certifica equivalencia 1:1 todavía.

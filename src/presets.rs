@@ -381,6 +381,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
     ];
     crate::media::apply_defaults(id, &mut lobby);
     crate::gallery::defaults(id, &mut theme, &mut lobby);
+    crate::classic_view::defaults(id, &mut lobby);
     if id == "ivory" {
         crate::resort::defaults(&mut theme, &mut lobby);
     }

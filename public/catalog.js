@@ -116,6 +116,21 @@ function buildBanner(doc,meta,state){
   };
   current.banner={draw};draw();
 }
+function renderFeatured(doc,studio){
+  for(const rail of doc.querySelectorAll('[data-featured-group]')){
+    const group=rail.dataset.featuredGroup;
+    const page=JSON.parse(studio.catalog_page(JSON.stringify({group,group_order:true,preview:false})));
+    const template=doc.createElement('template');template.innerHTML=page.html;
+    rail.replaceChildren();
+    for(const card of template.content.querySelectorAll('[data-catalog-card]')){
+      const img=card.querySelector('img');if(!img)continue;
+      const title=card.querySelector('h3')?.textContent??'Juego';
+      const b=button(doc,'','game',card.dataset.catalogCard);
+      b.setAttribute('aria-label','Ver '+title);
+      b.append(img.cloneNode(true));const caption=doc.createElement('span');caption.textContent=title;b.append(caption);rail.append(b);
+    }
+  }
+}
 function catalogSource(preset){
   if(!sources.has(preset)){
     const promise=fetch('/catalogs/'+preset+'.json').then(r=>{if(!r.ok)throw Error('Catálogo no disponible.');return r.text();});
@@ -166,7 +181,7 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
       groupRail.append(b);
     }
   }
-  populate();updateMode(doc,state);buildBanner(doc,meta,state);
+  renderFeatured(doc,studio);populate();updateMode(doc,state);buildBanner(doc,meta,state);
 }
 export function catalogInput(doc,target){
   if(current?.doc!==doc)return false;
@@ -242,4 +257,5 @@ export async function exportCatalog(doc,frozenStudio,preset,query){
   const items=doc.querySelector('#catalog .items');if(!items)return;
   frozenStudio.set_catalog(await catalogSource(preset));
   items.innerHTML=JSON.parse(frozenStudio.catalog_page(query)).html;
+  renderFeatured(doc,frozenStudio);
 }
