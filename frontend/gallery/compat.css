@@ -25,7 +25,7 @@ body[data-profile=violet] .gallery-game h3{line-height:normal;margin:7px 0 4px}
 .gallery-banner picture{display:block;width:100%;height:100%}
 .gallery-banner picture img{width:100%;height:100%;object-fit:cover}
 .gallery-banner h1,.editorial-fenarys-hero h1{white-space:pre-line}
-.gallery-cover-copy{position:absolute;inset:0;pointer-events:none;padding:5%;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,#0009,transparent)}
+body:not(:is([data-profile=verdant],[data-profile=crimson])) .gallery-cover-copy{position:absolute;inset:0;pointer-events:none;padding:5%;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,#0009,transparent)}
 .gallery-cover-copy button{pointer-events:auto;align-self:start}
 .gallery-custom-section{margin:18px 0;padding:16px;background:var(--surface);border-radius:12px}
 .gallery-custom-section img{max-width:100%;max-height:320px;object-fit:contain}
@@ -44,3 +44,9 @@ body[data-global-radius=true] :is(.gallery-game img,.gallery-banner,.gallery-pri
 .quick-links button img{max-width:36px;max-height:36px;object-fit:contain}
 @media(max-width:700px){.gallery-game h3{font-size:10px;margin:7px 0 2px}.gallery-custom-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Preserve the intrinsic dimensions of horizontally scrolling room cards. */
+body[data-profile=jade] .gallery-banner :is(img,picture img){object-fit:cover}
+@media(max-width:800px){body[data-profile=jade] .gallery-banner :is(img,picture img){object-fit:contain}}
+@media(max-width:700px){body:is([data-profile=brass],[data-profile=garnet],[data-profile=onyx]) .gallery-banner picture img{object-fit:contain}}
+@media(max-width:600px){.rooms-room-grid .rooms-room{min-width:180px;flex:0 0 180px}}

@@ -25,3 +25,15 @@ test('17 data catalogues validate and paginate in Rust',async()=>{
  }
  studio.free();
 });
+
+test('collection rows preserve the explicit manifest order',async()=>{
+ const studio=new Studio();
+ studio.dispatch(JSON.stringify({type:'switch',preset:'jade'}));
+ const catalog=JSON.parse(await readFile('public/catalogs/jade.json','utf8'));
+ studio.set_catalog(JSON.stringify(catalog));
+ const group=catalog.groups[0];
+ const page=JSON.parse(studio.catalog_page(JSON.stringify({group:group.id,group_order:true})));
+ const ids=[...page.html.matchAll(/data-catalog-card="([^"]+)"/g)].map(m=>m[1]);
+ assert.deepEqual(ids,group.items.slice(0,48));
+ studio.free();
+});

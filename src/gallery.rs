@@ -112,7 +112,12 @@ pub fn defaults(preset: &str, theme: &mut Theme, nodes: &mut [Component]) {
                     let mut n =
                         Component::new(format!("category-{index}"), Kind::Tile, &tile.title);
                     n.text.clone_from(&tile.text);
-                    n.button = "Explorar →".into();
+                    n.button = match (preset, index) {
+                        ("rose", 0) => "Ver mesas →",
+                        ("rose", 1) => "Explorar demo →",
+                        _ => "Explorar →",
+                    }
+                    .into();
                     n.asset = Some(tile.asset.clone());
                     node.children.push(n);
                 }
@@ -421,6 +426,9 @@ fn categories(out: &mut String, n: &Component, profile: &Profile, preset: &str, 
         }
         out.push_str("</section>");
     }
+    if preset == "rose" {
+        out.push_str("<div class=\"experience-heading\"><span>EXPLORÁ EL CASINO</span><p>Categorías para cada forma de jugar</p></div><nav id=\"experience-categories\" data-group-rail aria-label=\"Categorías\"></nav>");
+    }
     let quick: Vec<_> = n
         .children
         .iter()
@@ -475,7 +483,7 @@ fn catalog(out: &mut String, n: &Component, preset: &str) {
     write!(out, "<section {}>", attrs(n)).unwrap();
     match preset {
         "jade" => out.push_str("<div id=\"rows-collections\" data-group-rail aria-label=\"Colecciones de juegos\"></div>"),
-        "rose" => out.push_str("<div class=\"experience-heading\"><span>EXPLORÁ EL CASINO</span><p>Categorías para cada forma de jugar</p></div><nav id=\"experience-categories\" data-group-rail aria-label=\"Categorías\"></nav>"),
+        "rose" => {},
         "garnet" | "brass" => out.push_str("<nav id=\"family-categories\" data-group-rail aria-label=\"Categorías\"></nav>"),
         "aurum" | "verdant" | "crimson" | "onyx" => out.push_str("<nav id=\"gallery-groups\" data-group-rail aria-label=\"Categorías\"></nav>"),
         _ => {}
@@ -495,7 +503,7 @@ fn catalog(out: &mut String, n: &Component, preset: &str) {
         "",
     );
     action_button(out, "Favoritos", "favorites", "");
-    write!(out,"</div><label>⌕ <input type=\"search\" id=\"gallery-search\" data-search=\"true\" maxlength=\"120\" aria-label=\"Buscar juegos o proveedores\" placeholder=\"{}\"></label></section><div class=\"gallery-section-head\"><h1 data-catalog-title>{}</h1><span data-catalog-count></span></div>",escape(n.style.placeholder.as_deref().unwrap_or("Buscar juegos o proveedores")),escape(&n.title)).unwrap();
+    write!(out,"</div><label>⌕ <input type=\"search\" id=\"gallery-search\" data-search=\"true\" maxlength=\"120\" aria-label=\"Buscar juegos o proveedores\" placeholder=\"{}\"></label></section><div class=\"gallery-section-head\"><h1 data-catalog-title>{}</h1><span id=\"gallery-count\" data-catalog-count></span></div>",escape(n.style.placeholder.as_deref().unwrap_or("Buscar juegos o proveedores")),escape(&n.title)).unwrap();
     if !n.text.is_empty() {
         write!(out, "<p>{}</p>", escape(&n.text)).unwrap();
     }

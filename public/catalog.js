@@ -144,7 +144,7 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
         const title=doc.createElement('h2');title.textContent=group.title;
         header.append(title,button(doc,'Ver todos →','groupNav',group.id));
         const row=doc.createElement('div');row.className='rows-row';
-        const result=JSON.parse(studio.catalog_page(JSON.stringify({group:group.id,preview:false})));
+        const result=JSON.parse(studio.catalog_page(JSON.stringify({group:group.id,group_order:true,preview:false})));
         const fragment=doc.createElement('template');fragment.innerHTML=result.html;
         for(const [i,card] of [...fragment.content.querySelectorAll('[data-catalog-card]')].slice(0,12).entries()){
           const label=card.querySelector('h3')?.textContent??'Juego';
@@ -156,7 +156,15 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
         }
         section.append(header,row);groupRail.append(section);
       }
-    }else for(const group of meta.groups)groupRail.append(button(doc,group.title,'groupNav',group.id));
+    }else for(const group of meta.groups){
+      const b=button(doc,group.title,'groupNav',group.id);
+      if(groupRail.id==='experience-categories'){
+        const icon=doc.createElement('span'),name=doc.createElement('span');
+        icon.textContent=/vivo|live/i.test(group.title)?'◉':/fruta|moneda/i.test(group.title)?'◆':/crash/i.test(group.title)?'↗':'♠';
+        name.textContent=group.title;b.replaceChildren(icon,name);
+      }
+      groupRail.append(b);
+    }
   }
   populate();updateMode(doc,state);buildBanner(doc,meta,state);
 }

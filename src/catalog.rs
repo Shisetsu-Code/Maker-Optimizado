@@ -46,6 +46,7 @@ pub struct Query {
     pub provider: String,
     pub category: String,
     pub group: String,
+    pub group_order: bool,
     pub favorites_only: bool,
     pub recent_only: bool,
     pub favorites: Vec<String>,
@@ -173,11 +174,8 @@ impl Catalog {
         let overrides: BTreeMap<_, _> = nodes.iter().map(|n| (n.id.as_str(), n)).collect();
         let favorites: BTreeSet<_> = query.favorites.iter().map(String::as_str).collect();
         let recent: BTreeSet<_> = query.recent.iter().map(String::as_str).collect();
-        let group = self
-            .groups
-            .iter()
-            .find(|g| g.id == query.group)
-            .map(|g| g.items.iter().map(String::as_str).collect::<BTreeSet<_>>());
+        let collection = self.groups.iter().find(|g| g.id == query.group);
+        let group = collection.map(|g| g.items.iter().map(String::as_str).collect::<BTreeSet<_>>());
         let search = query.search.trim().to_lowercase();
         let mut rows = Vec::new();
         let mut consumed = BTreeSet::new();
@@ -207,6 +205,20 @@ impl Catalog {
                 continue;
             }
             rows.push((item, effective));
+        }
+        if query.group_order {
+            if let Some(collection) = collection {
+                let rank: BTreeMap<_, _> = collection
+                    .items
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .map(|(index, id)| (id.as_str(), index))
+                    .collect();
+                rows.sort_by_key(|(item, _)| {
+                    rank.get(item.id.as_str()).copied().unwrap_or(usize::MAX)
+                });
+            }
         }
         if query.top {
             rows.truncate(12);
@@ -316,6 +328,22 @@ mod tests {
             {"id":"item-one","title":"Golden Test","provider":"One","category":"slots","asset":null},
             {"id":"item-two","title":"Live Table","provider":"Two","category":"live","asset":null}
         ],"groups":[{"id":"collection-one","title":"Group","items":["item-two"]}],"banners":[]}).to_string(),"ember").unwrap()
+    }
+    #[test]
+    fn collection_preview_preserves_editorial_order() {
+        let mut catalog = sample();
+        catalog.groups[0].items = vec!["item-two".into(), "item-one".into()];
+        let design = crate::presets::design("ember").unwrap();
+        let page = catalog.page(
+            &design,
+            &Query {
+                group: "collection-one".into(),
+                group_order: true,
+                ..Default::default()
+            },
+        );
+        assert_eq!(page.total, 2);
+        assert!(page.html.find("Live Table").unwrap() < page.html.find("Golden Test").unwrap());
     }
     #[test]
     fn composed_filters() {

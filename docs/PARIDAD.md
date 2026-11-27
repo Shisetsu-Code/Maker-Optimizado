@@ -123,3 +123,11 @@ mantienen las operaciones de demostración del motor. El nombre de marca
 predeterminado es neutral y la prueba configura el mismo nombre en la
 referencia. La espera de la referencia descarta las pantallas de carga sin
 recortar ni enmascarar los píxeles comparados.
+
+### Revisión de diferencias residuales (27 de noviembre)
+
+La revisión 0d68e30 obtuvo 15/68 vistas dentro de la tolerancia; aprobó también
+la CI funcional y la auditoría de dependencias. Se corrigen el orden editorial
+de las colecciones Jade, el orden y los iconos de categorías Rose, el ancho
+intrínseco de las salas Amethyst, los estilos de cubierta Verdant/Crimson y el
+ajuste de portadas responsive. La referencia y el límite del 1% se conservan.
