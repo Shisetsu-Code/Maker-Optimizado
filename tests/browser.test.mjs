@@ -24,7 +24,7 @@ test('all presets, editing, mobile, persistence, export and conflict',{timeout:1
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   await page.locator('[data-size=mobile]').click();
   assert.ok(await page.locator('#preview').evaluate(el=>el.getBoundingClientRect().width<=394));
-  await page.locator('#panel').click();await preview.getByRole('heading',{name:'Panel de administración',exact:true}).waitFor();
+  await page.locator('#panel').click();await preview.getByRole('heading',{name:'Inicio',exact:true}).waitFor();
   await page.locator('#lobby').click();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
   const downloadPromise=page.waitForEvent('download');await page.locator('#export-html').click();assert.equal((await downloadPromise).suggestedFilename(),'maker-lobby.html');
   await page.reload();await page.locator('html[data-ready=true]').waitFor();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
@@ -142,7 +142,7 @@ test('administrative local preview, notes, review, history and maintenance',{tim
   const context=await browser.newContext({viewport:{width:1440,height:900}});
   const page=await context.newPage();page.on('dialog',dialog=>dialog.accept());
   await page.goto(origin);await page.locator('html[data-ready=true]').waitFor();
-  await page.locator('#panel').click();await page.locator('#mode').click();
+  await page.locator('#panel').click();await page.locator('#full-preview').click();
   const frame=page.frameLocator('#preview');
   await frame.locator('html[data-screen=panel][data-editing=false]').waitFor();
   await frame.locator('#surface[data-panel-ready=true]').waitFor();
@@ -245,4 +245,23 @@ test('offline thumbnail import re-encodes a validated image and rejects invalid 
   const huge=Buffer.from(png);huge.writeUInt32BE(100000,16);
   await assert.rejects(encodeThumbnail(page,studio,huge));
  }finally{studio.free();await browser.close();}
+});
+
+test('shared panel is responsive, preserves editable monitoring and keeps all sections accessible',{timeout:90000},async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1440,height:900}});await page.goto(origin);
+  await page.locator('html[data-ready=true]').waitFor();await page.locator('#preset').selectOption('ivory');
+  await page.locator('#panel').click();const frame=page.frameLocator('#preview');
+  await frame.locator('#surface[data-panel-ready=true]').waitFor();
+  assert.equal(await frame.locator('.panel-chart-bar').count(),60);
+  await page.locator('#full-preview').click();await page.locator('[data-size=mobile]').click();
+  await frame.locator('.panel-mobile [data-panel-menu]').click();
+  await frame.locator('.panel-navigation [data-panel-section=partners]').click();
+  await frame.locator('.panel-mobile [data-panel-menu]').click();
+  await frame.locator('.panel-navigation [data-panel-section=players]').click();
+  await frame.locator('[data-panel-row=player-1]').waitFor();
+  await frame.locator('.panel-mobile [data-panel-section=overview]').click();
+  await frame.locator('.panel-monitor').waitFor();
+ }finally{await browser.close();}
 });

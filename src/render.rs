@@ -263,6 +263,9 @@ pub fn document_with_profile(
     appearance: &Appearance,
     preset: Option<&str>,
 ) -> String {
+    if view == View::Panel {
+        return crate::panel_view::document(design, preset, preview, appearance);
+    }
     let t = &design.theme;
     let profile = preset
         .filter(|id| crate::presets::get(id).is_some_and(|p| p.layout == t.layout))

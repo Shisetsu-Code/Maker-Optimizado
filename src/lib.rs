@@ -7,6 +7,7 @@ pub mod gallery;
 pub mod media;
 pub mod migration;
 pub mod model;
+pub mod panel_view;
 pub mod presets;
 pub mod raster;
 pub mod render;

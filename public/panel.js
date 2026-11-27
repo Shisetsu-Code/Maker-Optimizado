@@ -9,6 +9,8 @@ function paint(){
   const nav=root.querySelector('.panel-navigation');
   if(nav)nav.outerHTML=studio.panel_navigation();
   workspace.innerHTML=studio.panel_content();
+  for(const el of root.querySelectorAll('[data-panel-overview]'))el.hidden=meta.section!=='overview';
+  for(const b of root.querySelectorAll('.panel-mobile [data-panel-section]'))b.setAttribute('aria-pressed',String(b.dataset.panelSection===meta.section));
   root.dataset.panelSection=meta.section;root.dataset.panelReady='true';
 }
 export function attachPanel(doc,studio,editing){
@@ -21,7 +23,15 @@ function apply(action,notice){
 export function panelClick(doc,target,notice){
   if(active?.doc!==doc)return false;
   const b=target.closest?.('button');if(!b)return false;
-  if(b.dataset.panelSection){apply({type:'navigate',section:b.dataset.panelSection},notice);return true;}
+  if(b.hasAttribute('data-panel-menu')){
+    const root=doc.querySelector('#surface.panel'),open=root?.dataset.menuOpen!=='true';
+    if(root)root.dataset.menuOpen=String(open);b.setAttribute('aria-expanded',String(open));return true;
+  }
+  if(b.dataset.panelSection){
+    const root=doc.querySelector('#surface.panel');if(root)root.dataset.menuOpen='false';
+    doc.querySelector('[data-panel-menu]')?.setAttribute('aria-expanded','false');
+    apply({type:'navigate',section:b.dataset.panelSection},notice);return true;
+  }
   if(active.editing())return false;
   if(b.dataset.panelRow){apply({type:'select',id:b.dataset.panelRow},notice);return true;}
   if(b.dataset.panelToggle){apply({type:'toggle',id:b.dataset.panelToggle},notice);return true;}

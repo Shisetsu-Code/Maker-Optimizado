@@ -417,31 +417,16 @@ impl Panel {
         Ok(())
     }
     pub fn navigation(&self) -> String {
-        let mut out = String::from(
-            "<nav class=\"panel-navigation\" aria-label=\"Secciones del panel\"><span class=\"panel-nav-label\">PANEL DE MUESTRA</span>",
-        );
-        for section in Section::ALL {
-            write!(out,"<button type=\"button\" data-panel-section=\"{}\" aria-pressed=\"{}\"><span class=\"panel-nav-indicator\" aria-hidden=\"true\"></span>{}</button>",section.id(),self.section==section,section.label()).unwrap();
-        }
-        out.push_str("</nav>");
-        out
+        crate::panel_view::navigation(self.section)
     }
     pub fn content(&self) -> String {
         let mut out = String::new();
-        write!(out,"<div class=\"panel-content-heading\"><div><span class=\"eyebrow\">VISTA LOCAL · DEMO</span><h2>{}</h2><p>{}</p></div><span class=\"panel-status\">Datos ficticios</span></div>",self.section.label(),self.section.summary()).unwrap();
+        if self.section != Section::Overview {
+    write!(out,"<div class=\"panel-content-heading\"><div><span class=\"eyebrow\">VISTA LOCAL · DEMO</span><h2>{}</h2><p>{}</p></div><span class=\"panel-status\">Datos ficticios</span></div>",self.section.label(),self.section.summary()).unwrap();
+        }
         match self.section {
             Section::Overview => {
-                let pending = self
-                    .rows
-                    .iter()
-                    .filter(|r| r.status == Status::Pending)
-                    .count();
-                let open = self
-                    .rows
-                    .iter()
-                    .filter(|r| r.section == Section::Support && r.status == Status::Open)
-                    .count();
-                write!(out,"<div class=\"panel-dashboard\"><article><span>Monitoreo</span><strong>Local</strong><small>Sin conexión a proveedores</small></article><article><span>Conversaciones abiertas</span><strong>{open}</strong><small>Ejemplo</small></article><article><span>Revisiones pendientes</span><strong>{pending}</strong><small>Ejemplo</small></article><article><span>Estado de la vista</span><strong>{}</strong><small>Solo este navegador</small></article></div><h3>Lo que sigue</h3><div class=\"panel-list\">",if self.maintenance{"Mantenimiento"}else{"Disponible"}).unwrap();
+                out.push_str("<section class=\"panel-box panel-tasks\"><h2>Lo que sigue</h2><div class=\"panel-list\">");
                 for (section, label) in [
                     (Section::Support, "Revisar conversaciones"),
                     (Section::Requests, "Revisar solicitudes"),
@@ -450,7 +435,7 @@ impl Panel {
                 ] {
                     write!(out,"<button type=\"button\" class=\"panel-row\" data-panel-section=\"{}\"><span>{label}</span><span aria-hidden=\"true\">›</span></button>",section.id()).unwrap();
                 }
-                out.push_str("</div>");
+                out.push_str("</div></section>");
             }
             Section::Settings => {
                 write!(out,"<div class=\"panel-settings\"><h3>Vista de mantenimiento</h3><p>Permite comprobar la pantalla de mantenimiento del lobby. No modifica ningún sitio ni servicio.</p><button type=\"button\" class=\"action\" data-panel-maintenance=\"{}\">{}</button><h3>Datos de ejemplo</h3><p>Restaurá las conversaciones, estados y notas ficticias de esta sesión.</p><button type=\"button\" data-panel-reset=\"true\" class=\"panel-secondary\">Restablecer demostración</button></div>",!self.maintenance,if self.maintenance{"Quitar mantenimiento"}else{"Mostrar mantenimiento"}).unwrap();

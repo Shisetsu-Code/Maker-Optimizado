@@ -41,3 +41,9 @@ semantic controls and collection summaries; the old JavaScript bundles are not
 served. Normalized CSS under `frontend/gallery/` is static and has no remote
 resource references. User text is escaped and style variables come from
 validated model values.
+
+### Shared panel presentation
+`src/panel_view.rs` renders the shared administrative dashboard using
+validated model components and a synthetic fixture. It does not contact
+monitoring or payment endpoints. `demo_panel.rs` owns section state and
+local actions; the browser adapter only manages navigation and visibility.

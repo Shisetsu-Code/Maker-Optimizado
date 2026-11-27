@@ -131,3 +131,16 @@ la CI funcional y la auditoría de dependencias. Se corrigen el orden editorial
 de las colecciones Jade, el orden y los iconos de categorías Rose, el ancho
 intrínseco de las salas Amethyst, los estilos de cubierta Verdant/Crimson y el
 ajuste de portadas responsive. La referencia y el límite del 1% se conservan.
+
+### Panel compartido
+
+Las referencias del panel de escritorio son idénticas para las 17 plantillas.
+Se reconstruye una única composición responsive: lateral de 272 px, barra
+móvil, cabecera, tarjetas de monitoreo y resumen de ejemplo, gráfica SVG
+generada desde una serie sintética, y navegación a las doce áreas locales.
+Los números de monitoreo y saldos son exclusivamente ficticios, sin operaciones
+financieras ni autenticación. Las preferencias de marca y los componentes
+editables conservan su modelo Rust y sus IDs. Los estilos base del panel no
+dependen del perfil del lobby; los colores personalizados explícitamente
+siguen aplicándose. La tipografía Figtree original se recupera localmente
+con su licencia OFL. Se vuelve a medir la composición sin relajar el umbral.

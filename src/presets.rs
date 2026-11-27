@@ -438,10 +438,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
             index as u8,
         ));
     }
-    Ok(Design {
-        theme,
-        lobby,
-        panel: vec![
+    let mut panel = vec![
             header,
             section(
                 "panel-title",
@@ -454,8 +451,9 @@ pub fn design(id: &str) -> ModelResult<Design> {
             metrics,
             activity,
             footer,
-        ],
-    })
+        ];
+    crate::panel_view::defaults(&mut panel);
+    Ok(Design { theme, lobby, panel })
 }
 
 pub fn workspace(id: &str) -> ModelResult<Workspace> {
