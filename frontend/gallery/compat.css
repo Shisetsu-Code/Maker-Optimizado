@@ -1,0 +1,52 @@
+
+/* Current semantic model bindings layered over the original layout geometry. */
+body{background:var(--page);color:var(--ink);min-height:100vh}
+#surface{min-height:100vh}
+[data-component]{min-width:0}
+[data-selected=true]{outline:3px solid #ffd36b;outline-offset:3px}
+[data-hidden=true]{opacity:.42;outline:2px dashed #aaa}
+[data-component][style*="--node-ink:"]{color:var(--node-ink)!important}
+[data-component][style*="--node-bg:"]{background:var(--node-bg)!important}
+[data-component][style*="--node-radius:"]{border-radius:var(--node-radius)!important}
+[data-component][style*="--node-padding:"]{padding:var(--node-padding)!important}
+[data-component][style*="--node-size:"] :is(h1,h2,h3,strong,p,button,input){font-size:var(--node-size)!important}
+[data-component][style*="--node-weight:"] :is(h1,h2,h3,strong,p,button){font-weight:var(--node-weight)!important}
+[data-component][style*="--node-fit:"] img{object-fit:var(--node-fit)!important}
+[data-component][style*="--node-position:"] img{object-position:var(--node-position)!important}
+#catalog[style*="--columns:"] .gallery-grid{grid-template-columns:repeat(var(--columns),minmax(0,1fr))}
+.gallery-game h3{font-size:11px;line-height:1.4;margin:9px 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+body[data-profile=violet] .gallery-game h3{line-height:normal;margin:7px 0 4px}
+.gallery-game-open{display:block;color:inherit}
+.gallery-game .gallery-missing{display:grid;place-items:center;aspect-ratio:.84;background:var(--surface);border-radius:9px;color:var(--ink);font-size:11px;text-align:center;padding:8px}
+.gallery-game .gallery-edit-action{display:block;font-size:11px;margin-top:3px;color:var(--accent)}
+.gallery-extra-filters{margin:18px 0;font-size:12px}
+.gallery-extra-filters [data-extra-filters]{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.gallery-extra-filters :is(select,button){background:var(--surface);color:var(--ink);border:1px solid #ffffff24;padding:8px;border-radius:6px;max-width:100%}
+.gallery-banner picture{display:block;width:100%;height:100%}
+.gallery-banner picture img{width:100%;height:100%;object-fit:cover}
+.gallery-banner h1,.editorial-fenarys-hero h1{white-space:pre-line}
+body:not(:is([data-profile=verdant],[data-profile=crimson])) .gallery-cover-copy{position:absolute;inset:0;pointer-events:none;padding:5%;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,#0009,transparent)}
+.gallery-cover-copy button{pointer-events:auto;align-self:start}
+.gallery-custom-section{margin:18px 0;padding:16px;background:var(--surface);border-radius:12px}
+.gallery-custom-section img{max-width:100%;max-height:320px;object-fit:contain}
+.gallery-custom-grid{display:grid;grid-template-columns:repeat(var(--columns,3),minmax(0,1fr));gap:12px}
+.gallery-backdrop{position:fixed;inset:0;pointer-events:none;z-index:-1}
+.gallery-backdrop img{width:100%;height:100%;object-fit:var(--backdrop-fit);object-position:var(--backdrop-position);opacity:var(--backdrop-opacity)}
+body.gallery-background-enabled{background:transparent;isolation:isolate}
+body[data-appearance-font=barlow]{font-family:Barlow,Arial,sans-serif}
+body[data-appearance-font=archivo]{font-family:Archivo,Arial,sans-serif}
+body[data-appearance-font=oswald]{font-family:Oswald,Arial,sans-serif}
+body[data-appearance-font=editorial]{font-family:Georgia,serif}
+body[data-appearance-font=condensed]{font-family:"Arial Narrow",Impact,Arial,sans-serif}
+body[data-appearance-font=system]{font-family:system-ui,sans-serif}
+body[data-global-weight=true] :is(h1,h2,h3,strong,button){font-weight:var(--global-weight)!important}
+body[data-global-radius=true] :is(.gallery-game img,.gallery-banner,.gallery-primary){border-radius:var(--global-radius)!important}
+.quick-links button img{max-width:36px;max-height:36px;object-fit:contain}
+@media(max-width:700px){.gallery-game h3{font-size:10px;margin:7px 0 2px}.gallery-custom-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Preserve the intrinsic dimensions of horizontally scrolling room cards. */
+body[data-profile=jade] .gallery-banner :is(img,picture img){object-fit:cover}
+@media(max-width:800px){body[data-profile=jade] .gallery-banner :is(img,picture img){object-fit:contain}}
+@media(max-width:700px){body:is([data-profile=brass],[data-profile=garnet],[data-profile=onyx]) .gallery-banner picture img{object-fit:contain}}
+@media(max-width:600px){.rooms-room-grid .rooms-room{min-width:180px;flex:0 0 180px}}

@@ -16,10 +16,21 @@ test('Every original graphic is byte-preserved, deduplicated and indexed',{timeo
    if(target.has(entry.id))assert.equal(target.get(entry.id),entry.bytes);
    target.set(entry.id,entry.bytes);
  }
- assert.equal(index.unique,deployed.size);
  assert.equal(provenance.unique_raster,deployed.size);
  assert.equal(provenance.archived_unique,archived.size);
  assert.equal([...deployed.values()].reduce((a,b)=>a+b,0),provenance.raster_bytes);
+ const imported=await readJson('docs/imported-thumbnails.json');
+ assert.equal(imported.version,1);
+ for(const [id,meta] of Object.entries(imported.objects)){
+   assert.match(id,idPattern);
+   assert.ok(!deployed.has(id),'Imported object cannot overwrite original');
+   assert.match(meta.sha256,/^[a-f0-9]{64}$/);
+   assert.match(meta.source_sha256,/^[a-f0-9]{64}$/);
+   const bytes=await readFile(ROOT+'/objects/'+id);
+   assert.equal(createHash('sha256').update(bytes).digest('hex'),meta.sha256);
+   deployed.set(id,meta.bytes);
+ }
+ assert.equal(index.unique,deployed.size);
  assert.deepEqual((await readdir(ROOT+'/objects')).sort(),[...deployed.keys()].sort());
  assert.deepEqual((await readdir('assets/archive')).sort(),[...archived.keys()].sort());
  async function verify(directory,entries){
@@ -47,4 +58,33 @@ test('Every original graphic is byte-preserved, deduplicated and indexed',{timeo
    for(const id of ids)assert.ok(deployed.has(id),preset+': '+id);
  }
  console.log('Verified '+originals.length+' original paths, '+deployed.size+' raster objects, '+archived.size+' archived objects.');
+});
+
+test('All catalogue references resolve to local graphics; missing coverage is explicit',async()=>{
+ const inventory=await readJson('docs/catalog-parity.json');
+ const ids=new Set(await readdir(ROOT+'/objects'));
+ const paths=(await readdir('public/catalogs')).filter(p=>p.endsWith('.json')).sort();
+ assert.deepEqual(paths,Object.keys(inventory.catalogs).map(p=>p+'.json').sort());
+ const missingIdentities=new Set();let missing=0,records=0;
+ for(const path of paths){
+   const catalogue=await readJson('public/catalogs/'+path);
+   const report=inventory.catalogs[catalogue.preset];
+   assert.equal(catalogue.items.length,report.normalized_records,path);
+   assert.equal(catalogue.items.length,report.source_records,path);
+   assert.equal(catalogue.items.filter(i=>i.asset===null).length,report.without_local_image,path);
+   for(const item of catalogue.items){
+     records++;
+     if(item.asset===null){
+       missing++;missingIdentities.add(JSON.stringify([item.provider,item.title]));
+       continue;
+     }
+     assert.match(item.asset,idPattern);
+     assert.ok(ids.has(item.asset),path+': '+item.id+' has a dangling graphic');
+   }
+   for(const banner of catalogue.banners){
+     assert.ok(ids.has(banner.desktop),path+': missing desktop banner');
+     if(banner.mobile!==null)assert.ok(ids.has(banner.mobile),path+': missing mobile banner');
+   }
+ }
+ console.log('Catalogue coverage: '+records+' records, '+missing+' missing graphic references, '+missingIdentities.size+' distinct exact title/provider pairs.');
 });

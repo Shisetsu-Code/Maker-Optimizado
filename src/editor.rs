@@ -4,6 +4,7 @@ use serde_json::{Value, json};
 use std::{collections::VecDeque, rc::Rc};
 
 const HISTORY_LIMIT: usize = 32;
+const HISTORY_BYTES: usize = 48 * 1024 * 1024;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -129,13 +130,17 @@ fn siblings_mut<'a>(nodes: &'a mut Vec<Component>, id: &str) -> Option<&'a mut V
 
 pub struct Editor {
     current: Workspace,
-    past: VecDeque<Workspace>,
-    future: Vec<Workspace>,
+    current_size: usize,
+    past: VecDeque<(Workspace, usize)>,
+    future: Vec<(Workspace, usize)>,
 }
 impl Editor {
     pub fn new() -> Self {
+        let current = presets::workspace("ember").expect("static preset");
+        let current_size = serialized_size(&current).expect("static preset size");
         Self {
-            current: presets::workspace("ember").expect("static preset"),
+            current,
+            current_size,
             past: VecDeque::new(),
             future: Vec::new(),
         }
@@ -146,43 +151,64 @@ impl Editor {
     pub fn active(&self) -> &Design {
         &self.current.designs[&self.current.active]
     }
+    fn trim_history(&mut self) {
+        while self.past.len() + self.future.len() > HISTORY_LIMIT
+            || self
+                .past
+                .iter()
+                .chain(self.future.iter())
+                .map(|(_, size)| size)
+                .sum::<usize>()
+                > HISTORY_BYTES
+        {
+            if self.past.pop_front().is_none() {
+                self.future.remove(0);
+            }
+        }
+    }
     fn commit(&mut self, next: Workspace) -> ModelResult<()> {
         validate(&next)?;
         if next != self.current {
+            let size = serialized_size(&next)?;
             let previous = std::mem::replace(&mut self.current, next);
-            self.past.push_back(previous);
-            if self.past.len() > HISTORY_LIMIT {
-                self.past.pop_front();
-            }
+            let previous_size = std::mem::replace(&mut self.current_size, size);
+            self.past.push_back((previous, previous_size));
             self.future.clear();
+            self.trim_history();
         }
         Ok(())
     }
-    pub(crate) fn replace_workspace(&mut self, workspace: Workspace) -> ModelResult<()> {
+    pub fn replace_workspace(&mut self, workspace: Workspace) -> ModelResult<()> {
         self.commit(workspace)
     }
     pub fn restore(&mut self, input: &str) -> ModelResult<()> {
         self.commit(decode(input)?)
     }
     pub fn load(&mut self, input: &str) -> ModelResult<()> {
-        self.current = decode(input)?;
+        let current = decode(input)?;
+        self.current_size = serialized_size(&current)?;
+        self.current = current;
         self.past.clear();
         self.future.clear();
         Ok(())
     }
     pub fn undo(&mut self) -> bool {
-        if let Some(previous) = self.past.pop_back() {
-            self.future
-                .push(std::mem::replace(&mut self.current, previous));
+        if let Some((previous, size)) = self.past.pop_back() {
+            let old = std::mem::replace(&mut self.current, previous);
+            let old_size = std::mem::replace(&mut self.current_size, size);
+            self.future.push((old, old_size));
+            self.trim_history();
             true
         } else {
             false
         }
     }
     pub fn redo(&mut self) -> bool {
-        if let Some(next) = self.future.pop() {
-            self.past
-                .push_back(std::mem::replace(&mut self.current, next));
+        if let Some((next, size)) = self.future.pop() {
+            let old = std::mem::replace(&mut self.current, next);
+            let old_size = std::mem::replace(&mut self.current_size, size);
+            self.past.push_back((old, old_size));
+            self.trim_history();
             true
         } else {
             false
@@ -374,6 +400,19 @@ mod tests {
         assert_eq!(e.workspace().active, "cobalt");
         assert!(e.redo());
         assert_eq!(e.workspace().active, "ember");
+    }
+    #[test]
+    fn history_has_a_combined_budget() {
+        let mut e = Editor::new();
+        for i in 0..100 {
+            let mut theme = e.active().theme.clone();
+            theme.brand = format!("Marca {i}");
+            e.apply(Action::Theme { theme }).unwrap();
+        }
+        assert_eq!(e.past.len(), HISTORY_LIMIT);
+        while e.undo() {}
+        assert_eq!(e.future.len(), HISTORY_LIMIT);
+        assert_eq!(serialized_size(e.workspace()).unwrap(), e.current_size);
     }
     #[test]
     fn actions_are_atomic() {

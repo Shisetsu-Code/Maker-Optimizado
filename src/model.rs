@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
+    io::{self, Write},
     rc::Rc,
 };
 
@@ -305,25 +306,7 @@ pub fn valid_image(s: &str) -> bool {
     valid_raster(s, MAX_IMAGE_BYTES)
 }
 pub fn valid_raster(s: &str, max: usize) -> bool {
-    if s.len() > max {
-        return false;
-    }
-    let Some(data) = [
-        "data:image/webp;base64,",
-        "data:image/png;base64,",
-        "data:image/jpeg;base64,",
-    ]
-    .iter()
-    .find_map(|prefix| s.strip_prefix(prefix)) else {
-        return false;
-    };
-    let padding = data.bytes().rev().take_while(|b| *b == b'=').count();
-    data.len() >= 4
-        && data.len().is_multiple_of(4)
-        && padding <= 2
-        && data.as_bytes()[..data.len() - padding]
-            .iter()
-            .all(|b| b.is_ascii_alphanumeric() || *b == b'+' || *b == b'/')
+    crate::raster::valid_data_url(s, max)
 }
 
 fn validate_node(
@@ -445,6 +428,42 @@ pub fn validate(workspace: &Workspace) -> ModelResult<()> {
     Ok(())
 }
 
+/// Count the exact JSON encoding without allocating a second project.
+pub fn serialized_size(workspace: &Workspace) -> ModelResult<usize> {
+    struct Budget(usize);
+    impl Write for Budget {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .filter(|n| *n <= MAX_PROJECT_BYTES)
+                .ok_or_else(|| io::Error::other("project exceeds byte budget"))?;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut budget = Budget(0);
+    serde_json::to_writer(&mut budget, workspace)
+        .map_err(|_| "El proyecto supera el límite de 24 MiB.".to_owned())?;
+    Ok(budget.0)
+}
+
+pub fn image_payload_bytes(workspace: &Workspace) -> usize {
+    fn node_bytes(node: &Component) -> usize {
+        node.image.as_ref().map_or(0, |s| s.len())
+            + node.children.iter().map(node_bytes).sum::<usize>()
+    }
+    workspace.appearance.image.as_ref().map_or(0, |s| s.len())
+        + workspace
+            .designs
+            .values()
+            .flat_map(|d| d.lobby.iter().chain(&d.panel))
+            .map(node_bytes)
+            .sum::<usize>()
+}
+
 pub fn decode(input: &str) -> ModelResult<Workspace> {
     if input.len() > MAX_PROJECT_BYTES {
         return Err("Proyecto demasiado grande.".into());
@@ -452,6 +471,7 @@ pub fn decode(input: &str) -> ModelResult<Workspace> {
     let state = serde_json::from_str::<Workspace>(input)
         .map_err(|_| "Formato de proyecto inválido.".to_owned())?;
     validate(&state)?;
+    serialized_size(&state)?;
     Ok(state)
 }
 
@@ -460,7 +480,7 @@ mod tests {
     use super::*;
     #[test]
     fn image_types_and_color() {
-        assert!(valid_image("data:image/png;base64,YWJj"));
+        assert!(!valid_image("data:image/png;base64,YWJj"));
         assert!(!valid_image("data:image/svg+xml;base64,YWJj"));
         assert!(!valid_image("data:image/png;base64,A==="));
         assert!(!valid_image("data:image/png;base64,AA=A"));

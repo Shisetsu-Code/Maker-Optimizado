@@ -254,7 +254,7 @@ const TITLES: [&str; 12] = [
 
 pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
-    let theme = Theme {
+    let mut theme = Theme {
         brand: "Mi casino".into(),
         accent: p.accent.into(),
         button_color: None,
@@ -274,12 +274,34 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "Acceder",
         p.art,
     );
+    // Full-width cover families use their preserved artwork without invented copy.
+    let (hero_title, hero_text, hero_button) = match id {
+        "violet" | "saffron" | "midnight" | "jade" | "garnet" | "brass" | "onyx" => ("", "", ""),
+        "verdant" => ("Donde empieza\ntu próxima aventura.", "", "Explorar juegos"),
+        "crimson" => ("Entra a tu\npróxima partida.", "", "Explorar juegos"),
+        "aurum" => (
+            "Renace\nla emoción.",
+            "Explorá tus juegos favoritos en un mundo de nuevas experiencias.",
+            "Descubrir juegos",
+        ),
+        "amethyst" => ("Las salas más poderosas", "", "Explorar juegos"),
+        "ivory" => (
+            "La suerte tiene\nun nuevo lugar.",
+            "Grandes clásicos, nuevas emociones.\nElegí tu juego y hacé tuya la noche.",
+            "Explorar juegos",
+        ),
+        _ => (
+            "Un nuevo nivel de entretenimiento",
+            "Descubrí un espacio hecho a tu medida. Una experiencia visual que comienza aquí.",
+            "Explorar juegos",
+        ),
+    };
     let hero = section(
         "hero",
         Kind::Hero,
-        "Un nuevo nivel de entretenimiento",
-        "Descubrí un espacio hecho a tu medida. Una experiencia visual que comienza aquí.",
-        "Explorar juegos",
+        hero_title,
+        hero_text,
+        hero_button,
         p.art,
     );
     let mut categories = section("categories", Kind::Categories, "Categorías", "", "", p.art);
@@ -287,7 +309,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "Destacados",
         "Slots",
         "Casino en vivo",
-        "Clásicos",
+        "Crash",
         "Favoritos",
     ]
     .iter()
@@ -358,7 +380,12 @@ pub fn design(id: &str) -> ModelResult<Design> {
         footer.clone(),
     ];
     crate::media::apply_defaults(id, &mut lobby);
-    if p.layout == Layout::Rooms {
+    crate::gallery::defaults(id, &mut theme, &mut lobby);
+    crate::classic_view::defaults(id, &mut lobby);
+    if id == "ivory" {
+        crate::resort::defaults(&mut theme, &mut lobby);
+    }
+    if p.layout == Layout::Rooms && !crate::gallery::has_profile(id) {
         lobby.swap(1, 2);
     }
     let mut metrics = section(
@@ -412,23 +439,25 @@ pub fn design(id: &str) -> ModelResult<Design> {
             index as u8,
         ));
     }
+    let mut panel = vec![
+        header,
+        section(
+            "panel-title",
+            Kind::Text,
+            "Panel de administración",
+            "Previsualización de la interfaz.",
+            "",
+            p.art,
+        ),
+        metrics,
+        activity,
+        footer,
+    ];
+    crate::panel_view::defaults(&mut panel);
     Ok(Design {
         theme,
         lobby,
-        panel: vec![
-            header,
-            section(
-                "panel-title",
-                Kind::Text,
-                "Panel de administración",
-                "Previsualización de la interfaz.",
-                "",
-                p.art,
-            ),
-            metrics,
-            activity,
-            footer,
-        ],
+        panel,
     })
 }
 

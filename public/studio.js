@@ -1,6 +1,7 @@
 import init,{Studio} from './wasm/maker_studio.js';
 import {load,save} from './storage.js';
-import {attachCatalog,catalogInput,catalogClick,exportCatalog} from './catalog.js';
+import {attachCatalog,catalogInput,catalogClick,exportCatalog,snapshotCatalogQuery} from './catalog.js';
+import {attachPanel,panelClick,panelInput,previewMaintenance} from './panel.js';
 
 const $=id=>document.getElementById(id);
 const status=$('status'),frame=$('preview'),themeForm=$('theme'),appearanceForm=$('appearance'),inspector=$('inspector');
@@ -76,16 +77,22 @@ function notice(title,message){
 function attachFrame(){
   const doc=frame.contentDocument;if(!doc?.getElementById('surface'))return;
   const preset=describe().active;
-  if(screen==='lobby')attachCatalog(doc,studio,preset,()=>editing,()=>frame.contentDocument===doc&&screen==='lobby'&&describe().active===preset)
+  // Reject a stale frame load instead of labeling it as the current view.
+  if(doc.documentElement.dataset.preset!==preset||doc.documentElement.dataset.screen!==screen||doc.documentElement.dataset.renderToken!==String(paintToken))return;
+  if(screen==='panel')attachPanel(doc,studio,()=>editing);
+  const maintenance=screen==='lobby'&&previewMaintenance(doc,studio,editing);
+  if(screen==='lobby'&&!maintenance)attachCatalog(doc,studio,preset,()=>editing,()=>frame.contentDocument===doc&&screen==='lobby'&&describe().active===preset&&doc.documentElement.dataset.renderToken===String(paintToken))
     .then(()=>highlight()).catch(error=>say(error.message??String(error),true));
   doc.addEventListener('click',event=>{
+    if(screen==='panel'&&event.target.closest?.('[data-panel-section]')&&panelClick(doc,event.target,notice)){event.preventDefault();return;}
     const node=event.target.closest?.('[data-component]');
     if(editing&&node){event.preventDefault();event.stopPropagation();choose(node.dataset.component);return;}
-    if(catalogClick(doc,event.target,notice)){event.preventDefault();return;}
-    if(event.target.closest?.('[data-demo]')){event.preventDefault();notice('Demostración','Esta opción es una demostración. No se crean cuentas ni se realizan apuestas.');}
+    if(panelClick(doc,event.target,notice)||catalogClick(doc,event.target,notice)){event.preventDefault();return;}
+    if(event.target.closest?.('[data-demo]')){event.preventDefault();notice(event.target.closest('[data-demo]').textContent.trim()||'Demostración','Esta opción es una demostración. No se crean cuentas ni se realizan apuestas.');}
   },true);
-  doc.addEventListener('change',event=>{if(event.target.matches?.('[data-catalog-filter]'))catalogInput(doc,event.target);});
+  doc.addEventListener('change',event=>{if(event.target.matches?.('[data-panel-filter]'))panelInput(doc,event.target,notice);else if(event.target.matches?.('[data-catalog-filter]'))catalogInput(doc,event.target);});
   doc.addEventListener('input',event=>{
+    if(event.target.matches?.('[data-panel-search]')&&panelInput(doc,event.target,notice))return;
     if(event.target.matches?.('[data-search]')&&catalogInput(doc,event.target))return;
     if(!event.target.matches?.('[data-search]'))return;
     const term=event.target.value.trim().toLocaleLowerCase('es');
@@ -99,7 +106,8 @@ function refresh(){
   if(!studio)return;
   const token=++paintToken;
   paintControls();
-  const html=studio.html(screen,editing);
+  const preset=describe().active;
+  const html=studio.html(screen,editing).replace('<html lang="es">','<html lang="es" data-preset="'+preset+'" data-screen="'+screen+'" data-render-token="'+token+'" data-editing="'+String(editing)+'">');
   if(token===paintToken)frame.srcdoc=html;
 }
 function readTheme(){const f=Object.fromEntries(new FormData(themeForm));return{...f,radius:Number(f.radius),button_color:f.button_color||null,glow_color:f.glow_color||null};}
@@ -107,6 +115,8 @@ function readPatch(){const f=new FormData(inspector),number=name=>f.get(name)===
 function randomId(){return 'component-'+crypto.randomUUID();}
 async function imageData(file,limit=600000){
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8*1024*1024)throw Error('Elegí JPG, PNG o WebP de hasta 8 MB.');
+  // Validate declared format and pixel dimensions before allocating a decoder.
+  studio.check_upload(new Uint8Array(await file.arrayBuffer()),file.type);
   const bitmap=await createImageBitmap(file);
   try{
     if(bitmap.width*bitmap.height>40_000_000)throw Error('La imagen tiene demasiados píxeles.');
@@ -189,9 +199,16 @@ async function readAsset(id,budget){
   return {url,size};
 }
 async function standaloneHtml(view){
-  // Work exclusively on trusted Rust-rendered HTML; never interpret imported text as markup.
-  const doc=new DOMParser().parseFromString(studio.html(view,false),'text/html');
-  if(view==='lobby')exportCatalog(doc,studio,describe().active);
+  // Freeze project and interaction query before any asynchronous catalogue load.
+  const frozen=new Studio();
+  let doc;
+  try{
+    frozen.load(studio.snapshot());
+    const preset=JSON.parse(frozen.describe(view,'')).active;
+    const query=snapshotCatalogQuery(preset);
+    doc=new DOMParser().parseFromString(frozen.html(view,false),'text/html');
+    if(view==='lobby')await exportCatalog(doc,frozen,preset,query);
+  }finally{frozen.free();}
   const images=new Map();
   for(const img of doc.querySelectorAll('img[src]')){
     const src=img.getAttribute('src');
@@ -217,7 +234,7 @@ async function standaloneHtml(view){
       style.textContent=style.textContent.replaceAll(url,encoded);
     }
     if(urls.length){
-      const notices=await Promise.all(['barlow','archivo','oswald'].map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
+      const notices=await Promise.all(['barlow','archivo','oswald','figtree'].map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
       const license=doc.createElement('pre');license.hidden=true;license.id='font-license-notices';license.textContent=notices.join('\n\n');doc.body.append(license);
     }
   }

@@ -46,6 +46,7 @@ pub struct Query {
     pub provider: String,
     pub category: String,
     pub group: String,
+    pub group_order: bool,
     pub favorites_only: bool,
     pub recent_only: bool,
     pub favorites: Vec<String>,
@@ -150,8 +151,15 @@ impl Catalog {
     }
     pub fn metadata(&self) -> serde_json::Value {
         let providers: BTreeSet<_> = self.items.iter().map(|i| &i.provider).collect();
+        let mut seen = BTreeSet::new();
+        let provider_order: Vec<_> = self
+            .items
+            .iter()
+            .map(|i| &i.provider)
+            .filter(|p| seen.insert(*p))
+            .collect();
         let categories: BTreeSet<_> = self.items.iter().map(|i| &i.category).collect();
-        serde_json::json!({"total":self.items.len(),"providers":providers,"categories":categories,
+        serde_json::json!({"total":self.items.len(),"providers":providers,"provider_order":provider_order,"categories":categories,
             "groups":self.groups.iter().map(|g|serde_json::json!({"id":g.id,"title":g.title})).collect::<Vec<_>>(),"banners":self.banners})
     }
     pub fn page(&self, design: &Design, query: &Query) -> Page {
@@ -166,11 +174,8 @@ impl Catalog {
         let overrides: BTreeMap<_, _> = nodes.iter().map(|n| (n.id.as_str(), n)).collect();
         let favorites: BTreeSet<_> = query.favorites.iter().map(String::as_str).collect();
         let recent: BTreeSet<_> = query.recent.iter().map(String::as_str).collect();
-        let group = self
-            .groups
-            .iter()
-            .find(|g| g.id == query.group)
-            .map(|g| g.items.iter().map(String::as_str).collect::<BTreeSet<_>>());
+        let collection = self.groups.iter().find(|g| g.id == query.group);
+        let group = collection.map(|g| g.items.iter().map(String::as_str).collect::<BTreeSet<_>>());
         let search = query.search.trim().to_lowercase();
         let mut rows = Vec::new();
         let mut consumed = BTreeSet::new();
@@ -183,8 +188,9 @@ impl Catalog {
             if let Some(n) = effective {
                 consumed.insert(n.id.as_str());
             }
-            let n = effective.cloned().unwrap_or_else(|| item.component());
-            if (!query.preview && n.hidden)
+            let title = effective.map_or(item.title.as_str(), |n| n.title.as_str());
+            let detail = effective.map_or(item.provider.as_str(), |n| n.text.as_str());
+            if (!query.preview && effective.is_some_and(|n| n.hidden))
                 || (query.favorites_only && !favorites.contains(item.id.as_str()))
                 || (query.recent_only && !recent.contains(item.id.as_str()))
                 || (!query.provider.is_empty() && query.provider != item.provider)
@@ -192,13 +198,27 @@ impl Catalog {
                 || (!query.group.is_empty()
                     && !group.as_ref().is_some_and(|g| g.contains(item.id.as_str())))
                 || (!search.is_empty()
-                    && !format!("{} {} {} {}", n.title, n.text, item.title, item.provider)
+                    && !format!("{} {} {} {}", title, detail, item.title, item.provider)
                         .to_lowercase()
                         .contains(&search))
             {
                 continue;
             }
-            rows.push((item, n));
+            rows.push((item, effective));
+        }
+        if query.group_order {
+            if let Some(collection) = collection {
+                let rank: BTreeMap<_, _> = collection
+                    .items
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .map(|(index, id)| (id.as_str(), index))
+                    .collect();
+                rows.sort_by_key(|(item, _)| {
+                    rank.get(item.id.as_str()).copied().unwrap_or(usize::MAX)
+                });
+            }
         }
         if query.top {
             rows.truncate(12);
@@ -222,8 +242,6 @@ impl Catalog {
         let custom: Vec<_> = if query.provider.is_empty()
             && query.category.is_empty()
             && query.group.is_empty()
-            && !query.favorites_only
-            && !query.recent_only
             && !query.top
         {
             nodes
@@ -231,6 +249,8 @@ impl Catalog {
                 .filter(|n| {
                     !consumed.contains(n.id.as_str())
                         && !is_placeholder(n)
+                        && (!query.favorites_only || favorites.contains(n.id.as_str()))
+                        && (!query.recent_only || recent.contains(n.id.as_str()))
                         && (query.preview || !n.hidden)
                         && (search.is_empty()
                             || format!("{} {}", n.title, n.text)
@@ -244,17 +264,54 @@ impl Catalog {
         let total = rows.len() + custom.len();
         let offset = query.offset.min(total);
         let end = (offset + PAGE_SIZE).min(total);
+        let mut order: Vec<usize> = (0..total).collect();
+        if query.recent_only {
+            order.sort_by_key(|index| {
+                let id = if let Some((item, _)) = rows.get(*index) {
+                    &item.id
+                } else {
+                    &custom[*index - rows.len()].id
+                };
+                query
+                    .recent
+                    .iter()
+                    .position(|s| s == id)
+                    .unwrap_or(usize::MAX)
+            });
+        }
+        let render_card = if crate::resort::enabled(&self.preset, design) {
+            crate::resort::card
+        } else if crate::gallery::enabled(&self.preset, design)
+            || crate::classic_view::enabled(&self.preset, design)
+        {
+            crate::gallery::card
+        } else {
+            crate::render::catalog_card
+        };
         let mut html = String::new();
-        for index in offset..end {
-            if let Some((item, n)) = rows.get(index) {
-                html.push_str(&crate::render::catalog_card(
-                    n,
+        for &index in &order[offset..end] {
+            if let Some((item, effective)) = rows.get(index) {
+                let fallback;
+                let node = match effective {
+                    Some(node) => *node,
+                    None => {
+                        fallback = item.component();
+                        &fallback
+                    }
+                };
+                html.push_str(&render_card(
+                    node,
                     &item.id,
                     favorites.contains(item.id.as_str()),
                     query.preview,
                 ));
             } else if let Some(n) = custom.get(index - rows.len()) {
-                html.push_str(&crate::render::catalog_card(n, &n.id, false, query.preview));
+                html.push_str(&render_card(
+                    n,
+                    &n.id,
+                    favorites.contains(n.id.as_str()),
+                    query.preview,
+                ));
             }
         }
         Page {
@@ -273,6 +330,22 @@ mod tests {
             {"id":"item-one","title":"Golden Test","provider":"One","category":"slots","asset":null},
             {"id":"item-two","title":"Live Table","provider":"Two","category":"live","asset":null}
         ],"groups":[{"id":"collection-one","title":"Group","items":["item-two"]}],"banners":[]}).to_string(),"ember").unwrap()
+    }
+    #[test]
+    fn collection_preview_preserves_editorial_order() {
+        let mut catalog = sample();
+        catalog.groups[0].items = vec!["item-two".into(), "item-one".into()];
+        let design = crate::presets::design("ember").unwrap();
+        let page = catalog.page(
+            &design,
+            &Query {
+                group: "collection-one".into(),
+                group_order: true,
+                ..Default::default()
+            },
+        );
+        assert_eq!(page.total, 2);
+        assert!(page.html.find("Live Table").unwrap() < page.html.find("Golden Test").unwrap());
     }
     #[test]
     fn composed_filters() {
@@ -299,6 +372,38 @@ mod tests {
         );
         assert_eq!(page.total, 1);
         assert!(page.html.contains("aria-pressed=\"true\""));
+    }
+    #[test]
+    fn custom_cards_participate_in_favorites_and_recents() {
+        let catalog = sample();
+        let mut design = crate::presets::design("ember").unwrap();
+        design
+            .lobby
+            .iter_mut()
+            .find(|node| node.id == "catalog")
+            .unwrap()
+            .children
+            .push(Component::new("custom-card", Kind::Tile, "Custom"));
+        let page = catalog.page(
+            &design,
+            &Query {
+                favorites_only: true,
+                favorites: vec!["custom-card".into()],
+                ..Default::default()
+            },
+        );
+        assert_eq!(page.total, 1);
+        assert!(page.html.contains("aria-pressed=\"true\""));
+        let page = catalog.page(
+            &design,
+            &Query {
+                recent_only: true,
+                recent: vec!["custom-card".into(), "item-one".into()],
+                ..Default::default()
+            },
+        );
+        assert_eq!(page.total, 2);
+        assert!(page.html.find("Custom").unwrap() < page.html.find("Golden Test").unwrap());
     }
     #[test]
     fn reject_untrusted_asset() {

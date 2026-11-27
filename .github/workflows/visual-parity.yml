@@ -1,0 +1,81 @@
+name: Visual parity audit
+on:
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: Fail unless all 68 reference comparisons pass
+        type: boolean
+        default: false
+  push:
+    branches: [rebuild/clean]
+    paths:
+      - '.github/workflows/visual-parity.yml'
+      - 'tests/visual-audit.mjs'
+      - 'src/**'
+      - 'frontend/**'
+      - 'public/*.js'
+      - 'public/*.css'
+      - 'public/index.html'
+      - 'public/catalogs/**'
+      - 'assets/preset-artwork.json'
+      - 'assets/gallery-layouts.json'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: Shisetsu-Code/Maker
+          ref: 9bc456f6ed1b4344a0cf4fb2e84ca4791061ba10
+          path: reference
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: rustup show
+      - name: Install locked tools
+        run: |
+          cargo install worker-build --version 0.9.0 --locked
+          cargo install wasm-bindgen-cli --version 0.2.130 --locked
+          npm ci
+          npx --no-install playwright install --with-deps chromium
+      - name: Compare pinned reference with new engine
+        env:
+          DEMO_ORIGIN: http://127.0.0.1:8787
+          LEGACY_ORIGIN: http://127.0.0.1:8788
+          WRANGLER_SEND_METRICS: 'false'
+          REQUIRE_VISUAL_PARITY: ${{ inputs.strict && '1' || '0' }}
+        run: |
+          mkdir -p work
+          node tests/reference-server.mjs reference/public >work/reference.log 2>&1 &
+          reference_pid=$!
+          npm run dev >work/worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$reference_pid" "$worker_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 150); do
+            if curl -fsS "$DEMO_ORIGIN/api/v1/health" && curl -fsS "$LEGACY_ORIGIN/muestra/resort.html" >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS "$DEMO_ORIGIN/api/v1/health"
+          curl -fsS "$LEGACY_ORIGIN/muestra/resort.html" >/dev/null
+          node tests/visual-audit.mjs
+      - name: Preserve visual comparison evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: visual-parity
+          path: |
+            work/visual-parity/
+            work/reference.log
+            work/worker.log
+          retention-days: 30

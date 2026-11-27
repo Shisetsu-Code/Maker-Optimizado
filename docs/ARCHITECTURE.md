@@ -29,3 +29,21 @@ The media-integrity test hashes every restored object against its original Git b
 Static normalized catalogues contain the full recovered records where structured source data is available. Rust validates and queries immutable records; only the edited cards are materialized into the project document. Existing seed IDs are mapped without rewriting user changes. Catalog interaction state is session-local; the browser bridge creates only filter controls, attaches event handlers and inserts typed Rust-generated card markup. The complete catalogue is not cloned into undo history or IndexedDB.
 
 Appearance is a shared, versioned workspace setting; all CSS is emitted from validated enums, bounds and colors. Original local fonts are served with their OFL notices. Standalone HTML exports embed the referenced fonts and licenses. Component styles remain sparse and typed; no arbitrary CSS is accepted.
+
+The administrative preview is a separate typed Rust state machine (`demo_panel.rs`) shared across presets, with synthetic fixtures, bounded actions and escaped output. The browser adapter (`panel.js`) only attaches events and replaces Rust-rendered preview markup. No server, payment, authentication, real player accounts or game engine is connected. The maintenance switch affects only the local preview. The visual audit is isolated from deployment and uses the immutable original reference.
+
+### Native gallery renderer
+
+`src/gallery.rs` uses a typed profile and exact authorized asset IDs in
+`assets/gallery-layouts.json`. It renders the twelve catalogue-based
+compositions directly from the same Rust model. The new browser bridge attaches
+semantic controls and collection summaries; the old JavaScript bundles are not
+served. Normalized CSS under `frontend/gallery/` is static and has no remote
+resource references. User text is escaped and style variables come from
+validated model values.
+
+### Shared panel presentation
+`src/panel_view.rs` renders the shared administrative dashboard using
+validated model components and a synthetic fixture. It does not contact
+monitoring or payment endpoints. `demo_panel.rs` owns section state and
+local actions; the browser adapter only manages navigation and visibility.

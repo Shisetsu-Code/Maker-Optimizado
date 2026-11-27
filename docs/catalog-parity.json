@@ -125,8 +125,8 @@
       "source_records": 5007,
       "normalized_records": 5007,
       "method": "literal-provider-groups",
-      "without_local_image": 3065,
-      "groups": 0,
+      "without_local_image": 3060,
+      "groups": 1,
       "banners": 1,
       "mapped_editable_seeds": 0,
       "cross_collection_matches": 1053
@@ -135,8 +135,8 @@
       "source_records": 5007,
       "normalized_records": 5007,
       "method": "literal-provider-groups",
-      "without_local_image": 3065,
-      "groups": 0,
+      "without_local_image": 3060,
+      "groups": 1,
       "banners": 1,
       "mapped_editable_seeds": 0,
       "cross_collection_matches": 1053
