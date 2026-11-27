@@ -439,21 +439,25 @@ pub fn design(id: &str) -> ModelResult<Design> {
         ));
     }
     let mut panel = vec![
-            header,
-            section(
-                "panel-title",
-                Kind::Text,
-                "Panel de administración",
-                "Previsualización de la interfaz.",
-                "",
-                p.art,
-            ),
-            metrics,
-            activity,
-            footer,
-        ];
+        header,
+        section(
+            "panel-title",
+            Kind::Text,
+            "Panel de administración",
+            "Previsualización de la interfaz.",
+            "",
+            p.art,
+        ),
+        metrics,
+        activity,
+        footer,
+    ];
     crate::panel_view::defaults(&mut panel);
-    Ok(Design { theme, lobby, panel })
+    Ok(Design {
+        theme,
+        lobby,
+        panel,
+    })
 }
 
 pub fn workspace(id: &str) -> ModelResult<Workspace> {

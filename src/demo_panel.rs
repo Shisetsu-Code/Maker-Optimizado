@@ -422,7 +422,7 @@ impl Panel {
     pub fn content(&self) -> String {
         let mut out = String::new();
         if self.section != Section::Overview {
-    write!(out,"<div class=\"panel-content-heading\"><div><span class=\"eyebrow\">VISTA LOCAL · DEMO</span><h2>{}</h2><p>{}</p></div><span class=\"panel-status\">Datos ficticios</span></div>",self.section.label(),self.section.summary()).unwrap();
+            write!(out,"<div class=\"panel-content-heading\"><div><span class=\"eyebrow\">VISTA LOCAL · DEMO</span><h2>{}</h2><p>{}</p></div><span class=\"panel-status\">Datos ficticios</span></div>",self.section.label(),self.section.summary()).unwrap();
         }
         match self.section {
             Section::Overview => {
