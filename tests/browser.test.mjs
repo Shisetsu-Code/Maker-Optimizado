@@ -76,7 +76,7 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   const card=page.locator('#media-grid .media-card').first();
   const src=await card.locator('img').getAttribute('src');
   await card.click();
-  await preview.locator('#hero img[src="'+src+'"]').waitFor();
+  await preview.locator('#hero img[src="'+src+'"]:visible').first().waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   // Test that header graphic controls actually render the selected image.
   await page.locator('#outline [data-id=header]').click();
@@ -85,7 +85,7 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   await page.locator('#media-collection').selectOption('cinematic');
   await page.locator('#media-page').filter({hasText:'28 imágenes'}).waitFor();
   await page.locator('#media-grid .media-card').first().click();
-  await preview.locator('#header .brand-art img').waitFor();
+  await preview.locator('#header .brand-art img:visible').first().waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   const pending=page.waitForEvent('download');
   await page.locator('#export-html').click();
@@ -96,8 +96,8 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   await context.setOffline(true);
   const offline=await context.newPage();
   await offline.setContent(html);
-  assert.ok(await offline.locator('#hero img').evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
-  assert.ok(await offline.locator('#header img').evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
+  assert.ok(await offline.locator('#hero img:visible').first().evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
+  assert.ok(await offline.locator('#header img:visible').first().evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
   assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
  }finally{await browser.close();}
 });

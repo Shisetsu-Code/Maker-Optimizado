@@ -77,13 +77,38 @@ def compile_one(p, mobile, d):
     for node in [h,hero]:sanitize(node)
     for img in h.select('img'):
         if 'logo' in str(img.get('class','')).lower() or img.get('alt','').lower()=='rushybet':img['data-brand-logo']=''
+    values={}
+    def bind(key,default):
+        values[key]=str(default)
+        return '{{'+key+'}}'
+    for mode,root in [('header',h),('hero',hero)]:
+        btns=[b for b in root.select('button') if b.get_text(strip=True)]
+        if btns:
+            b=btns[-1];leaf=next((t for t in reversed(b.find_all(string=True)) if t.strip()),None)
+            if leaf:leaf.replace_with(bind(mode+'_button',leaf))
+        # Replace text nodes in place so edits retain the original type and layout.
+        leaves=[t for t in root.find_all(string=True) if t.strip() and '{{' not in t and t.parent.name not in ('svg','path','style')]
+        if leaves:
+            title=next((t for t in leaves if len(t.strip())>4),leaves[0])
+            title.replace_with(bind(mode+'_title',title))
+            detail=next((t for t in leaves if t.parent and t is not title and len(t.strip())>5),None)
+            if detail:detail.replace_with(bind(mode+'_text',detail))
+        picture=root.select_one('img[data-brand-logo]') if mode=='header' else root.select_one('img[src]')
+        if picture:
+            fallback=picture.get('src') or '/media/objects/c7d60c43ba450618f022de96049c769a2cf81e87.webp'
+            picture['src']=bind(mode+'_src',fallback)
+            if mode=='header':
+                span=s.new_tag('span',attrs={'class':'brand-art','style':'display:contents'})
+                picture.wrap(span)
+                span.insert_after('{{brand_text}}')
+        elif mode=='hero':root.append('{{extra_image}}')
     sheet=[]
     for entry in d['styles']:
         href=entry['href'] or '';v=entry['css'] or ''
         if href.endswith('/piel-lobby.css'):v=(public/'muestra/piel-lobby.css').read_text(encoding='utf8')
         if not v or 'data-maker-select' in v:continue
         sheet.append(css(re.sub(r'/\*[\s\S]*?\*/','',v)))
-    return dict(header=str(h),hero=str(hero),css='\n'.join(dict.fromkeys(sheet)))
+    return dict(header=str(h),hero=str(hero),values=values,css='\n'.join(dict.fromkeys(sheet)))
 out={}
 for preset in ['ember','cobalt','flare','coal']:
     variants={}

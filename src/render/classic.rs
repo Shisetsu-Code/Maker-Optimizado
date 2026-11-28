@@ -1,4 +1,4 @@
-use super::{escape, node_style, render_node};
+use super::{artwork, escape, node_style};
 use crate::model::{Component, Design, Kind};
 use serde::Deserialize;
 use std::{collections::BTreeMap, fmt::Write, sync::OnceLock};
@@ -8,6 +8,7 @@ struct Variant {
     header: String,
     hero: String,
     css: String,
+    values: BTreeMap<String, String>,
 }
 #[derive(Deserialize)]
 pub(super) struct Classic {
@@ -56,17 +57,6 @@ impl Classic {
         let Some(base) = defaults.lobby.iter().find(|n| n.id == node.id) else {
             return false;
         };
-        // Keep authored replacements and previous projects editable through the normal component renderer.
-        if node.title != base.title
-            || node.text != base.text
-            || node.button != base.button
-            || node.asset != base.asset
-            || node.image.is_some()
-            || (header && design.theme.brand != defaults.theme.brand)
-        {
-            render_node(out, node, &design.theme, preview);
-            return true;
-        }
         write!(
             out,
             "<div id=\"{}\" data-component=\"{}\" data-classic-section style=\"{}\" {}>",
@@ -81,12 +71,49 @@ impl Classic {
         )
         .unwrap();
         for (mode, v) in [("desktop", &self.desktop), ("mobile", &self.mobile)] {
-            write!(
-                out,
-                "<div class=\"classic-{mode}\">{}</div>",
-                if header { &v.header } else { &v.hero }
-            )
-            .unwrap();
+            write!(out, "<div class=\"classic-{mode}\">").unwrap();
+            let mut rest = if header {
+                v.header.as_str()
+            } else {
+                v.hero.as_str()
+            };
+            while let Some((before, tail)) = rest.split_once("{{") {
+                out.push_str(before);
+                let (key, after) = tail.split_once("}}").expect("closed classic field");
+                let original = v.values.get(key).map(String::as_str).unwrap_or("");
+                let (_, field) = key.split_once('_').unwrap_or(("", key));
+                match (key, field) {
+                    ("extra_image", _) if node.image.is_some() || node.asset != base.asset => {
+                        out.push_str(&artwork(node))
+                    }
+                    ("brand_text", _) if design.theme.brand != defaults.theme.brand => {
+                        out.push_str(&escape(&design.theme.brand))
+                    }
+                    ("brand_text" | "extra_image", _) => {}
+                    (_, "src") if node.image.is_some() => {
+                        out.push_str(&escape(node.image.as_deref().unwrap_or("")))
+                    }
+                    (_, "src") if node.asset != base.asset => {
+                        if let Some(asset) = &node.asset {
+                            write!(out, "/media/objects/{}", escape(asset)).unwrap();
+                        }
+                    }
+                    (_, "title") if node.title != base.title => write!(
+                        out,
+                        "<span role=\"heading\" aria-level=\"1\">{}</span>",
+                        escape(&node.title)
+                    )
+                    .unwrap(),
+                    (_, "text") if node.text != base.text => out.push_str(&escape(&node.text)),
+                    (_, "button") if node.button != base.button => {
+                        out.push_str(&escape(&node.button))
+                    }
+                    _ => out.push_str(&escape(original)),
+                }
+                rest = after;
+            }
+            out.push_str(rest);
+            out.push_str("</div>");
         }
         out.push_str("</div>");
         true
