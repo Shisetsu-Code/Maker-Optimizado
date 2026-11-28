@@ -253,21 +253,22 @@ const TITLES: [&str; 12] = [
 ];
 
 pub fn catalog_brand(id: &str) -> Option<&'static str> {
-    Some(match id {
-        "violet" => "Tu casino",
-        "saffron" => "Cobraya",
-        "midnight" => "Lunabet",
-        "amethyst" => "Multisala",
-        "jade" => "Pinaplay",
-        "rose" => "Celuapuestas40",
-        "garnet" => "Bet30",
-        "brass" => "CasinoTower30",
-        "aurum" => "Fenarys",
-        "verdant" => "Fortuna SJK",
-        "crimson" => "RavenBet",
-        "onyx" => "LuckRex",
-        _ => return None,
-    })
+    matches!(
+        id,
+        "violet"
+            | "saffron"
+            | "midnight"
+            | "amethyst"
+            | "jade"
+            | "rose"
+            | "garnet"
+            | "brass"
+            | "aurum"
+            | "verdant"
+            | "crimson"
+            | "onyx"
+    )
+    .then_some("Tu casino")
 }
 fn restore_lobby_sections(preset: &str, nodes: &mut [Component]) {
     let hero = nodes

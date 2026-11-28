@@ -96,13 +96,40 @@ function populate(reset=true){
   resortFeatured(doc,state);
   group.dataset.catalogReady='true';
 }
-function nativeControls(doc,meta,state){
+function collectionMenu(doc,root,groups,studio){
+  if(root.id==='pp-collections'){
+    root.replaceChildren(...groups.slice(0,6).map((group,index)=>{
+      const section=doc.createElement('section');section.className='pp-collection';
+      const header=doc.createElement('div');header.className='pp-row-heading';
+      const title=doc.createElement('h2');title.textContent=group.title;
+      header.append(title,button(doc,'Ver todos →','catalogGroup',group.id));
+      const row=doc.createElement('div');row.className='pp-row';
+      const page=JSON.parse(studio.catalog_page(JSON.stringify({group:group.id,source_only:Boolean(endpoint)})));
+      const fragment=doc.createElement('template');fragment.innerHTML=page.html;
+      for(const [i,card] of [...fragment.content.querySelectorAll('[data-catalog-card]')].slice(0,12).entries()){
+        const name=card.querySelector('h3').textContent,img=card.querySelector('img');
+        const tile=button(doc,'','game',card.dataset.catalogCard);tile.className='pp-game';tile.setAttribute('aria-label','Ver '+name);
+        const label=doc.createElement('span');label.textContent=name;if(img)tile.append(img);tile.append(label);
+        if(index===0){const rank=doc.createElement('b');rank.textContent=String(i+1).padStart(2,'0');tile.append(rank);}row.append(tile);
+      }
+      section.append(header,row);return section;
+    }));return;
+  }
+  root.replaceChildren(...groups.map(group=>{
+    const b=button(doc,group.title,'catalogGroup',group.id);
+    if(root.id==='ce-categories'){
+      const icon=doc.createElement('span'),name=doc.createElement('span');name.textContent=group.title;
+      icon.textContent=/vivo|live/i.test(group.title)?'◉':/fruta|moneda/i.test(group.title)?'◆':/crash/i.test(group.title)?'↗':'♠';b.replaceChildren(icon,name);
+    }return b;
+  }));
+}
+function nativeControls(doc,meta,state,studio){
   const search=doc.querySelector('[data-search]');
   if(search)search.value=state.search;
   const providers=doc.querySelector('[data-providers]');
-  providers?.replaceChildren(...meta.providers.map(provider=>button(doc,provider,'catalogProvider',provider)));
+  providers?.replaceChildren(...(meta.featured_providers??meta.providers).map(provider=>button(doc,provider,'catalogProvider',provider)));
   const groups=doc.querySelector('[data-collections]');
-  groups?.replaceChildren(...meta.groups.map(group=>button(doc,group.title,'catalogGroup',group.id)));
+  if(groups)collectionMenu(doc,groups,meta.groups,studio);
   const sidebar=doc.querySelector('.lobby-sidebar');
   // All three filter dimensions are available even on themes with a short toolbar.
   if(sidebar){
@@ -140,9 +167,9 @@ function nativeBanner(doc,meta,state){
   };
   draw();return {draw};
 }
-function controls(doc,meta,state){
+function controls(doc,meta,state,studio){
   const group=doc.querySelector('#catalog');if(!group)return;
-  if(group.hasAttribute('data-native-section')){nativeControls(doc,meta,state);return;}
+  if(group.hasAttribute('data-native-section')){nativeControls(doc,meta,state,studio);return;}
   const root=doc.createElement('div');root.className='catalog-controls';
   root.append(select(doc,'provider','Todos los proveedores',meta.providers,state.provider),
     select(doc,'category','Todas las categorías',meta.categories,state.category),
@@ -201,7 +228,7 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!meta.categories.includes(state.category))state.category='';
   if(!meta.groups.some(group=>group.id===state.group))state.group='';
   current={doc,studio,preset,state,editing,banner:null};
-  controls(doc,meta,state);populate();updateMode(doc,state);
+  controls(doc,meta,state,studio);populate();updateMode(doc,state);
   if(doc.querySelector('[data-original-layout]'))current.banner=nativeBanner(doc,meta,state);
   else buildBanner(doc,meta,state);
 }
@@ -254,7 +281,7 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   resortFeatured(doc,state);
   if(doc.querySelector('[data-original-layout]')){
     const meta=JSON.parse(studio.catalog_metadata());
-    nativeControls(doc,meta,state);nativeBanner(doc,meta,state);updateMode(doc,state);
+    nativeControls(doc,meta,state,studio);nativeBanner(doc,meta,state);updateMode(doc,state);
     doc.querySelector('[data-catalog-count]').textContent=page.total+' juegos';
     doc.querySelector('[data-catalog-empty]').hidden=page.total!==0;
     doc.querySelector('[data-catalog-more]').hidden=true;

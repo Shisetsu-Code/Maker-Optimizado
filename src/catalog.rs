@@ -164,11 +164,14 @@ impl Catalog {
     pub fn metadata(&self, design: &Design) -> serde_json::Value {
         let mut ids = BTreeSet::new();
         let mut providers = BTreeSet::new();
+        let mut featured_providers = Vec::new();
         let mut categories = BTreeSet::new();
         for item in &self.items {
             if item.selected(design) {
                 ids.insert(item.id.as_str());
-                providers.insert(&item.provider);
+                if providers.insert(&item.provider) && featured_providers.len() < 12 {
+                    featured_providers.push(&item.provider);
+                }
                 categories.insert(&item.category);
             }
         }
@@ -178,7 +181,7 @@ impl Catalog {
             .filter(|group| group.items.iter().any(|id| ids.contains(id.as_str())))
             .map(|group| serde_json::json!({"id":group.id,"title":group.title}))
             .collect::<Vec<_>>();
-        serde_json::json!({"total":ids.len(),"providers":providers,"categories":categories,"groups":groups,"banners":self.banners})
+        serde_json::json!({"total":ids.len(),"providers":providers,"featured_providers":featured_providers,"categories":categories,"groups":groups,"banners":self.banners})
     }
     pub fn page(&self, design: &Design, query: &Query) -> Page {
         let Some(nodes) = Self::nodes(design) else {

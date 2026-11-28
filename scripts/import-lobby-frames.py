@@ -112,6 +112,10 @@ for preset,slug in names.items():
     slot(group.select_one('#bp-title'),'title')
     slot(group.select_one('#bp-games'),'seeds')
     result['catalog']=html(main.select_one('.ce-heading'))+html(menu)+html(strip)+html(filters)+html(group)
+    if preset=='rose':
+        prefix=html(main.select_one('.ce-heading'))+html(menu)
+        result['categories']=prefix+result['categories']
+        result['catalog']=result['catalog'].removeprefix(prefix)
     foot=main.footer
     slot(foot.select_one('strong'),'title');slot(foot.select_one('p'),'text')
     result['footer']=html(foot)+'{{extra}}'
