@@ -191,7 +191,10 @@ async function readAsset(id,budget){
 async function standaloneHtml(view){
   // Work exclusively on trusted Rust-rendered HTML; never interpret imported text as markup.
   const doc=new DOMParser().parseFromString(studio.html(view,false),'text/html');
-  if(view==='lobby')exportCatalog(doc,studio,describe().active);
+  if(view==='lobby'){
+    const token=paintToken;
+    await exportCatalog(doc,studio,describe().active,()=>token===paintToken);
+  }
   const images=new Map();
   for(const img of doc.querySelectorAll('img[src]')){
     const src=img.getAttribute('src');

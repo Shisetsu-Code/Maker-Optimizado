@@ -124,3 +124,29 @@ test('full catalogue interactions and sparse editing',{timeout:120000},async()=>
   await page.locator('#exit-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),null);
  }finally{await browser.close();}
 });
+
+test('export waits for session catalogue and respects an empty selection',async()=>{
+ const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage({acceptDownloads:true});
+  const actual=await readFile('public/index.html','utf8');
+  await page.route(origin+'/',route=>route.fulfill({contentType:'text/html',body:actual.replace('name="maker-catalog-endpoint" content=""','name="maker-catalog-endpoint" content="/api/account/catalog"')}));
+  let release;
+  const pending=new Promise(resolve=>{release=resolve;});
+  await page.route('**/api/account/catalog?*',async route=>{
+   const preset=new URL(route.request().url()).searchParams.get('preset');
+   await pending;
+   await route.fulfill({json:{version:1,preset,items:[],groups:[],banners:[]}});
+  });
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('html[data-ready=true]').waitFor();
+  const download=page.waitForEvent('download');
+  await page.locator('#export-html').click();
+  assert.equal(await page.locator('#export-html').isDisabled(),true);
+  release();
+  const file=await download;
+  const html=await readFile(await file.path(),'utf8');
+  const count=await page.evaluate(source=>new DOMParser().parseFromString(source,'text/html').querySelector('#catalog .items').children.length,html);
+  assert.equal(count,0);
+ }finally{await browser.close();}
+});

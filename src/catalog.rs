@@ -53,6 +53,7 @@ pub struct Query {
     pub offset: usize,
     pub top: bool,
     pub preview: bool,
+    pub source_only: bool,
 }
 #[derive(Serialize)]
 pub struct Page {
@@ -75,16 +76,16 @@ impl Item {
 impl Catalog {
     pub fn parse(input: &str, preset: &str) -> ModelResult<Self> {
         if input.len() > MAX_CATALOG_BYTES {
-            return Err("Catálogo demasiado grande.".into());
+            return Err("Cat�logo demasiado grande.".into());
         }
-        let value: Self = serde_json::from_str(input).map_err(|_| "Catálogo inválido.")?;
+        let value: Self = serde_json::from_str(input).map_err(|_| "Cat�logo inv�lido.")?;
         if value.version != 1
             || value.preset != preset
             || value.items.len() > 10_000
             || value.groups.len() > 100
             || value.banners.len() > 100
         {
-            return Err("Catálogo incompatible.".into());
+            return Err("Cat�logo incompatible.".into());
         }
         let mut ids = BTreeSet::new();
         let mut seeds = BTreeSet::new();
@@ -104,7 +105,7 @@ impl Catalog {
                     !model::valid_id(s) || !s.starts_with("game-") || !seeds.insert(s.as_str())
                 })
             {
-                return Err("Tarjeta de catálogo inválida.".into());
+                return Err("Tarjeta de cat�logo inv�lida.".into());
             }
         }
         let mut group_ids = BTreeSet::new();
@@ -114,7 +115,7 @@ impl Catalog {
                 || !model::valid_text(&group.title, 120)
                 || group.items.iter().any(|id| !ids.contains(id.as_str()))
             {
-                return Err("Colección inválida.".into());
+                return Err("Colecci�n inv�lida.".into());
             }
         }
         for banner in &value.banners {
@@ -124,7 +125,7 @@ impl Catalog {
                     .as_deref()
                     .is_some_and(|id| !crate::media::valid_asset(id))
             {
-                return Err("Portada inválida.".into());
+                return Err("Portada inv�lida.".into());
             }
         }
         Ok(value)
@@ -183,8 +184,9 @@ impl Catalog {
             if let Some(n) = effective {
                 consumed.insert(n.id.as_str());
             }
-            let n = effective.cloned().unwrap_or_else(|| item.component());
-            if (!query.preview && n.hidden)
+            let title = effective.map_or(item.title.as_str(), |n| n.title.as_str());
+            let detail = effective.map_or(item.provider.as_str(), |n| n.text.as_str());
+            if (!query.preview && effective.is_some_and(|n| n.hidden))
                 || (query.favorites_only && !favorites.contains(item.id.as_str()))
                 || (query.recent_only && !recent.contains(item.id.as_str()))
                 || (!query.provider.is_empty() && query.provider != item.provider)
@@ -192,70 +194,71 @@ impl Catalog {
                 || (!query.group.is_empty()
                     && !group.as_ref().is_some_and(|g| g.contains(item.id.as_str())))
                 || (!search.is_empty()
-                    && !format!("{} {} {} {}", n.title, n.text, item.title, item.provider)
+                    && !format!("{title} {detail} {} {}", item.title, item.provider)
                         .to_lowercase()
                         .contains(&search))
             {
                 continue;
             }
-            rows.push((item, n));
+            rows.push((item.id.as_str(), Some(item), effective));
         }
         if query.top {
             rows.truncate(12);
         }
-        if query.recent_only {
-            rows.sort_by_key(|(i, _)| {
-                query
-                    .recent
-                    .iter()
-                    .position(|s| s == &i.id)
-                    .unwrap_or(usize::MAX)
-            });
-        }
-        // Seed cards from the initial beta must not inflate the original catalogue.
-        // Retain only unmatched seeds actually modified by a user.
-        let defaults = crate::presets::design(&self.preset).ok();
-        let original_nodes = defaults.as_ref().and_then(Self::nodes).unwrap_or_default();
-        let is_placeholder = |n: &Component| {
-            n.id.starts_with("game-") && original_nodes.iter().any(|original| original == n)
-        };
-        let custom: Vec<_> = if query.provider.is_empty()
-            && query.category.is_empty()
-            && query.group.is_empty()
-            && !query.favorites_only
-            && !query.recent_only
+        if !query.source_only
             && !query.top
+            && query.group.is_empty()
+            && query.category.is_empty()
+            && query.provider.is_empty()
         {
-            nodes
+            let defaults = crate::presets::design(&self.preset).ok();
+            let original = defaults.as_ref().and_then(Self::nodes).unwrap_or_default();
+            for n in nodes {
+                let id = n.id.as_str();
+                if consumed.contains(id)
+                    || (id.starts_with("game-") && original.contains(n))
+                    || (!query.preview && n.hidden)
+                    || (query.favorites_only && !favorites.contains(id))
+                    || (query.recent_only && !recent.contains(id))
+                    || (!search.is_empty()
+                        && !format!("{} {}", n.title, n.text)
+                            .to_lowercase()
+                            .contains(&search))
+                {
+                    continue;
+                }
+                rows.push((id, None, Some(n)));
+            }
+        }
+        if query.recent_only {
+            let positions: BTreeMap<_, _> = query
+                .recent
                 .iter()
-                .filter(|n| {
-                    !consumed.contains(n.id.as_str())
-                        && !is_placeholder(n)
-                        && (query.preview || !n.hidden)
-                        && (search.is_empty()
-                            || format!("{} {}", n.title, n.text)
-                                .to_lowercase()
-                                .contains(&search))
-                })
-                .collect()
-        } else {
-            Vec::new()
-        };
-        let total = rows.len() + custom.len();
+                .enumerate()
+                .map(|(i, id)| (id.as_str(), i))
+                .collect();
+            rows.sort_by_key(|(id, _, _)| positions.get(id).copied());
+        }
+        let total = rows.len();
         let offset = query.offset.min(total);
         let end = (offset + PAGE_SIZE).min(total);
         let mut html = String::new();
-        for index in offset..end {
-            if let Some((item, n)) = rows.get(index) {
-                html.push_str(&crate::render::catalog_card(
-                    n,
-                    &item.id,
-                    favorites.contains(item.id.as_str()),
-                    query.preview,
-                ));
-            } else if let Some(n) = custom.get(index - rows.len()) {
-                html.push_str(&crate::render::catalog_card(n, &n.id, false, query.preview));
-            }
+        for &(id, item, edited) in &rows[offset..end] {
+            let base;
+            let node = match (edited, item) {
+                (Some(n), _) => n,
+                (None, Some(item)) => {
+                    base = item.component();
+                    &base
+                }
+                (None, None) => unreachable!(),
+            };
+            html.push_str(&crate::render::catalog_card(
+                node,
+                id,
+                favorites.contains(id),
+                query.preview,
+            ));
         }
         Page {
             html,
@@ -299,6 +302,31 @@ mod tests {
         );
         assert_eq!(page.total, 1);
         assert!(page.html.contains("aria-pressed=\"true\""));
+    }
+    #[test]
+    fn custom_cards_participate_in_session_lists() {
+        let catalog = sample();
+        let mut design = crate::presets::design("ember").unwrap();
+        let group = design.lobby.iter_mut().find(|n| n.id == "catalog").unwrap();
+        group
+            .children
+            .push(Component::new("component-demo", Kind::Tile, "Propia"));
+        let mut query = Query {
+            favorites_only: true,
+            favorites: vec!["component-demo".into()],
+            ..Default::default()
+        };
+        let page = catalog.page(&design, &query);
+        assert_eq!(page.total, 1);
+        assert!(page.html.contains("aria-pressed=\"true\""));
+        query.favorites_only = false;
+        query.recent_only = true;
+        query.recent = vec!["component-demo".into(), "item-two".into()];
+        let page = catalog.page(&design, &query);
+        assert_eq!(page.total, 2);
+        assert!(page.html.find("Propia").unwrap() < page.html.find("Live Table").unwrap());
+        query.source_only = true;
+        assert_eq!(catalog.page(&design, &query).total, 1);
     }
     #[test]
     fn reject_untrusted_asset() {

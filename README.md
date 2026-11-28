@@ -47,3 +47,7 @@ Verificación gráfica: `npm run test:media` comprueba la integridad de todos lo
 Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo incluye la primera página de la selección actual, con imágenes embebidas y sin motor de juego.
 
 Compatibilidad: la importación admite los formatos de ajustes y diseño anteriores, migra los campos conocidos y descarga un informe de las reglas sin correspondencia semántica. No se sobrescriben los archivos originales.
+
+### Catálogo por usuario
+
+El campo `meta[name="maker-catalog-endpoint"]` de `public/index.html` admite una ruta del mismo origen. Vacío, usa los catálogos provisionales recuperados del Maker original. Por ejemplo, con `content="/api/account/catalog"` el editor solicita `GET /api/account/catalog?preset=ember` con la sesión del navegador. El servidor debe identificar al usuario a partir de esa sesión y entregar únicamente sus juegos, proveedores, colecciones y portadas. La respuesta usa el mismo esquema versionado que `public/catalogs/ember.json`. Una selección vacía se representa con listas vacías y se respeta también al exportar. Un fallo del servicio se muestra al usuario. El servicio de cuentas se integra por separado. Al cambiar de cuenta se debe recargar el editor para descartar la caché y las listas de interacción de la sesión.

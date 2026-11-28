@@ -1,6 +1,35 @@
 // DOM bridge for the Rust-owned catalogue. Session-only interaction state.
 const states=new Map(),sources=new Map();
 let current=null;
+const installed=new WeakMap();
+const endpoint=document.querySelector('meta[name="maker-catalog-endpoint"]')?.content.trim();
+async function catalogSource(preset){
+  let url=new URL('/catalogs/'+encodeURIComponent(preset)+'.json',location.origin);
+  if(endpoint){
+    url=new URL(endpoint,location.origin);
+    if(url.origin!==location.origin)throw Error('La API del catálogo debe compartir el origen del editor.');
+    url.searchParams.set('preset',preset);
+  }
+  if(!sources.has(preset)){
+    const pending=fetch(url,{credentials:'same-origin',cache:endpoint?'no-store':'default',redirect:'error'})
+      .then(async response=>{
+        if(!response.ok)throw Error('Catálogo no disponible ('+response.status+').');
+        return response.text();
+      });
+    sources.set(preset,pending);
+    pending.catch(()=>sources.delete(preset));
+  }
+  return sources.get(preset);
+}
+async function prepare(studio,preset,stillCurrent){
+  const source=await catalogSource(preset);
+  if(!stillCurrent())return false;
+  if(installed.get(studio)!==preset){
+    studio.set_catalog(source);
+    installed.set(studio,preset);
+  }
+  return true;
+}
 function stateFor(preset){
   if(!states.has(preset))states.set(preset,{search:'',provider:'',category:'',group:'',favorites:new Set(),recent:[],favorites_only:false,recent_only:false,top:false,banner:0,shown:48});
   return states.get(preset);
@@ -17,7 +46,7 @@ function select(doc,key,label,options,value){
 function request(state,preview,offset=0){
   return JSON.stringify({search:state.search,provider:state.provider,category:state.category,group:state.group,
     favorites_only:state.favorites_only,recent_only:state.recent_only,favorites:[...state.favorites],recent:state.recent,
-    top:state.top,preview,offset});
+    top:state.top,source_only:Boolean(endpoint),preview,offset});
 }
 function populate(reset=true){
   if(!current)return;
@@ -81,12 +110,7 @@ function buildBanner(doc,meta,state){
 }
 export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!doc?.querySelector('#catalog'))return;
-  if(!sources.has(preset)){
-    const promise=fetch('/catalogs/'+preset+'.json').then(r=>{if(!r.ok)throw Error('Catálogo no disponible.');return r.text();});
-    sources.set(preset,promise);promise.catch(()=>sources.delete(preset));
-  }
-  const input=await sources.get(preset);if(!stillCurrent())return;
-  studio.set_catalog(input);
+  if(!await prepare(studio,preset,stillCurrent))return;
   const meta=JSON.parse(studio.catalog_metadata()),state=stateFor(preset);
   current={doc,studio,preset,state,editing,banner:null};
   controls(doc,meta,state);populate();updateMode(doc,state);buildBanner(doc,meta,state);
@@ -116,8 +140,9 @@ export function catalogClick(doc,target,notice){
   }
   return false;
 }
-export function exportCatalog(doc,studio,preset){
-  if(!current||current.studio!==studio||current.preset!==preset)return;
-  const items=doc.querySelector('#catalog .items');if(!items)return;
-  items.innerHTML=JSON.parse(studio.catalog_page(request(current.state,false,0))).html;
+export async function exportCatalog(doc,studio,preset,stillCurrent){
+  const items=doc.querySelector('#catalog .items');
+  if(!items)return;
+  if(!await prepare(studio,preset,stillCurrent))throw Error('La vista cambió durante la exportación. Volvé a exportar.');
+  items.innerHTML=JSON.parse(studio.catalog_page(request(stateFor(preset),false,0))).html;
 }
