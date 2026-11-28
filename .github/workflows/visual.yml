@@ -1,8 +1,13 @@
 name: Original visual comparison
 on:
   workflow_dispatch:
-  push:
-    branches: [fix/catalog-visual-reference]
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'frontend/**'
+      - 'public/**'
+      - 'scripts/compare-visual.mjs'
+      - '.github/workflows/visual.yml'
 permissions:
   contents: read
 jobs:

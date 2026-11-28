@@ -17,6 +17,7 @@ try{
   const measure=await browser.newPage();
   for(const [name,width,height] of [['desktop',1440,900],['mobile',393,798]]){
     const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion:'reduce',locale:'es-AR',timezoneId:'UTC'});
+    await context.clock.setFixedTime(new Date('2026-11-26T15:00:00Z'));
     await context.route('**/*',route=>{
       const url=new URL(route.request().url());
       return [original,candidate].includes(url.origin)||['data:','blob:'].includes(url.protocol)?route.continue():route.abort();
@@ -32,6 +33,7 @@ try{
         const refPath='/muestra/'+(view==='panel'?'vista-socio-panel':slug)+'.html';
         const ref=await old.goto(original+refPath);
         if(!ref?.ok())throw Error('Referencia inaccesible: '+refPath);
+        if(refPath.includes('vista-socio-'))await old.locator('#root > *').first().waitFor();
         await old.waitForLoadState('networkidle',{timeout:8000}).catch(()=>{});
         await editor.locator('#'+view).evaluate(node=>node.click());
         const surface=editor.frameLocator('#preview');
@@ -73,9 +75,14 @@ try{
         await writeFile(out+'/'+id+'-diff.png',Buffer.from(difference.png,'base64'));
         results.push({id,refPath,changed:difference.changed,pixels:difference.pixels});
         await writeFile(out+'/comparison.json',JSON.stringify(results,null,2));
+        console.log(id+': '+difference.changed+'/'+difference.pixels+' píxeles diferentes');
       }
     }
     await context.close();
   }
 }finally{await browser.close();}
-if(results.length!==68||results.some(r=>r.changed))process.exitCode=1;
+const exact=results.filter(r=>r.changed===0).length;
+const cards=results.map(({id,changed,pixels})=>`<section><h2>${id} · ${(100*changed/pixels).toFixed(2)} % diferente</h2><div>${['original','maker','diff'].map(kind=>`<figure><a href="${id}-${kind}.png"><img loading="lazy" src="${id}-${kind}.png" alt="${kind}"></a><figcaption>${kind}</figcaption></figure>`).join('')}</div></section>`).join('');
+await writeFile(out+'/index.html',`<!doctype html><html lang="es"><meta charset="utf-8"><title>Comparación de Maker</title><style>body{font:16px system-ui;margin:2rem;background:#16191c;color:#eee}section{margin:2rem 0}section div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}figure{margin:0}img{max-width:100%}</style><h1>Maker original y reconstrucción</h1><p>${exact} de ${results.length} vistas idénticas.</p>${cards}</html>`);
+console.log('Coincidencias exactas: '+exact+'/'+results.length);
+if(results.length!==68||exact!==68)process.exitCode=1;
