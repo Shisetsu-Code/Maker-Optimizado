@@ -1,0 +1,34 @@
+name: Review template screenshots
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: Completed original comparison run
+        required: true
+  push:
+    branches: [fix/catalog-visual-reference]
+    paths: ['scripts/review-sheets.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: maker-original-comparison
+          path: snapshots
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run || '46165877342' }}
+      - run: |
+          python3 -m venv /tmp/maker-review
+          /tmp/maker-review/bin/pip install Pillow
+          /tmp/maker-review/bin/python scripts/review-sheets.py snapshots/visual review
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maker-review-gallery
+          path: review/

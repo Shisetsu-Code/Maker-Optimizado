@@ -3,7 +3,7 @@
 @font-face{font-family:Figtree;font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/figtree-variable-05ce657d.woff2) format('woff2')}
 @font-face{font-family:Figtree;font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/figtree-variable-05ce657d.woff2) format('woff2')}
 html,body{margin:0}
-.cash-panel{--fuente:var(--font-figtree,Figtree),system-ui,sans-serif}
+.cash-panel{--fuente:var(--font-figtree,Figtree),system-ui,-apple-system,'Segoe UI',sans-serif}
 .cash-panel [data-hidden=true]{opacity:.42;outline:2px dashed #aaa}
 .cash-panel [data-selected=true]{outline:3px solid #ffd36b;outline-offset:2px}
 .cash-panel img.art-image{max-width:100%;height:auto}
