@@ -132,3 +132,62 @@ body.layout-editorial .page-backdrop+main{background:#f5f3edf0;border-radius:var
   [data-preset=amethyst] #categories .tile { min-width:180px; scroll-snap-align:start }
   [data-preset=aurum] .hero { min-height:340px; padding:var(--node-padding,24px 19px); grid-template-columns:1.5fr 1fr }
 }
+
+[data-preset=ivory] main.lobby { max-width:1360px; padding:0 5% 36px; gap:30px }
+.resort-hero { overflow:hidden; display:grid; grid-template-columns:1.05fr 1fr; min-height:450px; border-radius:var(--node-radius,18px); background:var(--node-bg,#080f20); color:var(--node-ink,#fff) }
+.resort-copy { padding:var(--node-padding,54px 0 35px 50px); z-index:1 }
+.resort-copy > span { color:#d9c89c; font-size:10px; font-weight:700; letter-spacing:2px }
+.resort-hero h1 { white-space:pre-line; font:var(--node-weight,400) var(--node-size,clamp(44px,4.5vw,72px))/1.02 Georgia,serif; letter-spacing:-2.5px; margin:23px 0 }
+.resort-copy p { font-size:16px; color:#ffffffa6; margin:0 0 26px }
+.resort-copy .action { padding:15px 21px; border-radius:7px; font-size:14px }
+.resort-meta { font-size:11px; color:#ffffff80; margin-top:31px }
+.resort-meta span { margin-left:22px }
+.resort-art { position:relative; min-width:0; background:radial-gradient(ellipse at center,#68704b50,transparent 66%) }
+.resort-art .orbit { position:absolute; border:1px solid #ffffff18; border-radius:50%; width:390px; height:390px; left:4%; top:7% }
+.resort-art .second { width:520px; height:520px; top:-8%; left:-10% }
+.resort-art .suit { position:absolute; font:80px Georgia,serif; color:var(--accent); right:16%; top:8%; transform:rotate(15deg) }
+.resort-art .poster { position:absolute; width:175px; height:232px; border-radius:14px; box-shadow:0 24px 38px #0008; border:4px solid #fff2; object-fit:cover }
+.resort-art .one { left:7%; top:16%; transform:rotate(-13deg) }
+.resort-art .two { left:43%; top:29%; transform:rotate(13deg) }
+.resort-art .art-label { position:absolute; right:9%; bottom:8%; text-align:right }
+.art-label small { display:block; font-size:9px; letter-spacing:2px; color:#ffffff80; margin-bottom:8px }
+.art-label strong { font:400 19px Georgia,serif }
+@media(max-width:800px) {
+  [data-preset=ivory] main.lobby { padding:0 19px 70px; gap:17px }
+  .resort-hero { grid-template-columns:1fr; min-height:0; border-radius:var(--node-radius,14px) }
+  .resort-copy { padding:var(--node-padding,27px 26px 0) }
+  .resort-copy > span { font-size:8px; letter-spacing:1.6px }
+  .resort-hero h1 { font-size:var(--node-size,43px); margin:17px 0; letter-spacing:-1.5px }
+  .resort-copy p { font-size:13px; margin-bottom:18px }
+  .resort-meta,.resort-art .art-label { display:none }
+  .resort-art { height:187px; margin-top:7px }
+  .resort-art .poster { width:92px; height:125px; border-width:2px }
+  .resort-art .one { left:24%; top:18% }
+  .resort-art .two { left:49%; top:26% }
+  .resort-art .orbit { width:240px; height:240px; left:18%; top:0 }
+  .resort-art .second { width:310px; height:310px; left:8%; top:-25% }
+  .resort-art .suit { font-size:45px; right:13%; top:2% }
+}
+
+.resort-header { display:flex; align-items:center; justify-content:space-between; height:100px; gap:24px; border-bottom:1px solid #dcded4; border-radius:0 }
+.resort-header nav { display:flex; align-items:center; gap:16px }
+.resort-header nav button { border:0; background:transparent; color:inherit; font:inherit }
+.resort-brand { display:flex; align-items:center; gap:13px }
+.resort-brand .star { font-size:38px; color:var(--accent) }
+.resort-brand strong { font-size:var(--node-size,27px); letter-spacing:-1px; display:block }
+.resort-brand small { display:block; font-size:9px; letter-spacing:3px; margin-top:5px }
+.resort-brand img { min-height:0; max-width:160px; height:48px; object-fit:contain }
+.wallet { padding:11px 18px; border:0; background:#e8e9df; color:#172423; border-radius:10px; text-align:left }
+.wallet small,.wallet strong { display:block }
+.wallet small { font-size:9px; letter-spacing:1.5px; margin-bottom:5px }
+.wallet strong { font-size:16px }
+@media(max-width:800px) {
+  .resort-header { height:78px; gap:10px }
+  .resort-header nav { display:none }
+  .resort-brand .star { font-size:29px }
+  .resort-brand strong { font-size:var(--node-size,23px) }
+  .resort-brand small { font-size:7px; letter-spacing:2px }
+  .wallet { padding:9px 12px }
+  .wallet small { font-size:7px }
+  .wallet strong { font-size:12px }
+}

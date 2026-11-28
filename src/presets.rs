@@ -275,6 +275,12 @@ fn restore_lobby_sections(preset: &str, nodes: &mut [Component]) {
         .find(|n| n.id == "hero")
         .expect("preset hero");
     match preset {
+        "ivory" => {
+            hero.title = "La suerte tiene\nun nuevo lugar.".into();
+            hero.text =
+                "Grandes clásicos, nuevas emociones.\nElegí tu juego y hacé tuya la noche.".into();
+            hero.button = "Explorar juegos ↗".into();
+        }
         "amethyst" => {
             hero.title = "Las salas más poderosas".into();
             hero.text = "En un solo lugar".into();
@@ -448,7 +454,13 @@ fn restore_lobby_sections(preset: &str, nodes: &mut [Component]) {
 pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
     let theme = Theme {
-        brand: catalog_brand(id).unwrap_or("Mi casino").into(),
+        brand: catalog_brand(id)
+            .unwrap_or(if id == "ivory" {
+                "Tu casino"
+            } else {
+                "Mi casino"
+            })
+            .into(),
         accent: p.accent.into(),
         button_color: None,
         glow_color: None,
@@ -468,6 +480,11 @@ pub fn design(id: &str) -> ModelResult<Design> {
         p.art,
     );
     let panel_header = header.clone();
+    if id == "ivory" {
+        header.title = "Descubrir".into();
+        header.text = "MI SALDO".into();
+        header.button = "ARS 11.052 ＋".into();
+    }
     if catalog_brand(id).is_some() {
         header.title = "Casino".into();
         header.text = if id == "violet" { "Entrar" } else { "Ingresar" }.into();
