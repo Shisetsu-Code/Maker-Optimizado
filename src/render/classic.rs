@@ -134,7 +134,9 @@ impl Classic {
             && defaults.lobby.iter().any(|n| n == node)
         {
             if !node.hidden || preview {
-                out.push_str(r#"<section id="categories" data-component="categories" data-classic-shelf>"#);
+                out.push_str(
+                    r#"<section id="categories" data-component="categories" data-classic-shelf>"#,
+                );
                 for (mode, variant) in [("desktop", &self.desktop), ("mobile", &self.mobile)] {
                     write!(out, "<div class=\"classic-{mode}\">{}</div>", variant.shelf).unwrap();
                 }
