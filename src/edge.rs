@@ -106,7 +106,7 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             let mut response = if head {
                 Response::empty()?
             } else {
-                Response::from_html(render::document(&design, view, false))?
+                Response::from_html(render::document(&id, &design, view, false))?
             };
             response
                 .headers_mut()

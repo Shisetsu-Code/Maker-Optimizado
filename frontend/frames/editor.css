@@ -1,0 +1,13 @@
+[data-selected=true]{outline:3px solid #ffd36b;outline-offset:3px}
+[data-hidden=true]{opacity:.42;outline:2px dashed #aaa}
+[data-native-section] .user-caption{position:absolute;inset:auto 0 0;padding:1rem;color:white;background:#0008}
+[data-native-section] .lobby-game img{object-fit:var(--node-fit,cover);object-position:var(--node-position,center)}
+.lobby [data-component][style*="--node-size"] :is(h1,h2,h3){font-size:var(--node-size)}
+.lobby [data-component][style*="--node-weight"] :is(h1,h2,h3){font-weight:var(--node-weight)}
+.lobby .lobby-brand .art-image{max-height:44px;max-width:180px;width:auto;object-fit:contain}
+.lobby .lobby-game-open{width:100%}
+.lobby .lobby-game-open .art{display:grid;place-items:center;min-height:7rem;background:var(--skin-t);color:var(--skin-p)}
+.lobby [data-component][style*="--columns"] .items{grid-template-columns:repeat(var(--columns),minmax(0,1fr))}
+.lobby .panel-extra .art-image{max-width:100%;height:auto}
+
+.lobby-banner picture{display:contents}.lobby-sidebar details select{display:block;max-width:100%}

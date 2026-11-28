@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="maker-catalog-endpoint" content="">
 <meta name="theme-color" content="#141416"><title>Maker Studio</title>
 <link rel="stylesheet" href="/studio.css">
 </head>
@@ -12,6 +13,13 @@
   <div class="panel-head"><span>PROYECTO</span><strong>Diseño</strong></div>
   <label>Plantilla<select id="preset" disabled></select></label>
   <div class="view-tabs"><button id="lobby" aria-pressed="true">Lobby</button><button id="panel" aria-pressed="false">Panel</button></div>
+  <details><summary>Catálogo de esta plantilla</summary><form id="catalog-selection">
+    <label><input type="checkbox" name="allProviders" checked> Todos los proveedores disponibles</label>
+    <label>Proveedores, uno por línea<textarea name="providers" rows="3" disabled></textarea></label>
+    <label><input type="checkbox" name="allGames" checked> Todos los juegos disponibles</label>
+    <label>Identificadores de juegos, uno por línea<textarea name="games" rows="3" disabled></textarea></label>
+    <button type="submit">Aplicar selección</button>
+  </form></details>
   <details open><summary>Identidad visual</summary><form id="theme">
     <label>Marca<input name="brand" maxlength="60" required></label>
     <div class="color-grid"><label>Principal<input type="color" name="accent"></label><label>Fondo<input type="color" name="background"></label><label>Superficie<input type="color" name="surface"></label><label>Texto<input type="color" name="ink"></label></div>

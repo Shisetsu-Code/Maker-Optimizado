@@ -73,7 +73,7 @@ impl Studio {
     }
     pub fn catalog_metadata(&self) -> Result<String, JsValue> {
         self.current_catalog()
-            .map(|c| c.metadata().to_string())
+            .map(|c| c.metadata(self.editor.active()).to_string())
             .ok_or_else(|| JsValue::from_str("Catálogo no disponible."))
     }
     pub fn catalog_page(&self, input: &str) -> Result<String, JsValue> {
@@ -115,6 +115,7 @@ impl Studio {
     }
     pub fn html(&self, screen: &str, preview: bool) -> Result<String, JsValue> {
         Ok(render::document_with_appearance(
+            &self.editor.workspace().active,
             self.editor.active(),
             view(screen)?,
             preview,

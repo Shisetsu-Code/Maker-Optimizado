@@ -1,0 +1,72 @@
+body:has([data-classic-section]) #surface{display:block;padding:0;max-width:none;margin:0;overflow:visible}
+[data-classic-section]{position:relative;color:var(--node-ink,inherit);background:var(--node-bg,transparent);padding:var(--node-padding,0);border-radius:var(--node-radius,0)}
+[data-classic-section][data-hidden=true]{opacity:.42}
+[data-classic-section][data-selected=true]{outline:3px solid #ffd36b;outline-offset:-3px}
+[data-classic-section] p,[data-classic-section] h1,[data-classic-section] h2{white-space:normal}
+.classic-mobile{display:none}
+.original-ember.lb{min-height:0;padding-bottom:0;overflow:visible}
+body[data-preset=ember] .classic-desktop .original-ember{padding:0 5% 0 calc(112px + 5%)}
+body[data-preset=ember] #header .classic-desktop .original-ember{padding-top:clamp(9px,1.1vw,16px)}
+@media(min-width:900px){body[data-preset=ember] .native-shelf{margin-top:clamp(38px,3.6vw,58px)}}
+body[data-preset=cobalt] .classic-desktop .original-cobalt{zoom:calc(100vw / 1920px)!important}
+body[data-preset=flare]:has([data-classic-section]){background:var(--bb-bg,#f7f7f8);color:var(--bb-text,#0a0a0b);font-family:Manrope,system-ui,sans-serif}
+body[data-preset=flare] .classic-desktop aside{position:fixed!important;left:0;top:0}
+body[data-preset=flare] .classic-desktop{margin-left:220px}
+body[data-preset=flare] #header .classic-desktop>div>div:first-child{position:static!important}
+body[data-preset=coal]:has([data-classic-section]){background:#000;color:#f3e9d8}
+body:has([data-classic-section]) #surface>.group,body:has([data-classic-section]) #surface>.footer{margin:18px clamp(12px,4vw,64px)}
+@media(max-width:768px){
+.classic-desktop{display:none}.classic-mobile{display:block}
+body[data-preset=cobalt] .original-cobalt{display:block!important;overflow:visible!important;height:auto!important}
+body[data-preset=cobalt] .original-cobalt>header{position:relative!important}
+body[data-preset=cobalt] .original-cobalt>nav{position:fixed!important}
+}
+
+body[data-preset=cobalt]:has([data-classic-section]){background:rgb(var(--rc-fondo,1,0,40));color:white}
+@media(max-width:768px){body[data-preset=cobalt] #hero .original-cobalt{padding-top:12px;background:rgb(var(--rc-fondo,1,0,40))}}
+.classic-shelf{margin:24px clamp(16px,4vw,64px);min-width:0}
+.classic-shelf-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:16px}
+.classic-shelf-title h2{margin:0}.classic-shelf-row{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 7 * 12px)/8);gap:12px;overflow:auto;scrollbar-width:none}
+.classic-shelf-row button{display:block;border:0;background:none;color:inherit;font:inherit;text-align:left;padding:0;min-width:0}
+.classic-shelf-row img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;border-radius:8px}
+.classic-shelf-row span{display:block;font-size:13px;font-weight:700;margin:6px 0}
+@media(min-width:769px){body[data-preset=ember] .classic-shelf{margin-left:calc(112px + 5%);margin-right:5%}body[data-preset=flare] .classic-shelf{margin-left:244px}}
+@media(max-width:768px){.classic-shelf-row{grid-auto-columns:26%;gap:8px}}
+
+@media(min-width:769px) and (max-width:899px){
+body[data-preset=ember] .classic-desktop{display:none}
+body[data-preset=ember] .classic-mobile{display:block}
+}
+body[data-preset=flare] .bgpass button,body[data-preset=flare] .bgpass [role=button]{pointer-events:auto}
+
+body[data-preset=flare] [data-classic-section] img[shape]{display:block;width:100%;height:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px}
+body[data-preset=flare] [data-classic-section] img[shape=round]{border-radius:50%}
+
+.account-feature{padding:clamp(18px,3vw,38px);border:1px solid var(--br-linea,#2b2724);border-radius:24px;background:var(--br-hondo,#0c0b0a);min-width:0}
+.account-feature[hidden]{display:none}
+.account-feature h2{font:700 clamp(24px,3.5vw,60px)/1.08 Oswald,sans-serif;margin:14px 0;color:var(--br-texto,#f3e9d8)}
+.account-feature>img{display:block;width:100%;height:clamp(120px,22vw,250px);object-fit:contain}
+.account-feature p{margin:12px 0}
+.account-feature button{padding:10px 14px;margin-right:6px;border-radius:12px;border:1px solid var(--br-linea,#2b2724);background:var(--br-hondo,#0c0b0a);color:inherit}
+.account-feature button[data-game]{background:var(--br-p,#ff5b14);color:#140b08}
+
+[data-native-cards]>button{border:0;padding:0;color:inherit;text-align:left;background:transparent;font:inherit;cursor:pointer;overflow:hidden}
+[data-native-cards]>button img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:7px}
+[data-native-cards]>button span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+body[data-preset=cobalt] [data-native-cards]>button:has(img) span{display:none}
+body[data-preset=cobalt] [data-native-cards]>button img{height:100%}
+body[data-preset=flare] #categories{padding:0 24px}
+body[data-preset=flare] #hero .bgpass{padding-bottom:22px!important}
+@media(max-width:768px){body[data-preset=flare] #categories{padding:0 14px}body[data-preset=coal] #categories{margin:0 14px}}
+@media(min-width:769px){body[data-preset=coal] #categories{display:none}}
+
+[data-native-cards]>button.ember-original-tile{position:relative;aspect-ratio:3/4;border-radius:7px;display:grid!important;place-items:center;background:linear-gradient(165deg,var(--tile-a),var(--tile-b));padding:12px;text-align:center;color:white}
+.ember-original-tile span{white-space:normal!important;font:700 13px/1.25 -apple-system,"Segoe UI",sans-serif;text-shadow:0 2px 10px #0009}
+.ember-original-tile:nth-child(1){--tile-a:#14532d;--tile-b:#a3e635}
+.ember-original-tile:nth-child(2){--tile-a:#082f49;--tile-b:#0ea5e9}
+.ember-original-tile:nth-child(3){--tile-a:#451a03;--tile-b:#f59e0b}
+.ember-original-tile:nth-child(4){--tile-a:#3b0764;--tile-b:#d946ef}
+.ember-original-tile:nth-child(5){--tile-a:#134e4a;--tile-b:#2dd4bf}
+.ember-original-tile:nth-child(6){--tile-a:#451a03;--tile-b:#f59e0b}
+.ember-original-tile:nth-child(7){--tile-a:#2e1065;--tile-b:#a78bfa}
+.ember-original-tile:nth-child(8){--tile-a:#4c0519;--tile-b:#fb7185}

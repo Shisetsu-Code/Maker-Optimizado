@@ -24,3 +24,170 @@
 .font-barlow{font-family:Barlow,system-ui,sans-serif}.font-archivo{font-family:Archivo,system-ui,sans-serif}.font-oswald{font-family:Oswald,system-ui,sans-serif}.font-condensed h1,.font-condensed h2,.font-condensed h3{font-family:Oswald,"Arial Narrow",system-ui,sans-serif}
 .page-backdrop{position:fixed;inset:0;background:#000;z-index:0;pointer-events:none}.page-backdrop img{display:block;width:100%;height:100%;object-fit:var(--backdrop-fit,cover);object-position:var(--backdrop-position,center);opacity:var(--backdrop-opacity,1)}body main{position:relative;z-index:1}
 body.layout-editorial .page-backdrop+main{background:#f5f3edf0;border-radius:var(--radius)}
+
+/* Native proportions from the original image-led lobbies. */
+[data-preset=violet] { --banner-wide:2.75; --banner-narrow:1.8; --card-ratio:.78; --grid-wide:6 }
+[data-preset=saffron] { --banner-wide:3.4; --banner-narrow:1.65; --card-ratio:.84; --grid-wide:7 }
+[data-preset=midnight] { --banner-wide:3.4; --banner-narrow:1.5; --card-ratio:.84; --grid-wide:7; --grid-narrow:2 }
+[data-preset=jade] { --banner-wide:2.9; --banner-narrow:2.75; --card-ratio:.75 }
+[data-preset=garnet] { --banner-wide:4.1; --banner-narrow:4.1; --card-ratio:1; --grid-wide:6 }
+[data-preset=brass] { --banner-wide:4.1; --banner-narrow:4.1; --card-ratio:1; --grid-wide:7 }
+[data-preset=verdant] { --banner-wide:2.8; --banner-narrow:1.8; --card-ratio:1; --grid-wide:6 }
+[data-preset=crimson] { --banner-wide:3; --banner-narrow:1.8; --card-ratio:1 }
+[data-preset=onyx] { --banner-wide:3; --banner-narrow:2.2; --card-ratio:.84; --grid-wide:6 }
+:is([data-preset=violet],[data-preset=saffron],[data-preset=midnight],[data-preset=jade],[data-preset=garnet],[data-preset=brass],[data-preset=verdant],[data-preset=crimson],[data-preset=onyx]) .lobby {
+  & .hero {
+    aspect-ratio:var(--banner-wide);
+    min-height:0;
+    display:grid;
+    grid-template-columns:1fr;
+    padding:var(--node-padding,0);
+    & .hero-art,& .hero-copy { grid-area:1/1 }
+    & .hero-art { width:100%; height:100%; min-height:0; overflow:hidden }
+    & .hero-art picture,& .hero-art .art-image { width:100%; height:100%; max-height:none; min-height:0; object-fit:var(--node-fit,cover) }
+    & .hero-copy { padding:var(--node-padding,20px); justify-self:start; max-width:70%; pointer-events:none }
+    & .hero-copy button { pointer-events:auto }
+    & .eyebrow,& h1:empty,& p:empty { display:none }
+    & .banner-navigation { position:absolute; bottom:5px; left:0; right:0 }
+  }
+  & .catalog .items { grid-template-columns:repeat(var(--columns,var(--grid-wide,7)),minmax(0,1fr)) }
+  & .catalog-card .tile-art { aspect-ratio:var(--card-ratio) }
+  @media(max-width:1000px) {
+    & .catalog .items { grid-template-columns:repeat(min(var(--columns,5),5),minmax(0,1fr)) }
+  }
+  @media(max-width:700px) {
+    & .hero { aspect-ratio:var(--banner-narrow) }
+    & .catalog .items { grid-template-columns:repeat(min(var(--columns,var(--grid-narrow,3)),var(--grid-narrow,3)),minmax(0,1fr)) }
+  }
+}
+
+.lobby:has(.catalog-mast) { padding-top:0 }
+.catalog-mast { color:var(--node-ink,var(--ink)); background:var(--node-bg,var(--page)); font-family:Arial,system-ui,sans-serif }
+.catalog-mast[data-selected] { outline:3px solid #ffd36b }
+.catalog-mast[data-hidden] { opacity:.42 }
+.catalog-mast .demo-strip { text-align:center; padding:7px; background:#050608; color:#a7acb8; font-size:9px; letter-spacing:1px }
+.catalog-mast header { height:75px; display:flex; align-items:center; gap:24px; padding:var(--node-padding,12px 4%); border-bottom:1px solid #ffffff12 }
+.catalog-mast button,.catalog-mast nav a { border:0; background:transparent; color:inherit; padding:11px 18px; font:700 13px Arial,system-ui,sans-serif }
+.catalog-mast nav { display:flex; align-items:center; gap:7px }
+.catalog-mast nav a:first-child,.catalog-mast .identity span { color:var(--accent) }
+.catalog-mast .identity { display:flex; gap:9px; align-items:center; max-width:250px; min-width:0 }
+.catalog-mast .identity span { font-size:34px }
+.catalog-mast .identity strong { font-size:var(--node-size,27px); font-weight:var(--node-weight,900); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.catalog-mast .identity img { max-width:180px; height:44px; min-height:0; object-fit:contain }
+.catalog-mast .access { margin-left:auto; display:flex; align-items:center; gap:10px }
+.catalog-mast .action { background:var(--button); color:var(--button-ink); border-radius:var(--node-radius,9px) }
+.catalog-mast [data-catalog-menu] { padding:5px; font-size:22px }
+.catalog-sidebar { display:none; position:fixed; inset:98px auto 0 0; width:235px; overflow:auto; z-index:5; background:var(--page); padding:25px 16px; box-shadow:25px 0 60px #000c }
+.catalog-sidebar h3 { font-size:11px; color:#9ba2b0; margin-bottom:15px }
+.catalog-sidebar button { display:block; width:100%; text-align:left }
+.catalog-mast:has([data-catalog-menu][aria-expanded=true]) .catalog-sidebar { display:block }
+@media(min-width:701px) {
+  [data-preset=violet] .catalog-sidebar { display:block; top:105px; width:216px; box-shadow:none; border-right:1px solid #ffffff0d }
+  [data-preset=violet] .lobby:has(.catalog-mast) { max-width:1700px; padding-inline:24px }
+  [data-preset=violet] .lobby:has(.catalog-mast) > :not(.catalog-mast) { margin-left:216px }
+  [data-preset=violet] .catalog-mast [data-catalog-menu] { display:none }
+}
+@media(max-width:700px) {
+  .catalog-mast { margin-inline:-12px }
+  .catalog-mast .demo-strip { font-size:7px; letter-spacing:.3px; padding:6px }
+  .catalog-mast header { height:63px; gap:8px; padding:var(--node-padding,10px 13px) }
+  .catalog-mast header nav { display:none }
+  .catalog-mast .identity { max-width:135px }
+  .catalog-mast .identity strong { font-size:var(--node-size,20px) }
+  .catalog-mast .identity span { font-size:24px }
+  .catalog-mast .identity img { max-width:105px; height:32px }
+  .catalog-mast .access { gap:2px }
+  .catalog-mast button { padding:8px 7px; font-size:10px }
+  .catalog-sidebar { top:84px; bottom:64px }
+}
+
+:is([data-preset=amethyst],[data-preset=garnet],[data-preset=verdant],[data-preset=crimson],[data-preset=onyx]) #categories,
+[data-preset=rose] #hero.categories {
+  & .section-head:has(h2:empty):has(p:empty) { display:none }
+  & .items { display:grid; grid-template-columns:repeat(var(--columns,var(--experience-columns,3)),minmax(0,1fr)); gap:var(--experience-gap,18px) }
+  & .tile { display:block; min-height:var(--experience-height,205px); overflow:hidden }
+  & .tile-art { position:absolute; inset:0; width:100%; height:100% }
+  & .art-image { width:100%; height:100%; object-fit:var(--node-fit,cover) }
+  & .tile-copy { position:relative; min-height:inherit; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; padding:var(--node-padding,22px); background:linear-gradient(0deg,#000d,transparent); text-align:left }
+  & .tile-copy h3 { font-size:var(--node-size,24px) }
+  & .tile-copy p { order:-1; font-size:10px }
+  & .tile-copy .action { display:block }
+}
+[data-preset=rose] { --experience-height:330px; --experience-gap:20px }
+[data-preset=garnet] { --experience-height:150px; --experience-gap:16px }
+[data-preset=crimson] { --experience-height:160px }
+[data-preset=onyx] { --experience-height:180px; --experience-columns:2 }
+[data-preset=amethyst] { --experience-height:0px; --experience-columns:5; --experience-gap:14px }
+[data-preset=amethyst] #categories .tile-art { position:static; height:100px }
+[data-preset=amethyst] #categories .tile-copy { background:transparent; padding:var(--node-padding,14px) }
+[data-preset=amethyst] #categories .tile-copy h3 { font-size:var(--node-size,16px) }
+[data-preset=amethyst] #categories .tile-copy p { order:0 }
+[data-preset=aurum] .hero { min-height:430px; grid-template-columns:1.3fr 1fr; padding:var(--node-padding,45px 55px); border-radius:var(--node-radius,24px) }
+@media(max-width:700px){
+  [data-preset=rose] { --experience-height:170px; --experience-columns:2; --experience-gap:10px }
+  [data-preset=rose] #hero.categories .tile:first-child { grid-column:1/-1; min-height:225px }
+  [data-preset=crimson] { --experience-height:125px; --experience-columns:1 }
+  [data-preset=verdant],[data-preset=garnet],[data-preset=onyx] { --experience-height:145px; --experience-gap:8px }
+  [data-preset=amethyst] #categories .items { display:flex; overflow:auto; scroll-snap-type:x mandatory }
+  [data-preset=amethyst] #categories .tile { min-width:180px; scroll-snap-align:start }
+  [data-preset=aurum] .hero { min-height:340px; padding:var(--node-padding,24px 19px); grid-template-columns:1.5fr 1fr }
+}
+
+[data-preset=ivory] main.lobby { max-width:1360px; padding:0 5% 36px; gap:30px }
+.resort-hero { overflow:hidden; display:grid; grid-template-columns:1.05fr 1fr; min-height:450px; border-radius:var(--node-radius,18px); background:var(--node-bg,#080f20); color:var(--node-ink,#fff) }
+.resort-copy { padding:var(--node-padding,54px 0 35px 50px); z-index:1 }
+.resort-copy > span { color:#d9c89c; font-size:10px; font-weight:700; letter-spacing:2px }
+.resort-hero h1 { white-space:pre-line; font:var(--node-weight,400) var(--node-size,clamp(44px,4.5vw,72px))/1.02 Georgia,serif; letter-spacing:-2.5px; margin:23px 0 }
+.resort-copy p { font-size:16px; color:#ffffffa6; margin:0 0 26px }
+.resort-copy .action { padding:15px 21px; border-radius:7px; font-size:14px }
+.resort-meta { font-size:11px; color:#ffffff80; margin-top:31px }
+.resort-meta span { margin-left:22px }
+.resort-art { position:relative; min-width:0; background:radial-gradient(ellipse at center,#68704b50,transparent 66%) }
+.resort-art .orbit { position:absolute; border:1px solid #ffffff18; border-radius:50%; width:390px; height:390px; left:4%; top:7% }
+.resort-art .second { width:520px; height:520px; top:-8%; left:-10% }
+.resort-art .suit { position:absolute; font:80px Georgia,serif; color:var(--accent); right:16%; top:8%; transform:rotate(15deg) }
+.resort-art .poster { position:absolute; width:175px; height:232px; border-radius:14px; box-shadow:0 24px 38px #0008; border:4px solid #fff2; object-fit:cover }
+.resort-art .one { left:7%; top:16%; transform:rotate(-13deg) }
+.resort-art .two { left:43%; top:29%; transform:rotate(13deg) }
+.resort-art .art-label { position:absolute; right:9%; bottom:8%; text-align:right }
+.art-label small { display:block; font-size:9px; letter-spacing:2px; color:#ffffff80; margin-bottom:8px }
+.art-label strong { font:400 19px Georgia,serif }
+@media(max-width:800px) {
+  [data-preset=ivory] main.lobby { padding:0 19px 70px; gap:17px }
+  .resort-hero { grid-template-columns:1fr; min-height:0; border-radius:var(--node-radius,14px) }
+  .resort-copy { padding:var(--node-padding,27px 26px 0) }
+  .resort-copy > span { font-size:8px; letter-spacing:1.6px }
+  .resort-hero h1 { font-size:var(--node-size,43px); margin:17px 0; letter-spacing:-1.5px }
+  .resort-copy p { font-size:13px; margin-bottom:18px }
+  .resort-meta,.resort-art .art-label { display:none }
+  .resort-art { height:187px; margin-top:7px }
+  .resort-art .poster { width:92px; height:125px; border-width:2px }
+  .resort-art .one { left:24%; top:18% }
+  .resort-art .two { left:49%; top:26% }
+  .resort-art .orbit { width:240px; height:240px; left:18%; top:0 }
+  .resort-art .second { width:310px; height:310px; left:8%; top:-25% }
+  .resort-art .suit { font-size:45px; right:13%; top:2% }
+}
+
+.resort-header { display:flex; align-items:center; justify-content:space-between; height:100px; gap:24px; border-bottom:1px solid #dcded4; border-radius:0 }
+.resort-header nav { display:flex; align-items:center; gap:16px }
+.resort-header nav button { border:0; background:transparent; color:inherit; font:inherit }
+.resort-brand { display:flex; align-items:center; gap:13px }
+.resort-brand .star { font-size:38px; color:var(--accent) }
+.resort-brand strong { font-size:var(--node-size,27px); letter-spacing:-1px; display:block }
+.resort-brand small { display:block; font-size:9px; letter-spacing:3px; margin-top:5px }
+.resort-brand img { min-height:0; max-width:160px; height:48px; object-fit:contain }
+.wallet { padding:11px 18px; border:0; background:#e8e9df; color:#172423; border-radius:10px; text-align:left }
+.wallet small,.wallet strong { display:block }
+.wallet small { font-size:9px; letter-spacing:1.5px; margin-bottom:5px }
+.wallet strong { font-size:16px }
+@media(max-width:800px) {
+  .resort-header { height:78px; gap:10px }
+  .resort-header nav { display:none }
+  .resort-brand .star { font-size:29px }
+  .resort-brand strong { font-size:var(--node-size,23px) }
+  .resort-brand small { font-size:7px; letter-spacing:2px }
+  .wallet { padding:9px 12px }
+  .wallet small { font-size:7px }
+  .wallet strong { font-size:12px }
+}

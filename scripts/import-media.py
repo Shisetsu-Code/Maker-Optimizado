@@ -37,7 +37,7 @@ HERO = {
     "cobalt": "public/muestra/azul/assets/hero-bg.webp",
     "flare": "public/muestra/rushybet/v2/pop-slots.webp",
     "coal": "public/muestra/rushybet/v3/cut-ruleta.webp",
-    "ivory": "public/rushybet/hero-art.webp",
+    "ivory": "public/games-cartas/slot-playngo/bookofdead.webp",
 }
 
 def git(*args):

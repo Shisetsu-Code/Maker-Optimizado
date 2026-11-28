@@ -19,6 +19,9 @@ pub struct Patch {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Action {
+    SelectCatalog {
+        selection: CatalogSelection,
+    },
     Switch {
         preset: String,
     },
@@ -235,6 +238,7 @@ impl Editor {
                     }
                 }
                 match other {
+                    Action::SelectCatalog { selection } => design.catalog_selection = selection,
                     Action::Theme { theme } => design.theme = theme,
                     Action::Edit { view, id, patch } => {
                         let node = find_mut(design.nodes_mut(view), &id)?;
@@ -342,7 +346,7 @@ impl Editor {
         let design = self.active();
         let nodes = design.nodes(view);
         let selected = nodes.iter().find_map(|n| n.find(id)).map(component_info);
-        json!({"version":SCHEMA_VERSION,"active":self.current.active,"theme":design.theme,"appearance":{"settings":self.current.appearance.settings,"has_image":self.current.appearance.image.is_some()},"outline":nodes.iter().map(outline).collect::<Vec<_>>(),"selected":selected,"undo":!self.past.is_empty(),"redo":!self.future.is_empty()})
+        json!({"version":SCHEMA_VERSION,"active":self.current.active,"theme":design.theme,"catalog_selection":design.catalog_selection,"appearance":{"settings":self.current.appearance.settings,"has_image":self.current.appearance.image.is_some()},"outline":nodes.iter().map(outline).collect::<Vec<_>>(),"selected":selected,"undo":!self.past.is_empty(),"redo":!self.future.is_empty()})
     }
 }
 impl Default for Editor {

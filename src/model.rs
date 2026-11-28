@@ -254,9 +254,18 @@ impl Component {
     }
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct CatalogSelection {
+    pub providers: Option<BTreeSet<String>>,
+    pub games: Option<BTreeSet<String>>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Design {
+    #[serde(default)]
+    pub catalog_selection: CatalogSelection,
     pub theme: Theme,
     pub lobby: Vec<Component>,
     pub panel: Vec<Component>,
@@ -417,6 +426,19 @@ pub fn validate(workspace: &Workspace) -> ModelResult<()> {
     for (id, design) in &workspace.designs {
         if crate::presets::get(id).is_none() {
             return Err("Plantilla desconocida.".into());
+        }
+        let selection = &design.catalog_selection;
+        if selection.providers.as_ref().is_some_and(|list| {
+            list.len() > 1000
+                || list
+                    .iter()
+                    .any(|p| p.trim().is_empty() || !valid_text(p, 120))
+        }) || selection
+            .games
+            .as_ref()
+            .is_some_and(|list| list.len() > 10000 || list.iter().any(|id| !valid_id(id)))
+        {
+            return Err("Selección de catálogo inválida.".into());
         }
         let theme = &design.theme;
         if theme.brand.trim().is_empty()

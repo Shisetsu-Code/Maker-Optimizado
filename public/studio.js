@@ -1,6 +1,6 @@
 import init,{Studio} from './wasm/maker_studio.js';
 import {load,save} from './storage.js';
-import {attachCatalog,catalogInput,catalogClick,exportCatalog} from './catalog.js';
+import {attachCatalog,catalogInput,catalogClick,exportCatalog,previewDocument} from './catalog.js';
 
 const $=id=>document.getElementById(id);
 const status=$('status'),frame=$('preview'),themeForm=$('theme'),appearanceForm=$('appearance'),inspector=$('inspector');
@@ -56,6 +56,14 @@ function paintOutline(nodes,container,depth=0){
 function paintControls(){
   const data=describe();
   $('preset').value=data.active;
+  const fields=$('catalog-selection').elements;
+  const selection=data.catalog_selection;
+  fields.allProviders.checked=selection.providers===null;
+  fields.allGames.checked=selection.games===null;
+  fields.providers.disabled=fields.allProviders.checked;
+  fields.games.disabled=fields.allGames.checked;
+  fields.providers.value=(selection.providers??[]).join('\n');
+  fields.games.value=(selection.games??[]).join('\n');
   put(themeForm,data.theme);put(appearanceForm,data.appearance.settings);$('clear-background').disabled=!data.appearance.has_image;
   $('undo').disabled=!data.undo;$('redo').disabled=!data.redo;
   $('lobby').setAttribute('aria-pressed',String(screen==='lobby'));$('panel').setAttribute('aria-pressed',String(screen==='panel'));
@@ -86,7 +94,7 @@ function attachFrame(){
   },true);
   doc.addEventListener('change',event=>{if(event.target.matches?.('[data-catalog-filter]'))catalogInput(doc,event.target);});
   doc.addEventListener('input',event=>{
-    if(event.target.matches?.('[data-search]')&&catalogInput(doc,event.target))return;
+    if(catalogInput(doc,event.target))return;
     if(!event.target.matches?.('[data-search]'))return;
     const term=event.target.value.trim().toLocaleLowerCase('es');
     const group=event.target.closest('.catalog');
@@ -100,7 +108,9 @@ function refresh(){
   const token=++paintToken;
   paintControls();
   const html=studio.html(screen,editing);
-  if(token===paintToken)frame.srcdoc=html;
+  const selection=describe().catalog_selection;
+  const restricted=selection.games!==null||selection.providers!==null;
+  if(token===paintToken)frame.srcdoc=previewDocument(html,restricted);
 }
 function readTheme(){const f=Object.fromEntries(new FormData(themeForm));return{...f,radius:Number(f.radius),button_color:f.button_color||null,glow_color:f.glow_color||null};}
 function readPatch(){const f=new FormData(inspector),number=name=>f.get(name)===''?null:Number(f.get(name)),color=name=>String(f.get(name)||'')||null;return{title:String(f.get('title')),text:String(f.get('text')),button:String(f.get('button')),hidden:inspector.elements.hidden.checked,art:Number(f.get('art')),style:{color:color('color'),background:color('background'),radius:number('radius'),padding:number('padding'),font_size:number('font_size'),columns:number('columns'),font_weight:number('font_weight'),align:color('align'),border_color:color('border_color'),border_width:number('border_width'),width:number('width'),height:number('height'),fit:color('fit'),position:color('position'),placeholder:color('placeholder')}};}
@@ -191,21 +201,37 @@ async function readAsset(id,budget){
 async function standaloneHtml(view){
   // Work exclusively on trusted Rust-rendered HTML; never interpret imported text as markup.
   const doc=new DOMParser().parseFromString(studio.html(view,false),'text/html');
-  if(view==='lobby')exportCatalog(doc,studio,describe().active);
+  if(view==='lobby'){
+    const token=paintToken;
+    await exportCatalog(doc,studio,describe().active,()=>token===paintToken);
+  }
   const images=new Map();
-  for(const img of doc.querySelectorAll('img[src]')){
-    const src=img.getAttribute('src');
+  for(const img of doc.querySelectorAll('img[src], source[srcset]')){
+    const attr=img.localName==='source'?'srcset':'src';
+    const src=img.getAttribute(attr);
     if(!src.startsWith('/media/objects/'))continue;
     const id=src.slice('/media/objects/'.length);
     if(!ASSET_ID.test(id))throw Error('Identificador gráfico inválido.');
     if(!images.has(id))images.set(id,[]);
-    images.get(id).push(img);
+    images.get(id).push([img,attr]);
+  }
+  const styles=[...doc.querySelectorAll('style,[style]')];
+  const references=new Map();
+  for(const node of styles){
+    const css=node.localName==='style'?node.textContent:node.getAttribute('style');
+    const ids=new Set([...css.matchAll(/\/media\/objects\/([a-f0-9]{40}\.(?:webp|png|jpg|gif|avif))/g)].map(m=>m[1]));
+    for(const id of ids){if(!references.has(id))references.set(id,[]);references.get(id).push(node);if(!images.has(id))images.set(id,[]);}
   }
   let total=0;
   for(const [id,nodes] of images){
     const {url,size}=await readAsset(id,24*1024*1024-total);
     total+=size;
-    for(const img of nodes)img.setAttribute('src',url);
+    for(const [img,attr] of nodes)img.setAttribute(attr,url);
+    for(const node of references.get(id)??[]){
+      const path='/media/objects/'+id;
+      if(node.localName==='style')node.textContent=node.textContent.replaceAll(path,url);
+      else node.setAttribute('style',node.getAttribute('style').replaceAll(path,url));
+    }
   }
   // Embed the licensed local fonts so the static document also works offline.
   for(const style of doc.querySelectorAll('style')){
@@ -217,7 +243,8 @@ async function standaloneHtml(view){
       style.textContent=style.textContent.replaceAll(url,encoded);
     }
     if(urls.length){
-      const notices=await Promise.all(['barlow','archivo','oswald'].map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
+      const families=[...new Set(urls.map(url=>url.slice('/fonts/'.length).split('-')[0]))];
+      const notices=await Promise.all(families.map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
       const license=doc.createElement('pre');license.hidden=true;license.id='font-license-notices';license.textContent=notices.join('\n\n');doc.body.append(license);
     }
   }
@@ -242,6 +269,19 @@ function bind(){
   for(const view of ['lobby','panel'])$(view).onclick=()=>{screen=view;selected='';refresh();};
   for(const button of document.querySelectorAll('button[data-size]'))button.onclick=()=>{ $('canvas').dataset.size=button.dataset.size;for(const b of document.querySelectorAll('button[data-size]'))b.setAttribute('aria-pressed',String(b===button)); };
   $('mode').onclick=()=>{editing=!editing;$('mode').setAttribute('aria-pressed',String(editing));$('mode').textContent=editing?'Editar':'Explorar';refresh();};
+  const picker=$('catalog-selection'),fields=picker.elements;
+  picker.onchange=()=>{
+    fields.providers.disabled=fields.allProviders.checked;
+    fields.games.disabled=fields.allGames.checked;
+  };
+  picker.onsubmit=event=>{
+    event.preventDefault();
+    const lines=input=>input.value.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+    dispatch({type:'select_catalog',selection:{
+      providers:fields.allProviders.checked?null:lines(fields.providers),
+      games:fields.allGames.checked?null:lines(fields.games),
+    }});
+  };
   themeForm.onsubmit=event=>{event.preventDefault();dispatch({type:'theme',theme:readTheme()});};
   appearanceForm.onsubmit=event=>{
     event.preventDefault();const f=new FormData(appearanceForm);

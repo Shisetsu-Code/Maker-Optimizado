@@ -252,10 +252,212 @@ const TITLES: [&str; 12] = [
     "Silver Mirage",
 ];
 
+pub fn catalog_brand(id: &str) -> Option<&'static str> {
+    matches!(
+        id,
+        "violet"
+            | "saffron"
+            | "midnight"
+            | "amethyst"
+            | "jade"
+            | "rose"
+            | "garnet"
+            | "brass"
+            | "aurum"
+            | "verdant"
+            | "crimson"
+            | "onyx"
+    )
+    .then_some("Tu casino")
+}
+fn restore_lobby_sections(preset: &str, nodes: &mut [Component]) {
+    let hero = nodes
+        .iter_mut()
+        .find(|n| n.id == "hero")
+        .expect("preset hero");
+    match preset {
+        "ivory" => {
+            hero.title = "La suerte tiene\nun nuevo lugar.".into();
+            hero.text =
+                "Grandes clásicos, nuevas emociones.\nElegí tu juego y hacé tuya la noche.".into();
+            hero.button = "Explorar juegos ↗".into();
+        }
+        "amethyst" => {
+            hero.title = "Las salas más poderosas".into();
+            hero.text = "En un solo lugar".into();
+            hero.button = "Entrar ahora →".into();
+        }
+        "aurum" => {
+            hero.title = "Renace la emoción.".into();
+            hero.text = "Explorá tus juegos favoritos en un mundo de nuevas experiencias.".into();
+            hero.button = "Descubrir juegos →".into();
+        }
+        _ => {}
+    }
+    let cards: &[(&str, &str, &str)] = match preset {
+        "amethyst" => &[
+            (
+                "Celu Apuestas",
+                "La sala original",
+                "6569761ec760a2a1b425e4d0ac3092ece4f90855.webp",
+            ),
+            (
+                "Ganamos.net",
+                "Pura adrenalina",
+                "61dd5e13abf8a66c5a4f6594acce5b5ed08f56fc.webp",
+            ),
+            (
+                "Tío Rico Juegos",
+                "Tradición y confianza",
+                "e892b940175070588140998d1de6cc101fcfe69f.webp",
+            ),
+            (
+                "Betados",
+                "Más juegos, más emoción",
+                "7c00da3fca519c4a5a7807d6c956f1bebc60e43e.webp",
+            ),
+            (
+                "FutureBet",
+                "Casino galáctico",
+                "0962b43954921f67c86296fa10f45f8acce57d24.webp",
+            ),
+        ],
+        "rose" => &[
+            (
+                "Casino",
+                "Descubrí tus favoritos",
+                "7280119d39a2af5372c1e98ede79fcef57135ffa.webp",
+            ),
+            (
+                "Casino en vivo",
+                "La emoción de las mesas",
+                "60d00af24df6cf157e7a043bb5bff597df522e1a.webp",
+            ),
+            (
+                "Deportes",
+                "Tu pasión, en un lugar",
+                "8e01ff3945cd652de89b7085eb89a675f9217bbb.webp",
+            ),
+        ],
+        "garnet" => &[
+            (
+                "Casino",
+                "",
+                "7280119d39a2af5372c1e98ede79fcef57135ffa.webp",
+            ),
+            (
+                "Casino en vivo",
+                "",
+                "60d00af24df6cf157e7a043bb5bff597df522e1a.webp",
+            ),
+            (
+                "Deportes",
+                "",
+                "8e01ff3945cd652de89b7085eb89a675f9217bbb.webp",
+            ),
+        ],
+        "verdant" => &[
+            (
+                "Casino",
+                "Todos tus favoritos",
+                "6a2f39223cfacfc51e6077320e755cf9a93d3f27.webp",
+            ),
+            (
+                "Casino en vivo",
+                "La emoción de las mesas",
+                "c93e3e79ce04a246723758a45176c3d0b5bbe5fa.webp",
+            ),
+            (
+                "Crash",
+                "Descubrí lo instantáneo",
+                "8e341e9fd699c3c86c0e572ef1e2f11608a0c1a1.webp",
+            ),
+        ],
+        "crimson" => &[
+            (
+                "Slots",
+                "Elegí tu próxima aventura",
+                "64e5d9a5b50f39f15fe5cbcdc5022262152f1258.webp",
+            ),
+            (
+                "Crash Games",
+                "Juegos instantáneos",
+                "8aef33dd76a246c8279b22063921c3dcead75bbd.webp",
+            ),
+            (
+                "Casino en vivo",
+                "Mesas y experiencias",
+                "3e72af84c0c587102605ec12cd0ef83243b1dd4d.webp",
+            ),
+        ],
+        "onyx" => &[
+            (
+                "Casino",
+                "Descubrí todos los juegos",
+                "86da59273abc925a85f69ba3d9ccf3960516ff93.webp",
+            ),
+            (
+                "Casino en vivo",
+                "Entrá a las mesas",
+                "8706574f446a4f0a2a14defb6ebdf1681a978971.webp",
+            ),
+        ],
+        _ => return,
+    };
+    let target = if preset == "rose" {
+        "hero"
+    } else {
+        "categories"
+    };
+    let group = nodes
+        .iter_mut()
+        .find(|n| n.id == target)
+        .expect("preset group");
+    group.kind = Kind::Categories;
+    group.title = if preset == "amethyst" {
+        "Nuestras salas"
+    } else {
+        ""
+    }
+    .into();
+    group.text = if preset == "amethyst" {
+        "Distintas experiencias dentro de esta demostración."
+    } else {
+        ""
+    }
+    .into();
+    group.button.clear();
+    group.asset = None;
+    group.children = cards
+        .iter()
+        .enumerate()
+        .map(|(i, (title, detail, asset))| {
+            let label = match (preset, i) {
+                ("rose", 0) => "Explorar juegos →",
+                ("rose", 1) => "Ver mesas →",
+                ("rose", _) => "Explorar demo →",
+                ("garnet", _) => "",
+                _ => "Explorar →",
+            };
+            let mut tile = section(
+                &format!("{target}-art-{i}"),
+                Kind::Tile,
+                title,
+                detail,
+                label,
+                0,
+            );
+            tile.asset = Some((*asset).into());
+            tile
+        })
+        .collect();
+}
 pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
     let theme = Theme {
-        brand: "Mi casino".into(),
+        brand: catalog_brand(id)
+            .unwrap_or(if id == "ivory" { "Nahuel" } else { "Mi casino" })
+            .into(),
         accent: p.accent.into(),
         button_color: None,
         glow_color: None,
@@ -266,7 +468,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         font: p.font,
         layout: p.layout,
     };
-    let header = section(
+    let mut header = section(
         "header",
         Kind::Header,
         "Inicio",
@@ -274,7 +476,18 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "Acceder",
         p.art,
     );
-    let hero = section(
+    let panel_header = header.clone();
+    if id == "ivory" {
+        header.title = "Descubrir".into();
+        header.text = "MI SALDO".into();
+        header.button = "ARS 11.052 ＋".into();
+    }
+    if catalog_brand(id).is_some() {
+        header.title = "Casino".into();
+        header.text = if id == "violet" { "Entrar" } else { "Ingresar" }.into();
+        header.button = "Registrarse".into();
+    }
+    let mut hero = section(
         "hero",
         Kind::Hero,
         "Un nuevo nivel de entretenimiento",
@@ -282,6 +495,22 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "Explorar juegos",
         p.art,
     );
+    if matches!(
+        id,
+        "violet"
+            | "saffron"
+            | "midnight"
+            | "jade"
+            | "garnet"
+            | "brass"
+            | "verdant"
+            | "crimson"
+            | "onyx"
+    ) {
+        hero.title.clear();
+        hero.text.clear();
+        hero.button.clear();
+    }
     let mut categories = section("categories", Kind::Categories, "Categorías", "", "", p.art);
     for (index, title) in [
         "Destacados",
@@ -358,74 +587,108 @@ pub fn design(id: &str) -> ModelResult<Design> {
         footer.clone(),
     ];
     crate::media::apply_defaults(id, &mut lobby);
-    if p.layout == Layout::Rooms {
-        lobby.swap(1, 2);
+    if matches!(id, "ember" | "cobalt" | "flare" | "coal") {
+        // Classic covers combine multiple original assets. A chosen asset is an explicit override.
+        if let Some(cover) = lobby.iter_mut().find(|node| node.id == "hero") {
+            cover.asset = None;
+        }
     }
-    let mut metrics = section(
-        "metrics",
-        Kind::Metrics,
-        "Resumen",
-        "Datos ilustrativos, no reales.",
-        "",
-        p.art,
-    );
-    for (index, (title, text)) in [
-        ("Usuarios", "—"),
-        ("Actividad", "—"),
-        ("Sesiones", "—"),
-        ("Balance", "—"),
+    restore_lobby_sections(id, &mut lobby);
+    crate::render::frames::initialize(id, &mut lobby);
+    let mut panel_header = panel_header;
+    panel_header.title = "dueno".into();
+    panel_header.text = "DUEÑO".into();
+    panel_header.button = "Cargar / Descargar".into();
+    panel_header.asset = Some("c7d60c43ba450618f022de96049c769a2cf81e87.webp".into());
+    let mut metrics = section("metrics", Kind::Metrics, "MONITOREO", "", "", p.art);
+    for (i, title) in ["Jugadores", "Servidor"].into_iter().enumerate() {
+        metrics.children.push(section(
+            &format!("metric-{i}"),
+            Kind::Tile,
+            title,
+            "",
+            "",
+            i as u8,
+        ));
+    }
+    let mut totals = section("totals", Kind::Metrics, "Totales", "", "", p.art);
+    for (i, (title, amount, note)) in [
+        ("CARGASTE HOY", "ARS 20.000,00", ""),
+        ("DESCARGASTE HOY", "ARS 0,00", ""),
+        (
+            "TE TENDRÍA QUE QUEDAR",
+            "ARS 20.000,00",
+            "lo que entró menos lo que pagaste, hoy",
+        ),
     ]
     .into_iter()
     .enumerate()
     {
-        metrics.children.push(section(
-            &format!("metric-{index}"),
+        totals.children.push(section(
+            &format!("total-{i}"),
             Kind::Tile,
             title,
-            text,
-            "",
-            index as u8,
+            amount,
+            note,
+            i as u8,
         ));
     }
-    let mut activity = section(
-        "activity",
-        Kind::Activity,
-        "Actividad reciente",
-        "Sin operaciones reales.",
-        "",
-        p.art,
-    );
-    for (index, title) in [
-        "Sesiones de muestra",
-        "Movimientos de ejemplo",
-        "Configuración",
+    let mut activity = section("activity", Kind::Activity, "LO QUE SIGUE", "", "", p.art);
+    for (i, (title, button)) in [
+        (
+            "4 jugadores están esperando que les resuelvas un pedido",
+            "Ver pendientes",
+        ),
+        (
+            "3 premios frenados por el tope, esperando que decidas",
+            "Ver premios",
+        ),
+        ("2 grupos de cuentas se ven juntos", "Ver alertas"),
+        (
+            "1 socio no terminó de arrancar: les falta el acceso o las fichas",
+            "Ver socios",
+        ),
+        (
+            "2 del equipo todavía no configuraron el autenticador",
+            "Ver equipo",
+        ),
     ]
-    .iter()
+    .into_iter()
     .enumerate()
     {
         activity.children.push(section(
-            &format!("activity-{index}"),
+            &format!("activity-{i}"),
             Kind::Tile,
             title,
-            "Sin datos",
             "",
-            index as u8,
+            button,
+            i as u8,
         ));
     }
+    let footer = section(
+        "footer",
+        Kind::Footer,
+        "MI LINK",
+        "Todavía no tenés link. Crealo y mandáselo a la gente que querés que juegue con vos.",
+        "Crear mi link",
+        p.art,
+    );
     Ok(Design {
+        catalog_selection: CatalogSelection::default(),
         theme,
         lobby,
         panel: vec![
-            header,
+            panel_header,
             section(
                 "panel-title",
                 Kind::Text,
-                "Panel de administración",
-                "Previsualización de la interfaz.",
+                "Inicio",
+                "Lo que pasó hoy y lo que te falta hacer.",
                 "",
                 p.art,
             ),
             metrics,
+            totals,
             activity,
             footer,
         ],

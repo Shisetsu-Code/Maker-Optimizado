@@ -47,3 +47,13 @@ Verificación gráfica: `npm run test:media` comprueba la integridad de todos lo
 Los catálogos se cargan por plantilla desde `public/catalogs/`. El motor Rust valida los registros, filtra, busca, pagina en lotes de 48 y aplica cambios persistentes a tarjetas por identificador estable; los favoritos, recientes y carruseles son estado de interacción local. El HTML autónomo incluye la primera página de la selección actual, con imágenes embebidas y sin motor de juego.
 
 Compatibilidad: la importación admite los formatos de ajustes y diseño anteriores, migra los campos conocidos y descarga un informe de las reglas sin correspondencia semántica. No se sobrescriben los archivos originales.
+
+### Catálogo por usuario
+
+El campo `meta[name="maker-catalog-endpoint"]` de `public/index.html` admite una ruta del mismo origen. Vacío, usa los catálogos provisionales recuperados del Maker original. Por ejemplo, con `content="/api/account/catalog"` el editor solicita `GET /api/account/catalog?preset=ember` con la sesión del navegador. El servidor debe identificar al usuario a partir de esa sesión y entregar únicamente sus juegos, proveedores, colecciones y portadas. La respuesta usa el mismo esquema versionado que `public/catalogs/ember.json`. Una selección vacía se representa con listas vacías y se respeta también al exportar. Un fallo del servicio se muestra al usuario. El servicio de cuentas se integra por separado. Al cambiar de cuenta se debe recargar el editor para descartar la caché y las listas de interacción de la sesión.
+
+Cada diseño admite `catalog_selection`, editable en «Catálogo de esta plantilla» y persistido en el proyecto. `providers` y `games` aceptan `null` (todos los disponibles), `[]` (ninguno) o una lista de nombres de proveedor e identificadores estables de juego, respectivamente. Se aplica la intersección con el catálogo recibido, también para favoritos, búsquedas y exportaciones. Los proyectos anteriores empiezan con ambas listas en `null`.
+
+## Comparación visual
+
+El workflow **Original visual comparison** compara las 17 plantillas con Maker en la revisión `9bc456f`. Para cada lobby y panel guarda tres PNG (original, reconstrucción y diferencias) en escritorio de 1440 × 900 y móvil de 393 × 798. El artefacto `maker-original-comparison` contiene un índice HTML y los recuentos por vista en `comparison.json`. La verificación exige cero píxeles diferentes en las 68 comparaciones.

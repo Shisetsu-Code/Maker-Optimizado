@@ -123,10 +123,10 @@
     },
     "ember": {
       "source_records": 5007,
-      "normalized_records": 5007,
+      "normalized_records": 5009,
       "method": "literal-provider-groups",
       "without_local_image": 3065,
-      "groups": 0,
+      "groups": 1,
       "banners": 1,
       "mapped_editable_seeds": 0,
       "cross_collection_matches": 1053

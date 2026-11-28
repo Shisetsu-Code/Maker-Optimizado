@@ -19,12 +19,12 @@ test('all presets, editing, mobile, persistence, export and conflict',{timeout:1
   await page.locator('#inspector [name=title]').fill('Edición propia');
   await page.locator('#inspector button[type=submit]').click();
   await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
-  await page.locator('#undo').click();await preview.getByRole('heading',{name:'Un nuevo nivel de entretenimiento',exact:true}).waitFor();
+  await page.locator('#undo').click();await preview.locator('#hero :is(.classic-desktop,.classic-mobile):visible').waitFor();
   await page.locator('#redo').click();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   await page.locator('[data-size=mobile]').click();
   assert.ok(await page.locator('#preview').evaluate(el=>el.getBoundingClientRect().width<=394));
-  await page.locator('#panel').click();await preview.getByRole('heading',{name:'Panel de administración',exact:true}).waitFor();
+  await page.locator('#panel').click();await preview.getByRole('heading',{name:'Inicio',exact:true}).waitFor();
   await page.locator('#lobby').click();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
   const downloadPromise=page.waitForEvent('download');await page.locator('#export-html').click();assert.equal((await downloadPromise).suggestedFilename(),'maker-lobby.html');
   await page.reload();await page.locator('html[data-ready=true]').waitFor();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
@@ -48,10 +48,16 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   const preview=page.frameLocator('#preview');
   for(const [preset,art] of Object.entries(defaults)){
    await page.locator('#preset').selectOption(preset);
-   const hero=preview.locator('#hero img');
+   if(['ember','cobalt','flare','coal'].includes(preset)){
+    await preview.locator('body[data-preset="'+preset+'"] #hero :is(.classic-desktop,.classic-mobile):visible').waitFor();
+    const logos=preview.locator('#header img[data-brand-logo]:visible');
+    assert.ok(await logos.first().evaluate(async img=>{await img.decode();return img.naturalWidth>0;}),preset);
+   }else{
+   const hero=preview.locator('#hero img').first();
    await hero.waitFor();
    await preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').waitFor();
    assert.ok(await hero.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.naturalHeight>0;}),preset);
+   }
    await preview.locator('#catalog[data-catalog-ready=true]').waitFor();
    const cards=preview.locator('#catalog img');
    assert.ok(await cards.count()>0,preset);
@@ -70,7 +76,7 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   const card=page.locator('#media-grid .media-card').first();
   const src=await card.locator('img').getAttribute('src');
   await card.click();
-  await preview.locator('#hero img[src="'+src+'"]').waitFor();
+  await preview.locator('#hero img[src="'+src+'"]:visible').first().waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   // Test that header graphic controls actually render the selected image.
   await page.locator('#outline [data-id=header]').click();
@@ -79,7 +85,7 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   await page.locator('#media-collection').selectOption('cinematic');
   await page.locator('#media-page').filter({hasText:'28 imágenes'}).waitFor();
   await page.locator('#media-grid .media-card').first().click();
-  await preview.locator('#header .brand-art img').waitFor();
+  await preview.locator('#header .brand-art img:visible').first().waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   const pending=page.waitForEvent('download');
   await page.locator('#export-html').click();
@@ -90,8 +96,8 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   await context.setOffline(true);
   const offline=await context.newPage();
   await offline.setContent(html);
-  assert.ok(await offline.locator('#hero img').evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
-  assert.ok(await offline.locator('#header img').evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
+  assert.ok(await offline.locator('#hero img:visible').first().evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
+  assert.ok(await offline.locator('#header img:visible').first().evaluate(async img=>{await img.decode();return img.naturalWidth>0;}));
   assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
  }finally{await browser.close();}
 });
@@ -114,13 +120,56 @@ test('full catalogue interactions and sparse editing',{timeout:120000},async()=>
   await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
   await frame.locator('[data-catalog-more]').click();assert.equal(await cards.count(),96);
   await cards.first().locator('[data-favorite]').click();
-  await frame.locator('[data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
+  await frame.locator('#catalog [data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
   await cards.first().locator('[data-game]').click();await page.locator('#demo-dialog[open]').waitFor();
   await page.locator('#close-demo').click();
-  await frame.locator('[data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
-  await frame.locator('[data-catalog-mode=all]').click();
+  await frame.locator('#catalog [data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
+  await frame.locator('#catalog [data-catalog-mode=all]').click();
   await frame.locator('[data-search]').fill('Tarjeta personalizada');assert.equal(await cards.count(),1);
   await page.locator('#full-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),'true');
   await page.locator('#exit-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),null);
+ }finally{await browser.close();}
+});
+
+test('export waits for session catalogue and respects an empty selection',async()=>{
+ const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage({acceptDownloads:true});
+  const actual=await readFile('public/index.html','utf8');
+  await page.route(origin+'/',route=>route.fulfill({contentType:'text/html',body:actual.replace('name="maker-catalog-endpoint" content=""','name="maker-catalog-endpoint" content="/api/account/catalog"')}));
+  let release;
+  const pending=new Promise(resolve=>{release=resolve;});
+  await page.route('**/api/account/catalog?*',async route=>{
+   const preset=new URL(route.request().url()).searchParams.get('preset');
+   await pending;
+   await route.fulfill({json:{version:1,preset,items:[],groups:[],banners:[]}});
+  });
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('html[data-ready=true]').waitFor();
+  const download=page.waitForEvent('download');
+  await page.locator('#export-html').click();
+  assert.equal(await page.locator('#export-html').isDisabled(),true);
+  release();
+  const file=await download;
+  const html=await readFile(await file.path(),'utf8');
+  const count=await page.evaluate(source=>new DOMParser().parseFromString(source,'text/html').querySelector('#catalog .items').children.length,html);
+  assert.equal(count,0);
+ }finally{await browser.close();}
+});
+
+test('Coal featured games come from the account',async()=>{
+ const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();
+  const actual=await readFile('public/index.html','utf8');
+  await page.route(origin+'/',route=>route.fulfill({contentType:'text/html',body:actual.replace('name="maker-catalog-endpoint" content=""','name="maker-catalog-endpoint" content="/api/account/catalog"')}));
+  await page.route('**/api/account/catalog?*',route=>{
+   const preset=new URL(route.request().url()).searchParams.get('preset');
+   return route.fulfill({json:{version:1,preset,groups:[],banners:[],items:[{id:'item-authorized',title:'Juego de la cuenta',provider:'Proveedor de prueba',category:'slots',asset:null}]}});
+  });
+  await page.goto(origin);await page.locator('html[data-ready=true]').waitFor();await page.locator('#preset').selectOption('coal');
+  const frame=page.frameLocator('#preview');await frame.locator('body[data-preset=coal] #catalog[data-catalog-ready=true]').waitFor();
+  await frame.locator('.account-feature:visible h2').filter({hasText:'Juego de la cuenta'}).waitFor();
+  assert.equal(await frame.locator('[data-fixture-only]').count(),0);
  }finally{await browser.close();}
 });

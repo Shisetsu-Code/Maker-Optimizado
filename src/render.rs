@@ -1,3 +1,6 @@
+mod classic;
+pub(crate) mod frames;
+mod panel;
 use crate::model::*;
 use std::fmt::Write as _;
 
@@ -137,6 +140,79 @@ fn button(n: &Component) -> String {
         )
     }
 }
+fn catalog_header(out: &mut String, n: &Component, theme: &Theme, preset: &str, preview: bool) {
+    if n.hidden && !preview {
+        return;
+    }
+    let violet = preset == "violet";
+    let symbol = if violet || preset == "jade" {
+        "♠"
+    } else {
+        "✦"
+    };
+    let label = if violet {
+        "PLANTILLA DE DEMOSTRACIÓN · SIN APUESTAS NI OFERTAS REALES"
+    } else {
+        "DEMO · Sin apuestas reales ni promociones vigentes"
+    };
+    let logo = if n.image.is_some() || n.asset.is_some() {
+        artwork(n)
+    } else {
+        format!(
+            "<span>{symbol}</span><strong>{}</strong>",
+            escape(&theme.brand)
+        )
+    };
+    let live = if violet {
+        ""
+    } else {
+        "<a href=\"#live\">En vivo</a>"
+    };
+    let hidden = if n.hidden {
+        " data-hidden=\"true\""
+    } else {
+        ""
+    };
+    write!(out,r##"<div class="catalog-mast" id="{}" data-component="{}" style="{}"{}><div class="demo-strip">{label}</div><header><button type="button" data-catalog-menu aria-label="Mostrar menú" aria-expanded="false">☰</button><a class="identity" href="#surface">{logo}</a><nav><a href="#catalog">{}</a>{live}<button data-demo="true">Deportes</button></nav><div class="access"><button data-demo="true">{}</button>{}</div></header><aside class="catalog-sidebar"><h3>EXPLORAR</h3><button data-catalog-mode="all">Todos los juegos</button><button data-catalog-mode="top">Destacados</button><button data-catalog-mode="favorites">Mis favoritos</button><button data-demo="true">Soporte demo</button></aside></div>"##,escape(&n.id),escape(&n.id),node_style(n),hidden,escape(&n.title),escape(&n.text),button(n)).unwrap();
+}
+fn resort_header(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
+    if n.hidden && !preview {
+        return;
+    }
+    let hidden = if n.hidden {
+        " data-hidden=\"true\""
+    } else {
+        ""
+    };
+    let brand = if n.image.is_some() || n.asset.is_some() {
+        artwork(n)
+    } else {
+        format!(
+            r#"<span class="star">✦</span><span><strong>{}</strong><small>CASINO &amp; CLUB</small></span>"#,
+            escape(&theme.brand)
+        )
+    };
+    write!(out,r##"<header id="{}" data-component="{}" class="component resort-header" style="{}"{}><a href="#surface" class="resort-brand">{brand}</a><nav><a href="#catalog">{}</a><a href="#catalog">Slots</a><a href="#live">En vivo</a><button data-demo="true">Deportes</button></nav><button data-demo="true" class="wallet"><small>{}</small><strong>{}</strong></button></header>"##,escape(&n.id),escape(&n.id),node_style(n),hidden,escape(&n.title),escape(&n.text),escape(&n.button)).unwrap();
+}
+fn resort_hero(out: &mut String, n: &Component, preview: bool) {
+    if n.hidden && !preview {
+        return;
+    }
+    let hidden = if n.hidden {
+        " data-hidden=\"true\""
+    } else {
+        ""
+    };
+    let art = if n.image.is_none()
+        && n.asset.as_deref() == Some("bced3a505c90b295e30a6c749ba043d65a73e9f5.webp")
+    {
+        r#"<div class="orbit"></div><div class="orbit second"></div><span class="suit">♠</span><img class="poster one" alt="Book of Dead" src="/media/objects/bced3a505c90b295e30a6c749ba043d65a73e9f5.webp"><img class="poster two" alt="Fortune Tiger" src="/media/objects/5838f407e17892f42a6210429cce32b0a304ef8a.webp"><div class="art-label"><small>EL PLAN DE ESTA NOCHE</small><strong>Jugar. Descubrir. Disfrutar.</strong></div>"#.to_owned()
+    } else {
+        artwork(n)
+    };
+    write!(out,r#"<section class="component resort-hero" id="{}" data-component="{}" style="{}"{}><div class="resort-copy"><span>BIENVENIDO A TU NUEVO LUGAR FAVORITO</span><h1>{}</h1><p>{}</p>{}<div class="resort-meta">✦ Una experiencia diferente <span>Modo demo</span></div></div><div class="resort-art">{art}</div></section>"#,escape(&n.id),escape(&n.id),node_style(n),hidden,escape(&n.title),escape(&n.text),button(n)).unwrap();
+}
+
 fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
     if n.hidden && !preview {
         return;
@@ -223,17 +299,30 @@ pub fn catalog_card(n: &Component, game: &str, favorite: bool, preview: bool) ->
         escape(&n.title)
     )
 }
-pub fn document(design: &Design, view: View, preview: bool) -> String {
-    document_with_appearance(design, view, preview, &Appearance::default())
+pub fn document(preset: &str, design: &Design, view: View, preview: bool) -> String {
+    document_with_appearance(preset, design, view, preview, &Appearance::default())
 }
 pub fn document_with_appearance(
+    preset: &str,
     design: &Design,
     view: View,
     preview: bool,
     appearance: &Appearance,
 ) -> String {
+    if view == View::Panel {
+        return panel::document(preset, design, preview, appearance);
+    }
+    if frames::available(preset, design) {
+        return frames::document(preset, design, preview, appearance);
+    }
     let t = &design.theme;
     let settings = &appearance.settings;
+    let classic = classic::get(preset, design);
+    let original = classic.and_then(|_| crate::presets::design(preset).ok());
+    let mut classic_style = String::new();
+    if let (Some(frame), Some(defaults)) = (classic, original.as_ref()) {
+        frame.style(&mut classic_style, design, defaults, appearance);
+    }
     let mut out = String::with_capacity(16_000);
     let button = t.button_color.as_deref().unwrap_or(&t.accent);
     let glow = t.glow_color.as_deref().unwrap_or(&t.accent);
@@ -253,7 +342,7 @@ pub fn document_with_appearance(
     if let Some(weight) = settings.weight {
         write!(css, "--global-weight:{weight};").unwrap();
     }
-    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
+    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}{classic_style}</style></head><body data-preset=\"{}\" class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),escape(preset),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
     if settings.enabled {
         if let Some(image) = &appearance.image {
             write!(out,"<div class=\"page-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
@@ -270,7 +359,23 @@ pub fn document_with_appearance(
     )
     .unwrap();
     for n in design.nodes(view) {
-        render_node(&mut out, n, t, preview);
+        if let (Some(frame), Some(defaults)) = (classic, original.as_ref()) {
+            if frame.section(&mut out, n, design, preset, defaults, preview) {
+                continue;
+            }
+        }
+        if view == View::Lobby
+            && n.kind == Kind::Header
+            && crate::presets::catalog_brand(preset).is_some()
+        {
+            catalog_header(&mut out, n, t, preset, preview);
+        } else if view == View::Lobby && preset == "ivory" && n.kind == Kind::Hero {
+            resort_hero(&mut out, n, preview);
+        } else if view == View::Lobby && preset == "ivory" && n.kind == Kind::Header {
+            resort_header(&mut out, n, t, preview);
+        } else {
+            render_node(&mut out, n, t, preview);
+        }
     }
     out.push_str("</main></body></html>");
     out
@@ -284,7 +389,7 @@ mod tests {
         let mut d = crate::presets::design("ember").unwrap();
         d.theme.brand = "<script>alert(1)</script>".into();
         d.lobby[1].title = "<img src=x onerror=alert(1)>".into();
-        let html = document(&d, View::Lobby, false);
+        let html = document("ember", &d, View::Lobby, false);
         assert!(!html.contains("<script>"));
         assert!(!html.contains("<img src=x"));
         assert!(html.contains("&lt;script&gt;"));
@@ -293,15 +398,15 @@ mod tests {
     fn hidden_not_exported() {
         let mut d = crate::presets::design("ember").unwrap();
         d.lobby[1].hidden = true;
-        assert!(!document(&d, View::Lobby, false).contains("id=\"hero\""));
-        assert!(document(&d, View::Lobby, true).contains("data-hidden=\"true\""));
+        assert!(!document("ember", &d, View::Lobby, false).contains("id=\"hero\""));
+        assert!(document("ember", &d, View::Lobby, true).contains("data-hidden=\"true\""));
     }
     #[test]
     fn all_templates_render_both_views() {
         for p in crate::presets::PRESETS {
             let d = crate::presets::design(p.id).unwrap();
             for view in [View::Lobby, View::Panel] {
-                assert!(document(&d, view, false).contains("id=\"surface\""));
+                assert!(document(p.id, &d, view, false).contains("id=\"surface\""));
             }
         }
     }
