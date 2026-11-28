@@ -33,7 +33,10 @@ try{
         const refPath='/muestra/'+(view==='panel'?'vista-socio-panel':slug)+'.html';
         const ref=await old.goto(original+refPath);
         if(!ref?.ok())throw Error('Referencia inaccesible: '+refPath);
-        if(refPath.includes('vista-socio-'))await old.locator('#root > *').first().waitFor();
+        if(['ember','cobalt','flare','coal'].includes(preset)||view==='panel'){
+          await old.locator('#root > *').first().waitFor();
+          if(view==='lobby')await old.waitForTimeout(2200);
+        }
         await old.waitForLoadState('networkidle',{timeout:8000}).catch(()=>{});
         await editor.locator('#'+view).evaluate(node=>node.click());
         const surface=editor.frameLocator('#preview');
