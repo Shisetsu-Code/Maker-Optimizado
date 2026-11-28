@@ -156,3 +156,20 @@ test('export waits for session catalogue and respects an empty selection',async(
   assert.equal(count,0);
  }finally{await browser.close();}
 });
+
+test('Coal featured games come from the account',async()=>{
+ const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();
+  const actual=await readFile('public/index.html','utf8');
+  await page.route(origin+'/',route=>route.fulfill({contentType:'text/html',body:actual.replace('name="maker-catalog-endpoint" content=""','name="maker-catalog-endpoint" content="/api/account/catalog"')}));
+  await page.route('**/api/account/catalog?*',route=>{
+   const preset=new URL(route.request().url()).searchParams.get('preset');
+   return route.fulfill({json:{version:1,preset,groups:[],banners:[],items:[{id:'item-authorized',title:'Juego de la cuenta',provider:'Proveedor de prueba',category:'slots',asset:null}]}});
+  });
+  await page.goto(origin);await page.locator('html[data-ready=true]').waitFor();await page.locator('#preset').selectOption('coal');
+  const frame=page.frameLocator('#preview');await frame.locator('body[data-preset=coal] #catalog[data-catalog-ready=true]').waitFor();
+  await frame.locator('.account-feature:visible h2').filter({hasText:'Juego de la cuenta'}).waitFor();
+  assert.equal(await frame.locator('[data-fixture-only]').count(),0);
+ }finally{await browser.close();}
+});

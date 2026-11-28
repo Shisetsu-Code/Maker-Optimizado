@@ -64,11 +64,13 @@ function request(state,preview,offset=0){
 }
 function classicShelf(doc,studio,meta){
   for(const summary of doc.querySelectorAll('[data-classic-summary]'))summary.textContent='Casino online con '+meta.total+' juegos de '+meta.providers.length+' proveedores.';
-  const root=doc.querySelector('[data-classic-shelf]'),row=root?.querySelector('.classic-shelf-row');if(!row)return;
+  const root=doc.querySelector('[data-classic-shelf]'),row=root?.querySelector('.classic-shelf-row');
+  if(!row&&!doc.querySelector('.account-feature'))return;
   const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint)})));
   const template=doc.createElement('template');template.innerHTML=result.html;
   const cards=[...template.content.querySelectorAll('[data-catalog-card]')].slice(0,8);
   accountFeature(doc,cards);
+  if(!row)return;
   root.hidden=!cards.length;
   row.replaceChildren(...cards.map(card=>{
     const name=card.querySelector('h3').textContent,open=button(doc,'','game',card.dataset.catalogCard);
@@ -231,7 +233,7 @@ function restrictFixtureGames(doc){
 }
 function accountFeature(doc,cards){
   for(const deck of doc.querySelectorAll('.account-feature')){
-    deck.hidden=!cards.length;if(!cards.length)continue;
+    deck.hidden=!cards.length;deck.dataset.count=String(cards.length);if(!cards.length){deck.replaceChildren();continue;}
     const index=(Number(deck.dataset.index)||0)%cards.length;
     const current=cards[index],id=current.dataset.catalogCard,title=current.querySelector('h3').textContent;
     const caption=doc.createElement('small');caption.textContent='DESTACADOS · '+(index+1)+' / '+cards.length;
@@ -294,7 +296,7 @@ export function catalogClick(doc,target,notice){
     }
   }
   if(b?.dataset.featureStep){
-    const deck=b.closest('.account-feature'),items=doc.querySelectorAll('.classic-shelf-row [data-game]').length;
+    const deck=b.closest('.account-feature'),items=Number(deck?.dataset.count)||0;
     if(deck&&items){deck.dataset.index=String(((Number(deck.dataset.index)||0)+Number(b.dataset.featureStep)+items)%items);
       classicShelf(doc,current.studio,JSON.parse(current.studio.catalog_metadata()));}return true;
   }
