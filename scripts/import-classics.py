@@ -67,7 +67,7 @@ def compile_one(p, mobile, d):
     elif p=='flare':
         kids=children(main);promo=s.select_one('.bgpass');ads=children(promo)
         h=wrapper(s,([children(app)[0]] if not mobile else [s.nav])+[kids[0]])
-        hero=wrapper(s,[kids[1],wrapper(s,ads[:2],promo)])
+        hero=wrapper(s,[kids[1],wrapper(s,ads[:3],promo)])
         kids[1]['data-fixture-only']=''
     else:
         kids=children(app);h=wrapper(s,[kids[0],kids[1]]+([kids[3]] if mobile else []))
