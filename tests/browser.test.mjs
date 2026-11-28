@@ -114,11 +114,11 @@ test('full catalogue interactions and sparse editing',{timeout:120000},async()=>
   await frame.locator('#catalog[data-catalog-ready=true]').waitFor();
   await frame.locator('[data-catalog-more]').click();assert.equal(await cards.count(),96);
   await cards.first().locator('[data-favorite]').click();
-  await frame.locator('[data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
+  await frame.locator('#catalog [data-catalog-mode=favorites]').click();assert.equal(await cards.count(),1);
   await cards.first().locator('[data-game]').click();await page.locator('#demo-dialog[open]').waitFor();
   await page.locator('#close-demo').click();
-  await frame.locator('[data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
-  await frame.locator('[data-catalog-mode=all]').click();
+  await frame.locator('#catalog [data-catalog-mode=recent]').click();assert.equal(await cards.count(),1);
+  await frame.locator('#catalog [data-catalog-mode=all]').click();
   await frame.locator('[data-search]').fill('Tarjeta personalizada');assert.equal(await cards.count(),1);
   await page.locator('#full-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),'true');
   await page.locator('#exit-preview').click();assert.equal(await page.locator('body').getAttribute('data-full-preview'),null);

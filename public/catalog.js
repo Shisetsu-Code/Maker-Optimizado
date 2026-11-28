@@ -1,7 +1,7 @@
 // DOM bridge for the Rust-owned catalogue. Session-only interaction state.
 const states=new Map(),sources=new Map();
 let current=null;
-const installed=new WeakMap();
+const installed=new WeakMap(),menuCache=new WeakMap();
 const endpoint=document.querySelector('meta[name="maker-catalog-endpoint"]')?.content.trim();
 async function catalogSource(preset){
   let url=new URL('/catalogs/'+encodeURIComponent(preset)+'.json',location.origin);
@@ -39,6 +39,7 @@ async function prepare(studio,preset,stillCurrent){
   if(installed.get(studio)!==preset){
     studio.set_catalog(source);
     installed.set(studio,preset);
+    menuCache.delete(studio);
   }
   return true;
 }
@@ -129,7 +130,16 @@ export function previewDocument(html,restricted){
 export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!doc?.querySelector('#catalog'))return;
   if(!await prepare(studio,preset,stillCurrent))return;
-  const meta=JSON.parse(studio.catalog_metadata()),state=stateFor(preset);
+  const choice=JSON.stringify(JSON.parse(studio.describe('lobby','')).catalog_selection);
+  let menu=menuCache.get(studio);
+  if(!menu||menu.choice!==choice){
+    menu={choice,meta:JSON.parse(studio.catalog_metadata())};
+    menuCache.set(studio,menu);
+  }
+  const meta=menu.meta,state=stateFor(preset);
+  if(!meta.providers.includes(state.provider))state.provider='';
+  if(!meta.categories.includes(state.category))state.category='';
+  if(!meta.groups.some(group=>group.id===state.group))state.group='';
   current={doc,studio,preset,state,editing,banner:null};
   controls(doc,meta,state);populate();updateMode(doc,state);buildBanner(doc,meta,state);
 }

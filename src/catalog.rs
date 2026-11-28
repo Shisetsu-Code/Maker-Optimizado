@@ -64,6 +64,18 @@ pub struct Page {
 }
 
 impl Item {
+    fn selected(&self, design: &Design) -> bool {
+        let selection = &design.catalog_selection;
+        selection
+            .providers
+            .as_ref()
+            .is_none_or(|list| list.contains(&self.provider))
+            && selection
+                .games
+                .as_ref()
+                .is_none_or(|list| list.contains(&self.id))
+    }
+
     pub fn component(&self) -> Component {
         let mut n = Component::new(&self.id, Kind::Tile, &self.title);
         n.text = self.provider.clone();
@@ -149,11 +161,24 @@ impl Catalog {
         }
         Some(n)
     }
-    pub fn metadata(&self) -> serde_json::Value {
-        let providers: BTreeSet<_> = self.items.iter().map(|i| &i.provider).collect();
-        let categories: BTreeSet<_> = self.items.iter().map(|i| &i.category).collect();
-        serde_json::json!({"total":self.items.len(),"providers":providers,"categories":categories,
-            "groups":self.groups.iter().map(|g|serde_json::json!({"id":g.id,"title":g.title})).collect::<Vec<_>>(),"banners":self.banners})
+    pub fn metadata(&self, design: &Design) -> serde_json::Value {
+        let mut ids = BTreeSet::new();
+        let mut providers = BTreeSet::new();
+        let mut categories = BTreeSet::new();
+        for item in &self.items {
+            if item.selected(design) {
+                ids.insert(item.id.as_str());
+                providers.insert(&item.provider);
+                categories.insert(&item.category);
+            }
+        }
+        let groups = self
+            .groups
+            .iter()
+            .filter(|group| group.items.iter().any(|id| ids.contains(id.as_str())))
+            .map(|group| serde_json::json!({"id":group.id,"title":group.title}))
+            .collect::<Vec<_>>();
+        serde_json::json!({"total":ids.len(),"providers":providers,"categories":categories,"groups":groups,"banners":self.banners})
     }
     pub fn page(&self, design: &Design, query: &Query) -> Page {
         let Some(nodes) = Self::nodes(design) else {
@@ -184,17 +209,7 @@ impl Catalog {
             if let Some(n) = effective {
                 consumed.insert(n.id.as_str());
             }
-            if design
-                .catalog_selection
-                .providers
-                .as_ref()
-                .is_some_and(|list| !list.contains(&item.provider))
-                || design
-                    .catalog_selection
-                    .games
-                    .as_ref()
-                    .is_some_and(|list| !list.contains(&item.id))
-            {
+            if !item.selected(design) {
                 continue;
             }
             let title = effective.map_or(item.title.as_str(), |n| n.title.as_str());
