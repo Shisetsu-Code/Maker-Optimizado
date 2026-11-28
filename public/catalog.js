@@ -68,6 +68,7 @@ function classicShelf(doc,studio,meta){
   const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint)})));
   const template=doc.createElement('template');template.innerHTML=result.html;
   const cards=[...template.content.querySelectorAll('[data-catalog-card]')].slice(0,8);
+  accountFeature(doc,cards);
   root.hidden=!cards.length;
   row.replaceChildren(...cards.map(card=>{
     const name=card.querySelector('h3').textContent,open=button(doc,'','game',card.dataset.catalogCard);
@@ -220,11 +221,33 @@ function buildBanner(doc,meta,state){
   };
   current.banner={draw};draw();
 }
+function restrictFixtureGames(doc){
+  for(const original of doc.querySelectorAll('[data-fixture-only]')){
+    if(doc.body.dataset.preset==='coal'&&original.parentElement?.id==='inicio'){
+      const deck=doc.createElement('section');deck.className='account-feature';deck.hidden=true;
+      deck.setAttribute('aria-label','Juegos destacados');original.replaceWith(deck);
+    }else original.remove();
+  }
+}
+function accountFeature(doc,cards){
+  for(const deck of doc.querySelectorAll('.account-feature')){
+    deck.hidden=!cards.length;if(!cards.length)continue;
+    const index=(Number(deck.dataset.index)||0)%cards.length;
+    const current=cards[index],id=current.dataset.catalogCard,title=current.querySelector('h3').textContent;
+    const caption=doc.createElement('small');caption.textContent='DESTACADOS · '+(index+1)+' / '+cards.length;
+    const heading=doc.createElement('h2');heading.textContent=title;
+    const details=doc.createElement('p');details.textContent=current.querySelector('p')?.textContent??'';
+    const open=button(doc,'Ver juego','game',id),image=current.querySelector('img')?.cloneNode();
+    const nav=doc.createElement('div');nav.append(open);
+    if(cards.length>1){for(const [name,step] of [['Anterior',-1],['Siguiente',1]]){const next=button(doc,name,'featureStep',String(step));nav.append(next);}}
+    deck.replaceChildren(caption,heading,...(image?[image]:[]),details,nav);
+  }
+}
 export function previewDocument(html,restricted){
   if(!endpoint&&!restricted)return html;
   const doc=new DOMParser().parseFromString(html,'text/html');
   doc.querySelector('#catalog .items')?.replaceChildren();
-  doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
+  restrictFixtureGames(doc);
   return '<!doctype html>'+doc.documentElement.outerHTML;
 }
 export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
@@ -270,6 +293,11 @@ export function catalogClick(doc,target,notice){
       doc.querySelector('#catalog')?.scrollIntoView();
     }
   }
+  if(b?.dataset.featureStep){
+    const deck=b.closest('.account-feature'),items=doc.querySelectorAll('.classic-shelf-row [data-game]').length;
+    if(deck&&items){deck.dataset.index=String(((Number(deck.dataset.index)||0)+Number(b.dataset.featureStep)+items)%items);
+      classicShelf(doc,current.studio,JSON.parse(current.studio.catalog_metadata()));}return true;
+  }
   if(b?.hasAttribute('data-catalog-menu')){
     const open=b.getAttribute('aria-expanded')!=='true';
     b.setAttribute('aria-expanded',String(open));doc.querySelector('.lobby-sidebar')?.classList.toggle('open',open);
@@ -302,7 +330,7 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   if(!items)return;
   if(!await prepare(studio,preset,stillCurrent))throw Error('La vista cambió durante la exportación. Volvé a exportar.');
   const selection=JSON.parse(studio.describe('lobby','')).catalog_selection;
-  if(endpoint||selection?.games!=null||selection?.providers!=null)doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
+  if(endpoint||selection?.games!=null||selection?.providers!=null)restrictFixtureGames(doc);
   const state=stateFor(preset),page=JSON.parse(studio.catalog_page(request(state,false,0)));
   items.innerHTML=page.html;
   if(doc.querySelector('[data-classic-section]'))classicShelf(doc,studio,JSON.parse(studio.catalog_metadata()));
