@@ -97,6 +97,8 @@ css='\n'.join(styles).replace('.v4 ','.cash-panel ').replace('.v4{','.cash-panel
 css=re.sub(r'\.v4(?=[,:\\[])','.cash-panel',css)
 if 'url(' in css or '@import' in css:raise ValueError("unexpected remote style resource")
 out.mkdir(exist_ok=True,parents=True)
+css=re.sub(r'(?<![-\w])font-size:\s*(\d+(?:\.\d+)?)px',r'font-size:calc(\1px * var(--text-scale,1))',css)
+css=re.sub(r'(?<![-\w])font-weight:\s*([1-9]00)\b',r'font-weight:var(--global-weight,\1)',css)
 (out/'panel.css').write_text(css+'\n',encoding='utf8')
 side=doc.select_one('aside.lateral')
 mobile=doc.select_one('header.hdr')

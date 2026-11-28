@@ -2,7 +2,10 @@ use super::{SURFACE_CSS, artwork, escape, node_style, render_node};
 use crate::model::{Appearance, Component, Design, Font, Kind};
 use std::{collections::BTreeMap, fmt::Write, sync::OnceLock};
 
-const CSS: &str = include_str!("../../frontend/panel/panel.css");
+const CSS: &str = concat!(
+    include_str!("../../frontend/panel/panel.css"),
+    include_str!("../../frontend/panel/editor.css")
+);
 const BINDINGS: &str = include_str!("../../frontend/panel/panel-parts.json");
 
 fn parts() -> &'static BTreeMap<String, String> {
