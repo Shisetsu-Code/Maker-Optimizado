@@ -66,7 +66,8 @@ function classicShelf(doc,studio,meta){
   for(const summary of doc.querySelectorAll('[data-classic-summary]'))summary.textContent='Casino online con '+meta.total+' juegos de '+meta.providers.length+' proveedores.';
   const root=doc.querySelector('[data-classic-shelf]');
   if(!root&&!doc.querySelector('.account-feature'))return;
-  const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint)})));
+  const authored=!endpoint&&meta.groups.some(group=>group.id==='original-recommendations');
+  const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint),group:authored?'original-recommendations':''})));
   const template=doc.createElement('template');template.innerHTML=result.html;
   const cards=[...template.content.querySelectorAll('[data-catalog-card]')];
   accountFeature(doc,cards.slice(0,8));
@@ -81,7 +82,8 @@ function classicShelf(doc,studio,meta){
       open.style.cssText=row.dataset.itemStyle||'';
       open.setAttribute('aria-label','Ver '+name);
       const img=card.querySelector('img');
-      if(img)open.append(img.cloneNode(true));
+      if(authored)open.classList.add('ember-original-tile');
+      else if(img)open.append(img.cloneNode(true));
       const label=doc.createElement('span');label.textContent=name;open.append(label);return open;
     }));
   }

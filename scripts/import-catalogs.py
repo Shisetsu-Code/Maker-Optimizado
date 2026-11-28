@@ -146,6 +146,18 @@ def main():
             if item["asset"]:known[item["asset"]]=(item["title"],item["provider"],item["category"])
     for preset,group in SOURCES.items():
         if preset not in normalized:normalized[preset]=legacy(preset,group,known)
+    # The classic landing page features these games separately from its provider list.
+    ember,collections,*_=normalized["ember"]
+    names=["Rich Wilde and the Book of Dead","Aviator","Reactoonz","Rise of Olympus","Fire Joker","Legacy of Dead","Fortune Tiger","Fortune Ox"]
+    members=[]
+    for name in names:
+        item=next((game for game in ember if game["title"]==name),None)
+        if item is None:
+            item=dict(next(game for game in normalized["flare"][0] if game["title"]==name))
+            item.pop("seed",None)
+            ember.append(item)
+        members.append(item["id"])
+    collections.append({"id":"original-recommendations","title":"Recomendados","items":members})
     for preset,(items,groups,banners,source_count,mode) in normalized.items():
         if not items:raise RuntimeError("Empty catalogue: "+preset)
         seed_count=0
