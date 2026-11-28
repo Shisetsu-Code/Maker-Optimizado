@@ -5,9 +5,6 @@ on:
       run:
         description: Completed original comparison run
         required: true
-  push:
-    branches: [fix/catalog-visual-reference]
-    paths: ['scripts/review-sheets.py']
 permissions:
   contents: read
   actions: read
@@ -23,16 +20,11 @@ jobs:
           name: maker-original-comparison
           path: snapshots
           github-token: ${{ github.token }}
-          run-id: ${{ inputs.run || '46170806262' }}
+          run-id: ${{ inputs.run }}
       - run: |
           python3 -m venv /tmp/maker-review
           /tmp/maker-review/bin/pip install Pillow
           /tmp/maker-review/bin/python scripts/review-sheets.py snapshots/visual review
-      - name: Emit compact reviewer previews
-        run: |
-          for sheet in review/compare-*.jpg; do
-            base64 -w 3000 "$sheet" | sed "s/^/PREVIEW $(basename "$sheet") /"
-          done
       - uses: actions/upload-artifact@v4
         with:
           name: maker-review-gallery

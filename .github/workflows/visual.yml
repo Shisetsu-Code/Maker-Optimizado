@@ -28,10 +28,19 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
+      - name: Restore pinned build tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/worker-build
+            ~/.cargo/bin/wasm-bindgen
+            ~/.cargo/bin/wasm-bindgen-test-runner
+            ~/.cargo/bin/wasm2es6js
+          key: ${{ runner.os }}-${{ runner.arch }}-worker-build-0.9.0-bindgen-0.2.130-${{ hashFiles('rust-toolchain.toml') }}
       - run: |
           npm ci
-          cargo install worker-build --version 0.9.0 --locked
-          cargo install wasm-bindgen-cli --version 0.2.130 --locked
+          command -v worker-build >/dev/null || cargo install worker-build --version 0.9.0 --locked
+          command -v wasm-bindgen >/dev/null || cargo install wasm-bindgen-cli --version 0.2.130 --locked
           npx --no-install playwright install --with-deps chromium
       - run: |
           mkdir -p work
