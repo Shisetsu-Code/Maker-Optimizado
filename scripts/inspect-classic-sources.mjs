@@ -22,10 +22,7 @@ try{
     return {markup:root.innerHTML,styles:[...document.styleSheets].map(s=>({href:s.href,css:s.href?null:s.ownerNode.textContent})),root:document.documentElement.className,body:document.body.className,text:document.body.innerText};
   });
   const bytes=gzipSync(JSON.stringify(result));
-  if(process.env.SHOW_REFERENCE==='1'){
-    const encoded=bytes.toString('base64');
-    for(let i=0;i<encoded.length;i+=4096)console.log('REFERENCE_'+preset+' '+encoded.slice(i,i+4096));
-  }else await writeFile(preset+'-source.json.gz',bytes);
+  await writeFile(preset+'-source.json.gz',bytes);
   await context.close();
  }
 }finally{await b.close();}

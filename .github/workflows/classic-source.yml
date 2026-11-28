@@ -1,7 +1,6 @@
 name: Inspect classic presentation sources
 on:
-  push:
-    paths: ['scripts/inspect-classic-sources.mjs']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -25,4 +24,9 @@ jobs:
       - run: |
           npm ci
           python3 -m http.server 8788 --bind 127.0.0.1 --directory reference/public >/tmp/reference.log 2>&1 &
-          SHOW_REFERENCE=1 node scripts/inspect-classic-sources.mjs
+          node scripts/inspect-classic-sources.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-classic-layouts
+          path: '*-source.json.gz'
+          retention-days: 30
