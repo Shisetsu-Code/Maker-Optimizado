@@ -30,6 +30,7 @@ pub(super) fn get(preset: &str, design: &Design) -> Option<&'static Classic> {
 }
 impl Classic {
     pub(super) fn style(&self, out: &mut String) {
+        out.push_str(include_str!("../../frontend/classic/fonts.css"));
         write!(
             out,
             "@media(min-width:769px){{{}}}@media(max-width:768px){{{}}}{}",
