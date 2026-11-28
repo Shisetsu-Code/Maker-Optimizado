@@ -23,7 +23,6 @@ try{
   });
   const bytes=gzipSync(JSON.stringify(result));
   await writeFile(preset+'-'+width+'-source.json.gz',bytes);
-  if(process.env.CAPTURE_MOBILE==='1' && width===393){const base64=bytes.toString('base64');for(let i=0;i<base64.length;i+=3000)console.log('FRAME '+preset+' '+base64.slice(i,i+3000));}
   await context.close();
  }
 }finally{await b.close();}

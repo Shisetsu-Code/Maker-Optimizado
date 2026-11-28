@@ -62,6 +62,16 @@ function request(state,preview,offset=0){
     favorites_only:state.favorites_only,recent_only:state.recent_only,favorites:[...state.favorites],recent:state.recent,
     top:state.top,source_only:Boolean(endpoint),preview,offset});
 }
+function resortFeatured(doc,state){
+  const feature=doc.querySelector('[data-resort-featured]');if(!feature)return;
+  const first=doc.querySelector('#catalog [data-catalog-card]');
+  feature.hidden=!first||Boolean(state.search||state.category||state.provider||state.group||state.favorites_only||state.recent_only||state.top);
+  if(feature.hidden)return;
+  const img=first.querySelector('img'),art=feature.querySelector('img');art.hidden=!img;
+  if(img)art.src=img.src;else art.removeAttribute('src');
+  feature.querySelector('h3').textContent=first.querySelector('h3').textContent;
+  feature.querySelector('button').dataset.game=first.dataset.catalogCard;
+}
 function populate(reset=true){
   if(!current)return;
   const {doc,studio,state,editing}=current;
@@ -83,6 +93,7 @@ function populate(reset=true){
   const empty=group.querySelector('[data-catalog-empty]');
   if(empty)empty.hidden=total!==0;
   group.querySelector('[data-catalog-more]').hidden=shown>=total;
+  resortFeatured(doc,state);
   group.dataset.catalogReady='true';
 }
 function nativeControls(doc,meta,state){
@@ -210,6 +221,10 @@ export function catalogClick(doc,target,notice){
     b.setAttribute('aria-expanded',String(open));doc.querySelector('.lobby-sidebar')?.classList.toggle('open',open);
     return true;
   }
+  if(b?.dataset.resortCategory){const names={slots:['slots','slot'],vivo:['vivo','live','casino en vivo'],deportes:['deportes','sports'],crash:['crash']};const key=b.dataset.resortCategory;
+    const options=JSON.parse(current.studio.catalog_metadata()).categories;
+    state.category=options.find(name=>(names[key]??[]).includes(name.toLowerCase()))??key;
+    state.favorites_only=false;state.recent_only=false;state.shown=48;populate();updateMode(doc,state);doc.querySelector('#catalog')?.scrollIntoView();return true;}
   if(b?.dataset.catalogProvider||b?.dataset.catalogGroup){
     const key=b.dataset.catalogProvider?'provider':'group',value=b.dataset.catalogProvider||b.dataset.catalogGroup;
     state[key]=state[key]===value?'':value;state.shown=48;populate();return true;
@@ -236,6 +251,7 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   if(endpoint||selection?.games!=null||selection?.providers!=null)doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
   const state=stateFor(preset),page=JSON.parse(studio.catalog_page(request(state,false,0)));
   items.innerHTML=page.html;
+  resortFeatured(doc,state);
   if(doc.querySelector('[data-original-layout]')){
     const meta=JSON.parse(studio.catalog_metadata());
     nativeControls(doc,meta,state);nativeBanner(doc,meta,state);updateMode(doc,state);

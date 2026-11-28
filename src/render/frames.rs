@@ -17,14 +17,23 @@ pub(crate) struct Frame {
     hero: String,
     categories: String,
     catalog: String,
+    #[serde(default)]
+    live: String,
     footer: String,
     mobile: String,
 }
 fn frames() -> &'static BTreeMap<String, Frame> {
     static FRAMES: OnceLock<BTreeMap<String, Frame>> = OnceLock::new();
     FRAMES.get_or_init(|| {
-        serde_json::from_str(include_str!("../../frontend/frames/lobbies.json"))
-            .expect("compiled lobby layouts")
+        let mut layouts: BTreeMap<String, Frame> =
+            serde_json::from_str(include_str!("../../frontend/frames/lobbies.json"))
+                .expect("compiled lobby layouts");
+        layouts.insert(
+            "ivory".into(),
+            serde_json::from_str(include_str!("../../frontend/ivory/resort.json"))
+                .expect("compiled resort presentation"),
+        );
+        layouts
     })
 }
 fn sheets() -> &'static BTreeMap<String, String> {
@@ -35,16 +44,29 @@ fn sheets() -> &'static BTreeMap<String, String> {
     })
 }
 pub(crate) fn available(id: &str, design: &Design) -> bool {
-    crate::presets::catalog_brand(id).is_some()
+    (id == "ivory" || crate::presets::catalog_brand(id).is_some())
         && crate::presets::get(id).is_some_and(|p| p.layout == design.theme.layout)
 }
 pub(crate) fn initialize(preset: &str, nodes: &mut Vec<Component>) {
     let Some(frame) = frames().get(preset) else {
         return;
     };
-    nodes.retain(|n| n.id != "live" && !(preset == "violet" && n.id == "categories"));
+    nodes.retain(|n| {
+        (preset == "ivory" || n.id != "live") && !(preset == "violet" && n.id == "categories")
+    });
     for n in nodes {
         match n.id.as_str() {
+            "live" if preset == "ivory" => {
+                n.title = "Tu lugar en primera fila.".into();
+                n.text = "La emoción de una mesa de casino, desde donde estés.".into();
+                n.button = "Descubrir casino en vivo ↗".into();
+                n.children.clear();
+            }
+            "categories" if preset == "ivory" => {
+                n.title = "¿Qué jugamos hoy?".into();
+                n.children.clear();
+                n.asset = None;
+            }
             "catalog" => {
                 n.title.clone_from(&frame.defaults.catalog_title);
                 n.text.clear();
@@ -177,6 +199,15 @@ fn emit(out: &mut String, template: &str, n: &Component, d: &Design, preset: &st
             "title" => out.push_str(&escape(&n.title)),
             "text" => out.push_str(&escape(&n.text)),
             "button" => out.push_str(&escape(&n.button)),
+            "lines_title" => out.push_str(&escape(&n.title).replace('\n', "<br>")),
+            "lines_text" => out.push_str(&escape(&n.text).replace('\n', "<br>")),
+            "ivory_brand" => {
+                if n.image.is_some() || n.asset.is_some() {
+                    out.push_str(&artwork(n));
+                } else {
+                    write!(out,"<span class=\"star\">✦</span><span><strong>{}</strong><small>CASINO &amp; CLUB</small></span>",escape(&d.theme.brand)).unwrap();
+                }
+            }
             "brand" => {
                 if n.image.is_some() || n.asset.is_some() {
                     out.push_str(&artwork(n));
@@ -251,6 +282,7 @@ fn section(
         ("categories", Kind::Categories) => &frame.categories,
         ("catalog", Kind::Catalog) => &frame.catalog,
         ("footer", Kind::Footer) => &frame.footer,
+        ("live", Kind::Live) if !frame.live.is_empty() => &frame.live,
         _ => {
             out.push_str("<div class=\"panel-extra\">");
             render_node(out, n, &d.theme, preview);
@@ -294,6 +326,16 @@ pub(super) fn document(preset: &str, d: &Design, preview: bool, appearance: &App
     }
     let mut out = String::with_capacity(40000);
     write!(out,r#"<!doctype html><html lang="es" data-preset="{preset}" style="{vars}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'"><title>{}</title><style>"#,escape(&theme.brand)).unwrap();
+    if preset == "ivory" {
+        out.push_str(include_str!("../../frontend/ivory/resort.css"));
+        for line in SURFACE_CSS
+            .lines()
+            .take_while(|l| l.starts_with("@font-face"))
+        {
+            out.push_str(line);
+        }
+        out.push_str(".game-image>img{width:100%;height:100%;object-fit:cover}.layout:has(.spotlight[hidden]){grid-template-columns:1fr}.layout:has(.spotlight[hidden]) .grid{width:100%}");
+    }
     for key in &frame.styles {
         out.push_str(&sheets()[key]);
     }
@@ -365,4 +407,19 @@ pub(super) fn document(preset: &str, d: &Design, preview: bool, appearance: &App
     }
     out.push_str("</div></body></html>");
     out
+}
+
+pub(crate) fn resort_card(n: &Component, id: &str, favorite: bool, editing: bool) -> String {
+    if n.hidden && !editing {
+        return String::new();
+    }
+    let id = escape(id);
+    let title = escape(&n.title);
+    format!(
+        r#"<article class="game catalog-card" {} data-catalog-card="{id}"><button class="game-open" type="button" data-game="{id}"><div class="game-image">{}</div><h3>{title}</h3><p>{}</p></button><button type="button" class="favorite" data-favorite="{id}" aria-label="Favorito: {title}" aria-pressed="{favorite}">{}</button></article>"#,
+        attrs(n, editing),
+        artwork(n),
+        escape(&n.text),
+        if favorite { "♥" } else { "♡" }
+    )
 }

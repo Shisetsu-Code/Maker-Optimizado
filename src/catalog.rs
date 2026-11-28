@@ -287,7 +287,11 @@ impl Catalog {
                 }
                 (None, None) => unreachable!(),
             };
-            let render = if crate::render::frames::available(&self.preset, design) {
+            let render = if self.preset == "ivory"
+                && crate::render::frames::available(&self.preset, design)
+            {
+                crate::render::frames::resort_card
+            } else if crate::render::frames::available(&self.preset, design) {
                 crate::render::frames::card
             } else {
                 crate::render::catalog_card
