@@ -179,12 +179,7 @@ function nativeBanner(doc,meta,state){
   dots?.replaceChildren(...slides.map((_,i)=>{
     const b=button(doc,'','bannerIndex',String(i));b.setAttribute('aria-label','Portada '+(i+1));return b;
   }));
-  let mobile=doc.querySelector('#hero [data-banner-mobile]');
-  if(!mobile&&slides.some(slide=>slide.mobile)){
-    const picture=doc.createElement('picture');
-    mobile=doc.createElement('source');mobile.media='(max-width:700px)';
-    art.before(picture);picture.append(mobile,art);
-  }
+  const mobile=doc.querySelector('#hero [data-banner-mobile]');
   const draw=()=>{
     state.banner=((state.banner%slides.length)+slides.length)%slides.length;
     const slide=slides[state.banner];art.setAttribute('src',slide.desktop);

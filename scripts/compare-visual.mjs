@@ -49,6 +49,8 @@ try{
         },{width,height});
         // Reparenting an iframe reloads srcdoc. Only resize once per page.
         await surface.locator(view==='lobby'?'#catalog[data-catalog-ready=true]':'#panel-title').waitFor();
+        // The editor controls may leave the mouse over the newly positioned preview.
+        await Promise.all([old.mouse.move(0,0),editor.mouse.move(0,0)]);
         for(const target of [old.locator('body'),surface.locator('body')]){
           await target.evaluate(async body=>{
             await body.ownerDocument.fonts.ready;
