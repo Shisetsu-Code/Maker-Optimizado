@@ -70,7 +70,7 @@ pub(crate) fn initialize(preset: &str, nodes: &mut Vec<Component>) {
                 ]
                 .iter()
                 .enumerate()
-                .map(|(i, title)| Component::new(&format!("category-{i}"), Kind::Tile, title))
+                .map(|(i, title)| Component::new(&format!("category-{i}"), Kind::Tile, *title))
                 .collect();
             }
             _ => {}
