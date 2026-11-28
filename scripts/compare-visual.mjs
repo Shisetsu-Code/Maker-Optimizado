@@ -96,15 +96,28 @@ try{
           const canvas=document.createElement('canvas');canvas.width=left.width;canvas.height=left.height;
           const ctx=canvas.getContext('2d',{willReadFrequently:true});
           const pixels=img=>{ctx.drawImage(img,0,0);return ctx.getImageData(0,0,canvas.width,canvas.height);};
-          const first=pixels(left),second=pixels(right);let changed=0;
+          const first=pixels(left),second=pixels(right),points=[];let changed=0;
           for(let i=0;i<first.data.length;i+=4){
             const delta=first.data[i]!==second.data[i]||first.data[i+1]!==second.data[i+1]||first.data[i+2]!==second.data[i+2];
-            if(delta)changed++;
+            if(delta){changed++;const pos=i/4,x=pos%canvas.width,y=Math.floor(pos/canvas.width);if(x%8===4&&y%8===4)points.push([x,y]);}
             first.data[i]=delta?255:0;first.data[i+1]=0;first.data[i+2]=delta?100:0;
           }
           ctx.putImageData(first,0,0);
-          return {changed,pixels:canvas.width*canvas.height,png:canvas.toDataURL().split(',')[1]};
+          return {changed,points,pixels:canvas.width*canvas.height,png:canvas.toDataURL().split(',')[1]};
         },[before.toString('base64'),after.toString('base64')]);
+        if(difference.points.length && (view==='lobby'||preset==='ember')){
+          const describe=async target=>target.evaluate((body,points)=>{
+            const doc=body.ownerDocument,win=doc.defaultView,counts=new Map();
+            for(const [x,y] of points){const el=doc.elementFromPoint(x,y);if(el)counts.set(el,(counts.get(el)||0)+1);}
+            return [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8).map(([el,n])=>{
+              const rect=el.getBoundingClientRect(),style=win.getComputedStyle(el);
+              return {n,tag:el.localName,cls:el.getAttribute('class'),text:el.innerText?.trim().slice(0,28),box:[rect.x,rect.y,rect.width,rect.height].map(Math.round),font:style.fontFamily,size:style.fontSize,bg:style.backgroundColor};
+            });
+          },difference.points);
+          const zones={original:await describe(old.locator('body')),maker:await describe(surface.locator('body'))};
+          console.log('REGIONS '+id+' '+JSON.stringify(zones));
+          await writeFile(out+'/'+id+'-regions.json',JSON.stringify(zones,null,2));
+        }
         await writeFile(out+'/'+id+'-diff.png',Buffer.from(difference.png,'base64'));
         results.push({id,refPath,changed:difference.changed,pixels:difference.pixels});
         await writeFile(out+'/comparison.json',JSON.stringify(results,null,2));
