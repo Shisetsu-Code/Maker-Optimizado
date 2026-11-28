@@ -34,7 +34,7 @@ try{
         const ref=await old.goto(original+refPath);
         if(!ref?.ok())throw Error('Referencia inaccesible: '+refPath);
         if(['ember','cobalt','flare','coal'].includes(preset)||view==='panel'){
-          await old.locator('#root > *').first().waitFor();
+          await old.waitForFunction(()=>window.__demo?.listo===true);
           if(view==='lobby')await old.waitForTimeout(2200);
         }
         await old.waitForLoadState('networkidle',{timeout:8000}).catch(()=>{});

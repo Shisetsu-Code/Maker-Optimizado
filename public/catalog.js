@@ -37,7 +37,8 @@ async function prepare(studio,preset,stillCurrent){
   const source=await catalogSource(preset);
   if(!stillCurrent())return false;
   if(installed.get(studio)!==preset){
-    studio.set_catalog(source);
+    try{studio.set_catalog(source);}
+    catch(error){sources.delete(preset);throw error;}
     installed.set(studio,preset);
     menuCache.delete(studio);
   }

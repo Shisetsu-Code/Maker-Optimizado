@@ -10,7 +10,7 @@ try{
   await context.clock.setFixedTime(new Date('2026-11-26T15:00:00Z'));
   const page=await context.newPage();
   await page.goto('http://127.0.0.1:8788/muestra/'+path+'.html');
-  await page.locator('#root > *').first().waitFor();
+  await page.waitForFunction(()=>window.__demo?.listo===true);
   await page.waitForTimeout(2200);
   await page.waitForLoadState('networkidle',{timeout:10000}).catch(()=>{});
   const result=await page.evaluate(()=>{
