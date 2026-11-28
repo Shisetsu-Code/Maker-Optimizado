@@ -36,3 +36,6 @@ body[data-preset=ember] .classic-desktop{display:none}
 body[data-preset=ember] .classic-mobile{display:block}
 }
 body[data-preset=flare] .bgpass button,body[data-preset=flare] .bgpass [role=button]{pointer-events:auto}
+
+body[data-preset=flare] [data-classic-section] img[shape]{display:block;width:100%;height:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px}
+body[data-preset=flare] [data-classic-section] img[shape=round]{border-radius:50%}
