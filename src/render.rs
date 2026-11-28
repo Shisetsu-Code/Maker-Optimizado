@@ -1,3 +1,4 @@
+mod panel;
 use crate::model::*;
 use std::fmt::Write as _;
 
@@ -306,6 +307,9 @@ pub fn document_with_appearance(
     preview: bool,
     appearance: &Appearance,
 ) -> String {
+    if view == View::Panel {
+        return panel::document(preset, design, preview, appearance);
+    }
     let t = &design.theme;
     let settings = &appearance.settings;
     let mut out = String::with_capacity(16_000);

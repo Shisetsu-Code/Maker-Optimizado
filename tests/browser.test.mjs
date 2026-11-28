@@ -24,7 +24,7 @@ test('all presets, editing, mobile, persistence, export and conflict',{timeout:1
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   await page.locator('[data-size=mobile]').click();
   assert.ok(await page.locator('#preview').evaluate(el=>el.getBoundingClientRect().width<=394));
-  await page.locator('#panel').click();await preview.getByRole('heading',{name:'Panel de administración',exact:true}).waitFor();
+  await page.locator('#panel').click();await preview.getByRole('heading',{name:'Inicio',exact:true}).waitFor();
   await page.locator('#lobby').click();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
   const downloadPromise=page.waitForEvent('download');await page.locator('#export-html').click();assert.equal((await downloadPromise).suggestedFilename(),'maker-lobby.html');
   await page.reload();await page.locator('html[data-ready=true]').waitFor();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();

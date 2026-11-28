@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';
-import {gzipSync} from 'node:zlib';
+import {writeFile} from 'node:fs/promises';
 const b=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await b.newPage({viewport:{width:1440,height:900},locale:'es-AR',timezoneId:'UTC'});
@@ -18,6 +18,5 @@ try{
    }
    return {markup:root.innerHTML,styles:[...document.styleSheets].map(s=>({href:s.href,css:s.href?null:s.ownerNode.textContent})), root:document.documentElement.className,body:document.body.className,text:document.body.innerText};
  });
- const compressed=gzipSync(Buffer.from(JSON.stringify(value))).toString('base64');
- for(let i=0;i<compressed.length;i+=4096)console.log('REFERENCE_PANEL '+compressed.slice(i,i+4096));
+ await writeFile(process.argv[2]||'panel-source.json',JSON.stringify(value));
 }finally{await b.close();}

@@ -591,57 +591,84 @@ pub fn design(id: &str) -> ModelResult<Design> {
     ];
     crate::media::apply_defaults(id, &mut lobby);
     restore_lobby_sections(id, &mut lobby);
-    let mut metrics = section(
-        "metrics",
-        Kind::Metrics,
-        "Resumen",
-        "Datos ilustrativos, no reales.",
-        "",
-        p.art,
-    );
-    for (index, (title, text)) in [
-        ("Usuarios", "—"),
-        ("Actividad", "—"),
-        ("Sesiones", "—"),
-        ("Balance", "—"),
+    let mut panel_header = panel_header;
+    panel_header.title = "dueno".into();
+    panel_header.text = "DUEÑO".into();
+    panel_header.button = "Cargar / Descargar".into();
+    panel_header.asset = Some("c7d60c43ba450618f022de96049c769a2cf81e87.webp".into());
+    let mut metrics = section("metrics", Kind::Metrics, "MONITOREO", "", "", p.art);
+    for (i, title) in ["Jugadores", "Servidor"].into_iter().enumerate() {
+        metrics.children.push(section(
+            &format!("metric-{i}"),
+            Kind::Tile,
+            title,
+            "",
+            "",
+            i as u8,
+        ));
+    }
+    let mut totals = section("totals", Kind::Metrics, "Totales", "", "", p.art);
+    for (i, (title, amount, note)) in [
+        ("CARGASTE HOY", "ARS 20.000,00", ""),
+        ("DESCARGASTE HOY", "ARS 0,00", ""),
+        (
+            "TE TENDRÍA QUE QUEDAR",
+            "ARS 20.000,00",
+            "lo que entró menos lo que pagaste, hoy",
+        ),
     ]
     .into_iter()
     .enumerate()
     {
-        metrics.children.push(section(
-            &format!("metric-{index}"),
+        totals.children.push(section(
+            &format!("total-{i}"),
             Kind::Tile,
             title,
-            text,
-            "",
-            index as u8,
+            amount,
+            note,
+            i as u8,
         ));
     }
-    let mut activity = section(
-        "activity",
-        Kind::Activity,
-        "Actividad reciente",
-        "Sin operaciones reales.",
-        "",
-        p.art,
-    );
-    for (index, title) in [
-        "Sesiones de muestra",
-        "Movimientos de ejemplo",
-        "Configuración",
+    let mut activity = section("activity", Kind::Activity, "LO QUE SIGUE", "", "", p.art);
+    for (i, (title, button)) in [
+        (
+            "4 jugadores están esperando que les resuelvas un pedido",
+            "Ver pendientes",
+        ),
+        (
+            "3 premios frenados por el tope, esperando que decidas",
+            "Ver premios",
+        ),
+        ("2 grupos de cuentas se ven juntos", "Ver alertas"),
+        (
+            "1 socio no terminó de arrancar: les falta el acceso o las fichas",
+            "Ver socios",
+        ),
+        (
+            "2 del equipo todavía no configuraron el autenticador",
+            "Ver equipo",
+        ),
     ]
-    .iter()
+    .into_iter()
     .enumerate()
     {
         activity.children.push(section(
-            &format!("activity-{index}"),
+            &format!("activity-{i}"),
             Kind::Tile,
             title,
-            "Sin datos",
             "",
-            index as u8,
+            button,
+            i as u8,
         ));
     }
+    let footer = section(
+        "footer",
+        Kind::Footer,
+        "MI LINK",
+        "Todavía no tenés link. Crealo y mandáselo a la gente que querés que juegue con vos.",
+        "Crear mi link",
+        p.art,
+    );
     Ok(Design {
         catalog_selection: CatalogSelection::default(),
         theme,
@@ -651,12 +678,13 @@ pub fn design(id: &str) -> ModelResult<Design> {
             section(
                 "panel-title",
                 Kind::Text,
-                "Panel de administración",
-                "Previsualización de la interfaz.",
+                "Inicio",
+                "Lo que pasó hoy y lo que te falta hacer.",
                 "",
                 p.art,
             ),
             metrics,
+            totals,
             activity,
             footer,
         ],

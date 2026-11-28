@@ -230,7 +230,8 @@ async function standaloneHtml(view){
       style.textContent=style.textContent.replaceAll(url,encoded);
     }
     if(urls.length){
-      const notices=await Promise.all(['barlow','archivo','oswald'].map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
+      const families=[...new Set(urls.map(url=>url.slice('/fonts/'.length).split('-')[0]))];
+      const notices=await Promise.all(families.map(async name=>{const r=await fetch('/fonts/licenses/'+name+'.txt');if(!r.ok)throw Error('Licencia tipográfica no disponible.');return r.text();}));
       const license=doc.createElement('pre');license.hidden=true;license.id='font-license-notices';license.textContent=notices.join('\n\n');doc.body.append(license);
     }
   }
