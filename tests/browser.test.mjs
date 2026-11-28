@@ -48,7 +48,7 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   const preview=page.frameLocator('#preview');
   for(const [preset,art] of Object.entries(defaults)){
    await page.locator('#preset').selectOption(preset);
-   const hero=preview.locator('#hero img');
+   const hero=preview.locator('#hero img').first();
    await hero.waitFor();
    await preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').waitFor();
    assert.ok(await hero.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.naturalHeight>0;}),preset);

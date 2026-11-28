@@ -1,7 +1,7 @@
 //! Local, content-addressed image library. All references are same-origin IDs.
 use crate::model::{Component, Kind};
 use serde::Deserialize;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::OnceLock};
 
 #[derive(Deserialize, Default)]
 struct Artwork {
@@ -49,11 +49,11 @@ fn assign_cards(nodes: &mut [Component], cards: &[Card]) {
 }
 
 pub fn apply_defaults(preset: &str, nodes: &mut [Component]) {
-    let Ok(defaults) = serde_json::from_str::<BTreeMap<String, Artwork>>(include_str!(
-        "../assets/preset-artwork.json"
-    )) else {
-        return;
-    };
+    static DEFAULTS: OnceLock<BTreeMap<String, Artwork>> = OnceLock::new();
+    let defaults = DEFAULTS.get_or_init(|| {
+        serde_json::from_str(include_str!("../assets/preset-artwork.json"))
+            .expect("validated artwork manifest")
+    });
     let Some(artwork) = defaults.get(preset) else {
         return;
     };

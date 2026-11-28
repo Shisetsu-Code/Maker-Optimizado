@@ -269,6 +269,182 @@ pub fn catalog_brand(id: &str) -> Option<&'static str> {
         _ => return None,
     })
 }
+fn restore_lobby_sections(preset: &str, nodes: &mut [Component]) {
+    let hero = nodes
+        .iter_mut()
+        .find(|n| n.id == "hero")
+        .expect("preset hero");
+    match preset {
+        "amethyst" => {
+            hero.title = "Las salas más poderosas".into();
+            hero.text = "En un solo lugar".into();
+            hero.button = "Entrar ahora →".into();
+        }
+        "aurum" => {
+            hero.title = "Renace la emoción.".into();
+            hero.text = "Explorá tus juegos favoritos en un mundo de nuevas experiencias.".into();
+            hero.button = "Descubrir juegos →".into();
+        }
+        _ => {}
+    }
+    let cards: &[(&str, &str, &str)] = match preset {
+        "amethyst" => &[
+            (
+                "Celu Apuestas",
+                "La sala original",
+                "6569761ec760a2a1b425e4d0ac3092ece4f90855.webp",
+            ),
+            (
+                "Ganamos.net",
+                "Pura adrenalina",
+                "61dd5e13abf8a66c5a4f6594acce5b5ed08f56fc.webp",
+            ),
+            (
+                "Tío Rico Juegos",
+                "Tradición y confianza",
+                "e892b940175070588140998d1de6cc101fcfe69f.webp",
+            ),
+            (
+                "Betados",
+                "Más juegos, más emoción",
+                "7c00da3fca519c4a5a7807d6c956f1bebc60e43e.webp",
+            ),
+            (
+                "FutureBet",
+                "Casino galáctico",
+                "0962b43954921f67c86296fa10f45f8acce57d24.webp",
+            ),
+        ],
+        "rose" => &[
+            (
+                "Casino",
+                "Descubrí tus favoritos",
+                "7280119d39a2af5372c1e98ede79fcef57135ffa.webp",
+            ),
+            (
+                "Casino en vivo",
+                "La emoción de las mesas",
+                "60d00af24df6cf157e7a043bb5bff597df522e1a.webp",
+            ),
+            (
+                "Deportes",
+                "Tu pasión, en un lugar",
+                "8e01ff3945cd652de89b7085eb89a675f9217bbb.webp",
+            ),
+        ],
+        "garnet" => &[
+            (
+                "Casino",
+                "",
+                "7280119d39a2af5372c1e98ede79fcef57135ffa.webp",
+            ),
+            (
+                "Casino en vivo",
+                "",
+                "60d00af24df6cf157e7a043bb5bff597df522e1a.webp",
+            ),
+            (
+                "Deportes",
+                "",
+                "8e01ff3945cd652de89b7085eb89a675f9217bbb.webp",
+            ),
+        ],
+        "verdant" => &[
+            (
+                "Casino",
+                "Todos tus favoritos",
+                "6a2f39223cfacfc51e6077320e755cf9a93d3f27.webp",
+            ),
+            (
+                "Casino en vivo",
+                "La emoción de las mesas",
+                "c93e3e79ce04a246723758a45176c3d0b5bbe5fa.webp",
+            ),
+            (
+                "Crash",
+                "Descubrí lo instantáneo",
+                "8e341e9fd699c3c86c0e572ef1e2f11608a0c1a1.webp",
+            ),
+        ],
+        "crimson" => &[
+            (
+                "Slots",
+                "Elegí tu próxima aventura",
+                "64e5d9a5b50f39f15fe5cbcdc5022262152f1258.webp",
+            ),
+            (
+                "Crash Games",
+                "Juegos instantáneos",
+                "8aef33dd76a246c8279b22063921c3dcead75bbd.webp",
+            ),
+            (
+                "Casino en vivo",
+                "Mesas y experiencias",
+                "3e72af84c0c587102605ec12cd0ef83243b1dd4d.webp",
+            ),
+        ],
+        "onyx" => &[
+            (
+                "Casino",
+                "Descubrí todos los juegos",
+                "86da59273abc925a85f69ba3d9ccf3960516ff93.webp",
+            ),
+            (
+                "Casino en vivo",
+                "Entrá a las mesas",
+                "8706574f446a4f0a2a14defb6ebdf1681a978971.webp",
+            ),
+        ],
+        _ => return,
+    };
+    let target = if preset == "rose" {
+        "hero"
+    } else {
+        "categories"
+    };
+    let group = nodes
+        .iter_mut()
+        .find(|n| n.id == target)
+        .expect("preset group");
+    group.kind = Kind::Categories;
+    group.title = if preset == "amethyst" {
+        "Nuestras salas"
+    } else {
+        ""
+    }
+    .into();
+    group.text = if preset == "amethyst" {
+        "Distintas experiencias dentro de esta demostración."
+    } else {
+        ""
+    }
+    .into();
+    group.button.clear();
+    group.asset = None;
+    group.children = cards
+        .iter()
+        .enumerate()
+        .map(|(i, (title, detail, asset))| {
+            let label = match (preset, i) {
+                ("rose", 0) => "Explorar juegos →",
+                ("rose", 1) => "Ver mesas →",
+                ("rose", _) => "Explorar demo →",
+                ("garnet", _) => "",
+                _ => "Explorar →",
+            };
+            let mut tile = section(
+                &format!("{target}-art-{i}"),
+                Kind::Tile,
+                title,
+                detail,
+                label,
+                0,
+            );
+            tile.asset = Some((*asset).into());
+            tile
+        })
+        .collect();
+}
 pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
     let theme = Theme {
@@ -397,9 +573,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         footer.clone(),
     ];
     crate::media::apply_defaults(id, &mut lobby);
-    if p.layout == Layout::Rooms {
-        lobby.swap(1, 2);
-    }
+    restore_lobby_sections(id, &mut lobby);
     let mut metrics = section(
         "metrics",
         Kind::Metrics,
