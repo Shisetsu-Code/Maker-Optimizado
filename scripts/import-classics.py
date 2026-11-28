@@ -23,6 +23,7 @@ def css(text):
     def replace(m):
         url=m[1].strip(' "\'')
         if url.startswith('data:image/'):return m[0]
+        if url.startswith('#'):return m[0]
         image=asset(url)
         return 'url("'+image+'")' if image else 'none'
     return re.sub(r'url\(([^)]+)\)',replace,text)
@@ -74,14 +75,20 @@ def compile_one(p, mobile, d):
         if mobile:children(parent)[0]['data-fixture-only']=''
         children(belt)[0]['data-fixture-only']=''
         hero=wrapper(s,([children(parent)[0]] if mobile else [])+[belt],parent)
-    for node in [h,hero]:sanitize(node)
+    foot=s.footer if p!='coal' else s.select_one('#apuestas').find_next_sibling()
+    if not foot:raise ValueError('missing original footer')
+    if p=='ember':
+        for t in foot.find_all(string=True):
+            if '5.915' in t and '41' in t:
+                span=s.new_tag('span');span['data-classic-summary']='';t.replace_with(span)
+    for node in [h,hero,foot]:sanitize(node)
     for img in h.select('img'):
         if 'logo' in str(img.get('class','')).lower() or img.get('alt','').lower()=='rushybet':img['data-brand-logo']=''
     values={}
     def bind(key,default):
         values[key]=str(default)
         return '{{'+key+'}}'
-    for mode,root in [('header',h),('hero',hero)]:
+    for mode,root in [('header',h),('hero',hero),('footer',foot)]:
         btns=[b for b in root.select('button') if b.get_text(strip=True)]
         if btns:
             b=btns[-1];leaf=next((t for t in reversed(b.find_all(string=True)) if t.strip()),None)
@@ -102,13 +109,23 @@ def compile_one(p, mobile, d):
                 picture.wrap(span)
                 span.insert_after('{{brand_text}}')
         elif mode=='hero':root.append('{{extra_image}}')
+    for root in [h,hero,foot]:
+        for element in root.select('[id]'):
+            ident=element['id']
+            # Prefix duplicate SVG gradient, mask and clip identifiers together with their references.
+            if element.name.lower() in ('lineargradient','radialgradient','mask','clippath','filter','pattern'):
+                scoped=('m-' if mobile else 'd-')+ident
+                for tagged in root.find_all(True):
+                    for key,value in list(tagged.attrs.items()):
+                        if isinstance(value,str) and 'url(#'+ident+')' in value:tagged[key]=value.replace('url(#'+ident+')','url(#'+scoped+')')
+                element['id']=scoped
     sheet=[]
     for entry in d['styles']:
         href=entry['href'] or '';v=entry['css'] or ''
         if href.endswith('/piel-lobby.css'):v=(public/'muestra/piel-lobby.css').read_text(encoding='utf8')
         if not v or 'data-maker-select' in v:continue
         sheet.append(css(re.sub(r'/\*[\s\S]*?\*/','',v)))
-    return dict(header=str(h),hero=str(hero),values=values,css='\n'.join(dict.fromkeys(sheet)))
+    return dict(header=str(h),hero=str(hero),footer=str(foot),values=values,css='\n'.join(dict.fromkeys(sheet)))
 out={}
 for preset in ['ember','cobalt','flare','coal']:
     variants={}

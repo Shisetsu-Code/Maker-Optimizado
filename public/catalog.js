@@ -62,7 +62,8 @@ function request(state,preview,offset=0){
     favorites_only:state.favorites_only,recent_only:state.recent_only,favorites:[...state.favorites],recent:state.recent,
     top:state.top,source_only:Boolean(endpoint),preview,offset});
 }
-function classicShelf(doc,studio){
+function classicShelf(doc,studio,meta){
+  for(const summary of doc.querySelectorAll('[data-classic-summary]'))summary.textContent='Casino online con '+meta.total+' juegos de '+meta.providers.length+' proveedores.';
   const root=doc.querySelector('[data-classic-shelf]'),row=root?.querySelector('.classic-shelf-row');if(!row)return;
   const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint)})));
   const template=doc.createElement('template');template.innerHTML=result.html;
@@ -240,7 +241,7 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!meta.categories.includes(state.category))state.category='';
   if(!meta.groups.some(group=>group.id===state.group))state.group='';
   current={doc,studio,preset,state,editing,banner:null};
-  classicShelf(doc,studio);controls(doc,meta,state,studio);populate();updateMode(doc,state);
+  classicShelf(doc,studio,meta);controls(doc,meta,state,studio);populate();updateMode(doc,state);
   if(doc.querySelector('[data-original-layout]'))current.banner=nativeBanner(doc,meta,state);
   else buildBanner(doc,meta,state);
 }
@@ -290,7 +291,7 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   if(endpoint||selection?.games!=null||selection?.providers!=null)doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
   const state=stateFor(preset),page=JSON.parse(studio.catalog_page(request(state,false,0)));
   items.innerHTML=page.html;
-  classicShelf(doc,studio);
+  if(doc.querySelector('[data-classic-section]'))classicShelf(doc,studio,JSON.parse(studio.catalog_metadata()));
   resortFeatured(doc,state);
   if(doc.querySelector('[data-original-layout]')){
     const meta=JSON.parse(studio.catalog_metadata());

@@ -7,6 +7,7 @@ use std::{collections::BTreeMap, fmt::Write, sync::OnceLock};
 struct Variant {
     header: String,
     hero: String,
+    footer: String,
     css: String,
     values: BTreeMap<String, String>,
 }
@@ -64,7 +65,8 @@ impl Classic {
             return true;
         }
         let header = node.id == "header" && node.kind == Kind::Header;
-        if !header && !(node.id == "hero" && node.kind == Kind::Hero) {
+        let footer = node.id == "footer" && node.kind == Kind::Footer;
+        if !header && !footer && !(node.id == "hero" && node.kind == Kind::Hero) {
             return false;
         }
         if node.hidden && !preview {
@@ -90,6 +92,8 @@ impl Classic {
             write!(out, "<div class=\"classic-{mode}\">").unwrap();
             let mut rest = if header {
                 v.header.as_str()
+            } else if footer {
+                v.footer.as_str()
             } else {
                 v.hero.as_str()
             };

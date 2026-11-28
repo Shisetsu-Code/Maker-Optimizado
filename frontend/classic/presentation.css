@@ -30,3 +30,9 @@ body[data-preset=cobalt]:has([data-classic-section]){background:rgb(var(--rc-fon
 .classic-shelf-row span{display:block;font-size:13px;font-weight:700;margin:6px 0}
 @media(min-width:769px){body[data-preset=ember] .classic-shelf{margin-left:calc(112px + 5%);margin-right:5%}body[data-preset=flare] .classic-shelf{margin-left:244px}}
 @media(max-width:768px){.classic-shelf-row{grid-auto-columns:26%;gap:8px}}
+
+@media(min-width:769px) and (max-width:899px){
+body[data-preset=ember] .classic-desktop{display:none}
+body[data-preset=ember] .classic-mobile{display:block}
+}
+body[data-preset=flare] .bgpass button,body[data-preset=flare] .bgpass [role=button]{pointer-events:auto}
