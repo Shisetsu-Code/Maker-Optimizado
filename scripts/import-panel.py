@@ -110,7 +110,11 @@ for node in [side,mobile]:
 field(side,'.lat-cargar span','button')
 fragment('header',side)
 fragment('mobile_header',mobile)
-fragment('mobile_nav',doc.select_one('nav.nav'),False)
+nav=doc.select_one('nav.nav')
+pill=nav.select_one('.fx-pastilla')
+del pill['style']
+nav.select_one('button[aria-current=page]').insert(0,pill.extract())
+fragment('mobile_nav',nav,False)
 title=doc.select_one('.cab-pantalla')
 field(title,'h1','title')
 field(title,'.bajada','text')
