@@ -50,3 +50,18 @@ for idx in range(0, len(presets), 6):
                 im.thumbnail(size,Image.Resampling.LANCZOS)
                 sheet.paste(im,(x+dx,y+32))
     sheet.save(output / f"lobbies-{1+idx//6}.jpg", quality=79, optimize=True)
+
+# The largest desktop/mobile differences are collected first for visual review.
+for mode in ["desktop", "mobile"]:
+    ranked = sorted((x for x in report if x["id"].endswith("-lobby-"+mode)), key=lambda x:-x["changed"]/x["pixels"])[:8]
+    cell = (310,194) if mode=="desktop" else (134,272)
+    panel=Image.new("RGB",(cell[0]*4,(cell[1]+24)*4),"white")
+    draw=ImageDraw.Draw(panel)
+    for i,row in enumerate(ranked):
+        x=(i%2)*2*cell[0]; y=(i//2)*(cell[1]+24)
+        draw.text((x+3,y+2),row["id"].split("-")[0]+"   original / Maker", fill="black")
+        for col,kind in enumerate(["original","maker"]):
+            with Image.open(source/(row["id"]+"-"+kind+".png")) as im:
+                im.thumbnail(cell,Image.Resampling.LANCZOS)
+                panel.paste(im,(x+col*cell[0],y+22))
+    panel.save(output/("compare-"+mode+".jpg"),quality=76,optimize=True)
