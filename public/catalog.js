@@ -173,6 +173,7 @@ export function previewDocument(html,restricted){
   if(!endpoint&&!restricted)return html;
   const doc=new DOMParser().parseFromString(html,'text/html');
   doc.querySelector('#catalog .items')?.replaceChildren();
+  doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
   return '<!doctype html>'+doc.documentElement.outerHTML;
 }
 export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
@@ -231,6 +232,8 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   const items=doc.querySelector('#catalog .items');
   if(!items)return;
   if(!await prepare(studio,preset,stillCurrent))throw Error('La vista cambió durante la exportación. Volvé a exportar.');
+  const selection=JSON.parse(studio.describe('lobby','')).catalog_selection;
+  if(endpoint||selection?.games!=null||selection?.providers!=null)doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
   const state=stateFor(preset),page=JSON.parse(studio.catalog_page(request(state,false,0)));
   items.innerHTML=page.html;
   if(doc.querySelector('[data-original-layout]')){

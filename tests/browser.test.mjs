@@ -19,7 +19,7 @@ test('all presets, editing, mobile, persistence, export and conflict',{timeout:1
   await page.locator('#inspector [name=title]').fill('Edición propia');
   await page.locator('#inspector button[type=submit]').click();
   await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
-  await page.locator('#undo').click();await preview.getByRole('heading',{name:'Un nuevo nivel de entretenimiento',exact:true}).waitFor();
+  await page.locator('#undo').click();await preview.locator('#hero .classic-desktop .lb-promos').waitFor();
   await page.locator('#redo').click();await preview.getByRole('heading',{name:'Edición propia',exact:true}).waitFor();
   await page.locator('#status').filter({hasText:'guardado localmente'}).waitFor();
   await page.locator('[data-size=mobile]').click();
@@ -48,10 +48,16 @@ test('all 17 graphic presets, library selection and offline HTML',{timeout:18000
   const preview=page.frameLocator('#preview');
   for(const [preset,art] of Object.entries(defaults)){
    await page.locator('#preset').selectOption(preset);
+   if(['ember','cobalt','flare','coal'].includes(preset)){
+    await preview.locator('body[data-preset="'+preset+'"] #hero .classic-desktop').waitFor();
+    const logos=preview.locator('#header img[data-brand-logo]:visible');
+    assert.ok(await logos.first().evaluate(async img=>{await img.decode();return img.naturalWidth>0;}),preset);
+   }else{
    const hero=preview.locator('#hero img').first();
    await hero.waitFor();
    await preview.locator('#hero img[src="/media/objects/'+art.hero+'"]').waitFor();
    assert.ok(await hero.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.naturalHeight>0;}),preset);
+   }
    await preview.locator('#catalog[data-catalog-ready=true]').waitFor();
    const cards=preview.locator('#catalog img');
    assert.ok(await cards.count()>0,preset);

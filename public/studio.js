@@ -215,11 +215,23 @@ async function standaloneHtml(view){
     if(!images.has(id))images.set(id,[]);
     images.get(id).push([img,attr]);
   }
+  const styles=[...doc.querySelectorAll('style,[style]')];
+  const references=new Map();
+  for(const node of styles){
+    const css=node.localName==='style'?node.textContent:node.getAttribute('style');
+    const ids=new Set([...css.matchAll(/\/media\/objects\/([a-f0-9]{40}\.(?:webp|png|jpg|gif|avif))/g)].map(m=>m[1]));
+    for(const id of ids){if(!references.has(id))references.set(id,[]);references.get(id).push(node);if(!images.has(id))images.set(id,[]);}
+  }
   let total=0;
   for(const [id,nodes] of images){
     const {url,size}=await readAsset(id,24*1024*1024-total);
     total+=size;
     for(const [img,attr] of nodes)img.setAttribute(attr,url);
+    for(const node of references.get(id)??[]){
+      const path='/media/objects/'+id;
+      if(node.localName==='style')node.textContent=node.textContent.replaceAll(path,url);
+      else node.setAttribute('style',node.getAttribute('style').replaceAll(path,url));
+    }
   }
   // Embed the licensed local fonts so the static document also works offline.
   for(const style of doc.querySelectorAll('style')){

@@ -1,3 +1,4 @@
+mod classic;
 pub(crate) mod frames;
 mod panel;
 use crate::model::*;
@@ -316,6 +317,12 @@ pub fn document_with_appearance(
     }
     let t = &design.theme;
     let settings = &appearance.settings;
+    let classic = classic::get(preset, design);
+    let original = classic.and_then(|_| crate::presets::design(preset).ok());
+    let mut classic_style = String::new();
+    if let Some(frame) = classic {
+        frame.style(&mut classic_style);
+    }
     let mut out = String::with_capacity(16_000);
     let button = t.button_color.as_deref().unwrap_or(&t.accent);
     let glow = t.glow_color.as_deref().unwrap_or(&t.accent);
@@ -335,7 +342,7 @@ pub fn document_with_appearance(
     if let Some(weight) = settings.weight {
         write!(css, "--global-weight:{weight};").unwrap();
     }
-    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body data-preset=\"{}\" class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),escape(preset),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
+    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}{classic_style}</style></head><body data-preset=\"{}\" class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),escape(preset),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
     if settings.enabled {
         if let Some(image) = &appearance.image {
             write!(out,"<div class=\"page-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
@@ -352,6 +359,11 @@ pub fn document_with_appearance(
     )
     .unwrap();
     for n in design.nodes(view) {
+        if let (Some(frame), Some(defaults)) = (classic, original.as_ref()) {
+            if frame.section(&mut out, n, design, defaults, preview) {
+                continue;
+            }
+        }
         if view == View::Lobby
             && n.kind == Kind::Header
             && crate::presets::catalog_brand(preset).is_some()
