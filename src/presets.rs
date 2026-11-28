@@ -456,11 +456,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
     let theme = Theme {
         brand: catalog_brand(id)
-            .unwrap_or(if id == "ivory" {
-                "Nahuel"
-            } else {
-                "Mi casino"
-            })
+            .unwrap_or(if id == "ivory" { "Nahuel" } else { "Mi casino" })
             .into(),
         accent: p.accent.into(),
         button_color: None,
@@ -591,6 +587,12 @@ pub fn design(id: &str) -> ModelResult<Design> {
         footer.clone(),
     ];
     crate::media::apply_defaults(id, &mut lobby);
+    if matches!(id, "ember" | "cobalt" | "flare" | "coal") {
+        // Classic covers combine multiple original assets. A chosen asset is an explicit override.
+        if let Some(cover) = lobby.iter_mut().find(|node| node.id == "hero") {
+            cover.asset = None;
+        }
+    }
     restore_lobby_sections(id, &mut lobby);
     crate::render::frames::initialize(id, &mut lobby);
     let mut panel_header = panel_header;
