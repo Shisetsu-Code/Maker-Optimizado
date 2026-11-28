@@ -62,6 +62,28 @@ try{
           console.log('Panel original '+name+' '+JSON.stringify(structure));
           await writeFile(out+'/panel-'+name+'-structure.json',JSON.stringify(structure,null,2));
         }
+        if((view==='panel'&&preset==='ember')||(view==='lobby'&&['violet','ivory','garnet','rose'].includes(preset))){
+          const inspect=async(target,legacy)=>target.evaluate((body,{legacy,view})=>{
+            const doc=body.ownerDocument,rows={};
+            const selectors=view==='panel'?['.marco','.lateral','.lat-marca','.lat-float','.lat-cargar','.lat-nav','.lat-item','.hdr','.main','.cab-pantalla','.ceja','h1','.bajada','.mo','.mo-bloques','.mo-caja','.mo-tit','.mo-cifra-n','.mo-grafico','.mo-med','.numeros','.nav']:
+              ['header','main','.'+(legacy?'bp':'lobby')+'-brand','.'+(legacy?'bp':'lobby')+'-banner','.'+(legacy?'bp':'lobby')+'-grid','.'+(legacy?'bp':'lobby')+'-game','.ce-home','.hero','.resort-hero','.quick-links','.provider-strip'];
+            for(const sel of selectors){
+              const el=doc.querySelector(sel);if(!el)continue;
+              const win=doc.defaultView,style=win.getComputedStyle(el),rect=el.getBoundingClientRect();
+              rows[sel.replace(/bp-/g,'lobby-')]={box:[rect.x,rect.y,rect.width,rect.height].map(x=>+x.toFixed(2)),font:style.fontFamily,size:style.fontSize,weight:style.fontWeight,line:style.lineHeight,color:style.color,background:style.backgroundColor,text:el.innerText?.trim().slice(0,60)};
+            }
+            return rows;
+          },{legacy,view});
+          const originalRows=await inspect(old.locator('body'),true),makerRows=await inspect(surface.locator('body'),false);
+          const deviations={};
+          for(const [key,orig] of Object.entries(originalRows)){
+            const rebuilt=makerRows[key];
+            const changed=Object.fromEntries(Object.entries(orig).filter(([name,value])=>JSON.stringify(value)!==JSON.stringify(rebuilt?.[name])).map(([name,value])=>[name,[value,rebuilt?.[name]]]));
+            if(Object.keys(changed).length)deviations[key]=changed;
+          }
+          await writeFile(out+'/'+id+'-layout.json',JSON.stringify(deviations,null,2));
+          console.log('LAYOUT '+id+' '+JSON.stringify(deviations));
+        }
         const before=await old.screenshot({animations:'disabled',path:out+'/'+id+'-original.png'});
         const after=await frame.screenshot({animations:'disabled',path:out+'/'+id+'-maker.png'});
         const difference=await measure.evaluate(async ([a,b])=>{
