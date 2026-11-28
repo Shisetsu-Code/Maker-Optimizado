@@ -196,7 +196,7 @@ pub(super) fn document(
     }
     write!(out,r#"</style></head><body class="min-h-full flex flex-col" data-preset="{}"><div class="panel cash-panel fuente-demo-figtree" id="surface" data-estilo="1" aria-label="Panel de administración"><div class="marco">"#,escape(preset)).unwrap();
     let base_brand = crate::presets::catalog_brand(preset).unwrap_or(if preset == "ivory" {
-        "Tu casino"
+        "Nahuel"
     } else {
         "Mi casino"
     });

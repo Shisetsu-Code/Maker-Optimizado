@@ -457,7 +457,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
     let theme = Theme {
         brand: catalog_brand(id)
             .unwrap_or(if id == "ivory" {
-                "Tu casino"
+                "Nahuel"
             } else {
                 "Mi casino"
             })

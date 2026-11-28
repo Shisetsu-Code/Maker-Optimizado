@@ -140,7 +140,8 @@ fn experience(out: &mut String, preset: &str, parent: &str, tile: &Component, pr
     let label = escape(&tile.button);
     let img = artwork(tile);
     if preset == "rose" && parent == "hero" {
-        write!(out,r#"<button {attr} type="button" data-demo="true">{img}<div><span>{text}</span><h2>{title}</h2><strong>{label}</strong></div></button>"#).unwrap();
+        let tag = if tile.id.ends_with("-0") { "h1" } else { "h2" };
+        write!(out,r#"<button {attr} type="button" data-demo="true">{img}<div><span>{text}</span><{tag}>{title}</{tag}><strong>{label}</strong></div></button>"#).unwrap();
     } else if preset == "amethyst" {
         write!(out,r#"<button {attr} type="button" class="ms-room" data-demo="true">{img}<div><h3>{title}</h3><span>{text}</span><strong>{label}</strong></div></button>"#).unwrap();
     } else if matches!(preset, "garnet" | "verdant" | "crimson" | "onyx") {
