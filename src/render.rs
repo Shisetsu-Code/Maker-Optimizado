@@ -137,6 +137,41 @@ fn button(n: &Component) -> String {
         )
     }
 }
+fn catalog_header(out: &mut String, n: &Component, theme: &Theme, preset: &str, preview: bool) {
+    if n.hidden && !preview {
+        return;
+    }
+    let violet = preset == "violet";
+    let symbol = if violet || preset == "jade" {
+        "♠"
+    } else {
+        "✦"
+    };
+    let label = if violet {
+        "PLANTILLA DE DEMOSTRACIÓN · SIN APUESTAS NI OFERTAS REALES"
+    } else {
+        "DEMO · Sin apuestas reales ni promociones vigentes"
+    };
+    let logo = if n.image.is_some() || n.asset.is_some() {
+        artwork(n)
+    } else {
+        format!(
+            "<span>{symbol}</span><strong>{}</strong>",
+            escape(&theme.brand)
+        )
+    };
+    let live = if violet {
+        ""
+    } else {
+        "<a href=\"#live\">En vivo</a>"
+    };
+    let hidden = if n.hidden {
+        " data-hidden=\"true\""
+    } else {
+        ""
+    };
+    write!(out,r##"<div class="catalog-mast" id="{}" data-component="{}" style="{}"{}><div class="demo-strip">{label}</div><header><button type="button" data-catalog-menu aria-label="Mostrar menú" aria-expanded="false">☰</button><a class="identity" href="#surface">{logo}</a><nav><a href="#catalog">{}</a>{live}<button data-demo="true">Deportes</button></nav><div class="access"><button data-demo="true">{}</button>{}</div></header><aside class="catalog-sidebar"><h3>EXPLORAR</h3><button data-catalog-mode="all">Todos los juegos</button><button data-catalog-mode="top">Destacados</button><button data-catalog-mode="favorites">Mis favoritos</button><button data-demo="true">Soporte demo</button></aside></div>"##,escape(&n.id),escape(&n.id),node_style(n),hidden,escape(&n.title),escape(&n.text),button(n)).unwrap();
+}
 fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
     if n.hidden && !preview {
         return;
@@ -271,7 +306,14 @@ pub fn document_with_appearance(
     )
     .unwrap();
     for n in design.nodes(view) {
-        render_node(&mut out, n, t, preview);
+        if view == View::Lobby
+            && n.kind == Kind::Header
+            && crate::presets::catalog_brand(preset).is_some()
+        {
+            catalog_header(&mut out, n, t, preset, preview);
+        } else {
+            render_node(&mut out, n, t, preview);
+        }
     }
     out.push_str("</main></body></html>");
     out

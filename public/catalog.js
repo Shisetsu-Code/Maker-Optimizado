@@ -144,6 +144,10 @@ export function catalogInput(doc,target){
 export function catalogClick(doc,target,notice){
   if(current?.doc!==doc)return false;
   const state=current.state,b=target.closest?.('button');
+  if(b?.hasAttribute('data-catalog-menu')){
+    b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true'));
+    return true;
+  }
   if(b?.dataset.catalogMode){
     const mode=b.dataset.catalogMode;state.favorites_only=mode==='favorites';state.recent_only=mode==='recent';state.top=mode==='top';
     if(mode==='all'){state.provider='';state.category='';state.group='';state.search='';for(const s of doc.querySelectorAll('[data-catalog-filter]'))s.value='';const q=doc.querySelector('[data-search]');if(q)q.value='';}

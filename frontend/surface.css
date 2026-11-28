@@ -60,3 +60,43 @@ body.layout-editorial .page-backdrop+main{background:#f5f3edf0;border-radius:var
     & .catalog .items { grid-template-columns:repeat(min(var(--columns,var(--grid-narrow,3)),var(--grid-narrow,3)),minmax(0,1fr)) }
   }
 }
+
+.lobby:has(.catalog-mast) { padding-top:0 }
+.catalog-mast { color:var(--node-ink,var(--ink)); background:var(--node-bg,var(--page)); font-family:Arial,system-ui,sans-serif }
+.catalog-mast[data-selected] { outline:3px solid #ffd36b }
+.catalog-mast[data-hidden] { opacity:.42 }
+.catalog-mast .demo-strip { text-align:center; padding:7px; background:#050608; color:#a7acb8; font-size:9px; letter-spacing:1px }
+.catalog-mast header { height:75px; display:flex; align-items:center; gap:24px; padding:var(--node-padding,12px 4%); border-bottom:1px solid #ffffff12 }
+.catalog-mast button,.catalog-mast nav a { border:0; background:transparent; color:inherit; padding:11px 18px; font:700 13px Arial,system-ui,sans-serif }
+.catalog-mast nav { display:flex; align-items:center; gap:7px }
+.catalog-mast nav a:first-child,.catalog-mast .identity span { color:var(--accent) }
+.catalog-mast .identity { display:flex; gap:9px; align-items:center; max-width:250px; min-width:0 }
+.catalog-mast .identity span { font-size:34px }
+.catalog-mast .identity strong { font-size:var(--node-size,27px); font-weight:var(--node-weight,900); text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.catalog-mast .identity img { max-width:180px; height:44px; min-height:0; object-fit:contain }
+.catalog-mast .access { margin-left:auto; display:flex; align-items:center; gap:10px }
+.catalog-mast .action { background:var(--button); color:var(--button-ink); border-radius:var(--node-radius,9px) }
+.catalog-mast [data-catalog-menu] { padding:5px; font-size:22px }
+.catalog-sidebar { display:none; position:fixed; inset:98px auto 0 0; width:235px; overflow:auto; z-index:5; background:var(--page); padding:25px 16px; box-shadow:25px 0 60px #000c }
+.catalog-sidebar h3 { font-size:11px; color:#9ba2b0; margin-bottom:15px }
+.catalog-sidebar button { display:block; width:100%; text-align:left }
+.catalog-mast:has([data-catalog-menu][aria-expanded=true]) .catalog-sidebar { display:block }
+@media(min-width:701px) {
+  [data-preset=violet] .catalog-sidebar { display:block; top:105px; width:216px; box-shadow:none; border-right:1px solid #ffffff0d }
+  [data-preset=violet] .lobby:has(.catalog-mast) { max-width:1700px; padding-inline:24px }
+  [data-preset=violet] .lobby:has(.catalog-mast) > :not(.catalog-mast) { margin-left:216px }
+  [data-preset=violet] .catalog-mast [data-catalog-menu] { display:none }
+}
+@media(max-width:700px) {
+  .catalog-mast { margin-inline:-12px }
+  .catalog-mast .demo-strip { font-size:7px; letter-spacing:.3px; padding:6px }
+  .catalog-mast header { height:63px; gap:8px; padding:var(--node-padding,10px 13px) }
+  .catalog-mast header nav { display:none }
+  .catalog-mast .identity { max-width:135px }
+  .catalog-mast .identity strong { font-size:var(--node-size,20px) }
+  .catalog-mast .identity span { font-size:24px }
+  .catalog-mast .identity img { max-width:105px; height:32px }
+  .catalog-mast .access { gap:2px }
+  .catalog-mast button { padding:8px 7px; font-size:10px }
+  .catalog-sidebar { top:84px; bottom:64px }
+}

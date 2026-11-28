@@ -252,10 +252,27 @@ const TITLES: [&str; 12] = [
     "Silver Mirage",
 ];
 
+pub fn catalog_brand(id: &str) -> Option<&'static str> {
+    Some(match id {
+        "violet" => "Tu casino",
+        "saffron" => "Cobraya",
+        "midnight" => "Lunabet",
+        "amethyst" => "Multisala",
+        "jade" => "Pinaplay",
+        "rose" => "Celuapuestas40",
+        "garnet" => "Bet30",
+        "brass" => "CasinoTower30",
+        "aurum" => "Fenarys",
+        "verdant" => "Fortuna SJK",
+        "crimson" => "RavenBet",
+        "onyx" => "LuckRex",
+        _ => return None,
+    })
+}
 pub fn design(id: &str) -> ModelResult<Design> {
     let p = get(id).ok_or("Plantilla desconocida.")?;
     let theme = Theme {
-        brand: "Mi casino".into(),
+        brand: catalog_brand(id).unwrap_or("Mi casino").into(),
         accent: p.accent.into(),
         button_color: None,
         glow_color: None,
@@ -266,7 +283,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         font: p.font,
         layout: p.layout,
     };
-    let header = section(
+    let mut header = section(
         "header",
         Kind::Header,
         "Inicio",
@@ -274,6 +291,12 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "Acceder",
         p.art,
     );
+    let panel_header = header.clone();
+    if catalog_brand(id).is_some() {
+        header.title = "Casino".into();
+        header.text = if id == "violet" { "Entrar" } else { "Ingresar" }.into();
+        header.button = "Registrarse".into();
+    }
     let mut hero = section(
         "hero",
         Kind::Hero,
@@ -433,7 +456,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         theme,
         lobby,
         panel: vec![
-            header,
+            panel_header,
             section(
                 "panel-title",
                 Kind::Text,
