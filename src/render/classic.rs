@@ -1,5 +1,5 @@
 use super::{artwork, escape, node_style};
-use crate::model::{Component, Design, Kind};
+use crate::model::{Appearance, Component, Design, Font, Kind};
 use serde::Deserialize;
 use std::{collections::BTreeMap, fmt::Write, sync::OnceLock};
 
@@ -30,7 +30,13 @@ pub(super) fn get(preset: &str, design: &Design) -> Option<&'static Classic> {
     .get(preset)
 }
 impl Classic {
-    pub(super) fn style(&self, out: &mut String) {
+    pub(super) fn style(
+        &self,
+        out: &mut String,
+        d: &Design,
+        defaults: &Design,
+        appearance: &Appearance,
+    ) {
         out.push_str(include_str!("../../frontend/classic/fonts.css"));
         write!(
             out,
@@ -40,6 +46,78 @@ impl Classic {
             include_str!("../../frontend/classic/presentation.css")
         )
         .unwrap();
+
+        let theme = &d.theme;
+        out.push_str(":root{");
+        for (value, base, hex, rgb) in [
+            (
+                &theme.accent,
+                &defaults.theme.accent,
+                ["--dm-p", "--bb-primary", "--br-p"],
+                ["--dm-p-rgb", "--rc-marca", "--br-p-rgb"],
+            ),
+            (
+                &theme.background,
+                &defaults.theme.background,
+                ["--dm-f", "--bb-bg", "--br-fondo"],
+                ["--dm-f-rgb", "--rc-fondo", "--br-fondo-rgb"],
+            ),
+            (
+                &theme.surface,
+                &defaults.theme.surface,
+                ["--dm-t", "--bb-sidebar", "--br-hondo"],
+                ["--dm-t-rgb", "--rc-tarjeta", "--br-hondo-rgb"],
+            ),
+        ] {
+            if value != base {
+                for name in hex {
+                    write!(out, "{name}:{value};").unwrap();
+                }
+                if let Some(bytes) = value
+                    .strip_prefix('#')
+                    .filter(|s| s.len() == 6 && s.is_ascii())
+                {
+                    if let (Ok(r), Ok(g), Ok(b)) = (
+                        u8::from_str_radix(&bytes[..2], 16),
+                        u8::from_str_radix(&bytes[2..4], 16),
+                        u8::from_str_radix(&bytes[4..], 16),
+                    ) {
+                        for name in rgb {
+                            write!(out, "{name}:{r},{g},{b};").unwrap();
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(button) = &theme.button_color {
+            write!(out, "--dm-b:{button};--dm-b-grad:{button};").unwrap();
+        }
+        if theme.ink != defaults.theme.ink {
+            write!(out, "--bb-text:{};--br-texto:{};", theme.ink, theme.ink).unwrap();
+        }
+        out.push('}');
+        if let Some(font) = appearance
+            .settings
+            .font
+            .or((theme.font != defaults.theme.font).then_some(theme.font))
+        {
+            let family = match font {
+                Font::Archivo => "Archivo",
+                Font::Barlow => "Barlow",
+                Font::Oswald | Font::Condensed => "Oswald",
+                Font::Editorial => "Georgia",
+                Font::System => "system-ui",
+            };
+            write!(out,"[data-classic-section],[data-classic-section] :is(div,span,button,h1,h2,p){{font-family:{family},sans-serif!important}}").unwrap();
+        }
+        if appearance.settings.scale != 100 {
+            write!(
+                out,
+                "[data-classic-section]{{zoom:{}%}}",
+                appearance.settings.scale
+            )
+            .unwrap();
+        }
     }
     pub(super) fn section(
         &self,

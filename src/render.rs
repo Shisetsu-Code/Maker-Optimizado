@@ -320,8 +320,8 @@ pub fn document_with_appearance(
     let classic = classic::get(preset, design);
     let original = classic.and_then(|_| crate::presets::design(preset).ok());
     let mut classic_style = String::new();
-    if let Some(frame) = classic {
-        frame.style(&mut classic_style);
+    if let (Some(frame), Some(defaults)) = (classic, original.as_ref()) {
+        frame.style(&mut classic_style, design, defaults, appearance);
     }
     let mut out = String::with_capacity(16_000);
     let button = t.button_color.as_deref().unwrap_or(&t.accent);

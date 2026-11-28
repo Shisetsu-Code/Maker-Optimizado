@@ -94,7 +94,7 @@ function attachFrame(){
   },true);
   doc.addEventListener('change',event=>{if(event.target.matches?.('[data-catalog-filter]'))catalogInput(doc,event.target);});
   doc.addEventListener('input',event=>{
-    if(event.target.matches?.('[data-search]')&&catalogInput(doc,event.target))return;
+    if(catalogInput(doc,event.target))return;
     if(!event.target.matches?.('[data-search]'))return;
     const term=event.target.value.trim().toLocaleLowerCase('es');
     const group=event.target.closest('.catalog');
