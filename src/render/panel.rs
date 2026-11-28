@@ -129,7 +129,13 @@ pub(super) fn document(
 ) -> String {
     let theme = &design.theme;
     let defaults = crate::presets::get(preset).expect("validated preset");
-    let mut vars = String::new();
+    let mut vars = format!(
+        "--text-scale:{};",
+        f64::from(appearance.settings.scale) / 100.0
+    );
+    if let Some(weight) = appearance.settings.weight {
+        write!(vars, "--global-weight:{weight};").unwrap();
+    }
     let accent = &theme.accent;
     if accent != defaults.accent {
         let rgb = [1, 3, 5].map(|i| u8::from_str_radix(&accent[i..i + 2], 16).unwrap_or_default());
@@ -182,7 +188,7 @@ pub(super) fn document(
     write!(out, "@scope (.panel-extra){{{SURFACE_CSS}}}").unwrap();
     if appearance.settings.enabled {
         if let Some(img) = &appearance.image {
-            write!(out,".cash-panel .marco{{background-image:linear-gradient(#0000,#0000),url('{}');background-position:{};background-size:{};}}",escape(img),appearance.settings.position.css(),appearance.settings.fit.css()).unwrap();
+            write!(out,".cash-panel .marco{{background-image:linear-gradient(rgb(0 0 0 / {shade}%),rgb(0 0 0 / {shade}%)),url('{}');background-position:{};background-size:{};}}",escape(img),appearance.settings.position.css(),appearance.settings.fit.css(),shade=appearance.settings.shade).unwrap();
         }
     }
     write!(out,r#"</style></head><body class="min-h-full flex flex-col" data-preset="{}"><div class="panel cash-panel fuente-demo-figtree" id="surface" data-estilo="1" aria-label="Panel de administración"><div class="marco">"#,escape(preset)).unwrap();

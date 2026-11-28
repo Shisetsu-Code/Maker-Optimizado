@@ -78,12 +78,59 @@ function populate(reset=true){
     offset=page.shown;
   }while(shown<Math.min(target,total));
   state.shown=Math.max(48,shown);
-  group.querySelector('[data-catalog-count]').textContent=total?shown+' de '+total+' juegos':'No encontramos juegos.';
+  group.querySelector('[data-catalog-count]').textContent=group.hasAttribute('data-native-section')?total+' juegos':total?shown+' de '+total+' juegos':'No encontramos juegos.';
+  const empty=group.querySelector('[data-catalog-empty]');
+  if(empty)empty.hidden=total!==0;
   group.querySelector('[data-catalog-more]').hidden=shown>=total;
   group.dataset.catalogReady='true';
 }
+function nativeControls(doc,meta,state){
+  const search=doc.querySelector('[data-search]');
+  if(search)search.value=state.search;
+  const providers=doc.querySelector('[data-providers]');
+  providers?.replaceChildren(...meta.providers.map(provider=>button(doc,provider,'catalogProvider',provider)));
+  const groups=doc.querySelector('[data-collections]');
+  groups?.replaceChildren(...meta.groups.map(group=>button(doc,group.title,'catalogGroup',group.id)));
+  const sidebar=doc.querySelector('.lobby-sidebar');
+  // All three filter dimensions are available even on themes with a short toolbar.
+  if(sidebar){
+    const fields=[['provider','Proveedor',meta.providers],['category','Categoría',meta.categories],['group','Colección',meta.groups]];
+    const details=doc.createElement('details');
+    const title=doc.createElement('summary');title.textContent='Filtrar catálogo';details.append(title);
+    for(const [key,label,values] of fields)if(values.length)details.append(select(doc,key,label,values,state[key]));
+    sidebar.append(details);
+  }
+  const recent=doc.querySelector('[data-catalog-mode=recent]');
+  if(recent)recent.hidden=!state.recent.length;
+}
+function nativeBanner(doc,meta,state){
+  const art=doc.querySelector('#hero [data-banner-art]');
+  if(!art)return null;
+  const initial=art.getAttribute('src');
+  if(!initial)return null;
+  const banners=meta.banners.map(b=>({desktop:'/media/objects/'+b.desktop,mobile:b.mobile?'/media/objects/'+b.mobile:null}));
+  const slides=[banners.find(b=>b.desktop===initial)??{desktop:initial,mobile:null},...banners.filter(b=>b.desktop!==initial)];
+  const dots=doc.querySelector('[data-banner-dots]');
+  dots?.replaceChildren(...slides.map((_,i)=>{
+    const b=button(doc,'','bannerIndex',String(i));b.setAttribute('aria-label','Portada '+(i+1));return b;
+  }));
+  let mobile=doc.querySelector('#hero [data-banner-mobile]');
+  if(!mobile&&slides.some(slide=>slide.mobile)){
+    const picture=doc.createElement('picture');
+    mobile=doc.createElement('source');mobile.media='(max-width:700px)';
+    art.before(picture);picture.append(mobile,art);
+  }
+  const draw=()=>{
+    state.banner=((state.banner%slides.length)+slides.length)%slides.length;
+    const slide=slides[state.banner];art.setAttribute('src',slide.desktop);
+    if(mobile){if(slide.mobile)mobile.setAttribute('srcset',slide.mobile);else mobile.removeAttribute('srcset');}
+    for(const b of dots?.children??[])b.classList.toggle('active',Number(b.dataset.bannerIndex)===state.banner);
+  };
+  draw();return {draw};
+}
 function controls(doc,meta,state){
   const group=doc.querySelector('#catalog');if(!group)return;
+  if(group.hasAttribute('data-native-section')){nativeControls(doc,meta,state);return;}
   const root=doc.createElement('div');root.className='catalog-controls';
   root.append(select(doc,'provider','Todos los proveedores',meta.providers,state.provider),
     select(doc,'category','Todas las categorías',meta.categories,state.category),
@@ -141,7 +188,9 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!meta.categories.includes(state.category))state.category='';
   if(!meta.groups.some(group=>group.id===state.group))state.group='';
   current={doc,studio,preset,state,editing,banner:null};
-  controls(doc,meta,state);populate();updateMode(doc,state);buildBanner(doc,meta,state);
+  controls(doc,meta,state);populate();updateMode(doc,state);
+  if(doc.querySelector('[data-original-layout]'))current.banner=nativeBanner(doc,meta,state);
+  else buildBanner(doc,meta,state);
 }
 export function catalogInput(doc,target){
   if(current?.doc!==doc)return false;
@@ -155,8 +204,13 @@ export function catalogClick(doc,target,notice){
   if(current?.doc!==doc)return false;
   const state=current.state,b=target.closest?.('button');
   if(b?.hasAttribute('data-catalog-menu')){
-    b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true'));
+    const open=b.getAttribute('aria-expanded')!=='true';
+    b.setAttribute('aria-expanded',String(open));doc.querySelector('.lobby-sidebar')?.classList.toggle('open',open);
     return true;
+  }
+  if(b?.dataset.catalogProvider||b?.dataset.catalogGroup){
+    const key=b.dataset.catalogProvider?'provider':'group',value=b.dataset.catalogProvider||b.dataset.catalogGroup;
+    state[key]=state[key]===value?'':value;state.shown=48;populate();return true;
   }
   if(b?.dataset.catalogMode){
     const mode=b.dataset.catalogMode;state.favorites_only=mode==='favorites';state.recent_only=mode==='recent';state.top=mode==='top';
@@ -165,7 +219,7 @@ export function catalogClick(doc,target,notice){
   }
   if(b?.hasAttribute('data-catalog-more')){populate(false);return true;}
   if(b?.dataset.favorite){const id=b.dataset.favorite;state.favorites.has(id)?state.favorites.delete(id):state.favorites.add(id);populate();return true;}
-  if(b?.dataset.game){const id=b.dataset.game;state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,100);notice(b.closest('.catalog-card')?.querySelector('h3')?.textContent??'Juego','Vista de demostración local. No se inicia un motor de juego ni se realizan apuestas.');return true;}
+  if(b?.dataset.game){const id=b.dataset.game;state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,100);const recent=doc.querySelector('[data-catalog-mode=recent]');if(recent)recent.hidden=false;notice(b.closest('.catalog-card')?.querySelector('h3')?.textContent??'Juego','Vista de demostración local. No se inicia un motor de juego ni se realizan apuestas.');return true;}
   if(b?.dataset.bannerStep||b?.hasAttribute('data-banner-index')){
     if(current.banner){state.banner=b.dataset.bannerStep?state.banner+Number(b.dataset.bannerStep):Number(b.dataset.bannerIndex);current.banner.draw();}
     return true;
@@ -176,5 +230,13 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   const items=doc.querySelector('#catalog .items');
   if(!items)return;
   if(!await prepare(studio,preset,stillCurrent))throw Error('La vista cambió durante la exportación. Volvé a exportar.');
-  items.innerHTML=JSON.parse(studio.catalog_page(request(stateFor(preset),false,0))).html;
+  const state=stateFor(preset),page=JSON.parse(studio.catalog_page(request(state,false,0)));
+  items.innerHTML=page.html;
+  if(doc.querySelector('[data-original-layout]')){
+    const meta=JSON.parse(studio.catalog_metadata());
+    nativeControls(doc,meta,state);nativeBanner(doc,meta,state);updateMode(doc,state);
+    doc.querySelector('[data-catalog-count]').textContent=page.total+' juegos';
+    doc.querySelector('[data-catalog-empty]').hidden=page.total!==0;
+    doc.querySelector('[data-catalog-more]').hidden=true;
+  }
 }

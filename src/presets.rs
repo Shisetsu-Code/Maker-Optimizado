@@ -591,6 +591,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
     ];
     crate::media::apply_defaults(id, &mut lobby);
     restore_lobby_sections(id, &mut lobby);
+    crate::render::frames::initialize(id, &mut lobby);
     let mut panel_header = panel_header;
     panel_header.title = "dueno".into();
     panel_header.text = "DUEÑO".into();

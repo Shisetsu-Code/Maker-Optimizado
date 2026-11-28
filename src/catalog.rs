@@ -287,12 +287,12 @@ impl Catalog {
                 }
                 (None, None) => unreachable!(),
             };
-            html.push_str(&crate::render::catalog_card(
-                node,
-                id,
-                favorites.contains(id),
-                query.preview,
-            ));
+            let render = if crate::render::frames::available(&self.preset, design) {
+                crate::render::frames::card
+            } else {
+                crate::render::catalog_card
+            };
+            html.push_str(&render(node, id, favorites.contains(id), query.preview));
         }
         Page {
             html,

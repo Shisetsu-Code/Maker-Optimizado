@@ -1,3 +1,4 @@
+pub(crate) mod frames;
 mod panel;
 use crate::model::*;
 use std::fmt::Write as _;
@@ -309,6 +310,9 @@ pub fn document_with_appearance(
 ) -> String {
     if view == View::Panel {
         return panel::document(preset, design, preview, appearance);
+    }
+    if frames::available(preset, design) {
+        return frames::document(preset, design, preview, appearance);
     }
     let t = &design.theme;
     let settings = &appearance.settings;

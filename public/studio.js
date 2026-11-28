@@ -206,19 +206,20 @@ async function standaloneHtml(view){
     await exportCatalog(doc,studio,describe().active,()=>token===paintToken);
   }
   const images=new Map();
-  for(const img of doc.querySelectorAll('img[src]')){
-    const src=img.getAttribute('src');
+  for(const img of doc.querySelectorAll('img[src], source[srcset]')){
+    const attr=img.localName==='source'?'srcset':'src';
+    const src=img.getAttribute(attr);
     if(!src.startsWith('/media/objects/'))continue;
     const id=src.slice('/media/objects/'.length);
     if(!ASSET_ID.test(id))throw Error('Identificador gráfico inválido.');
     if(!images.has(id))images.set(id,[]);
-    images.get(id).push(img);
+    images.get(id).push([img,attr]);
   }
   let total=0;
   for(const [id,nodes] of images){
     const {url,size}=await readAsset(id,24*1024*1024-total);
     total+=size;
-    for(const img of nodes)img.setAttribute('src',url);
+    for(const [img,attr] of nodes)img.setAttribute(attr,url);
   }
   // Embed the licensed local fonts so the static document also works offline.
   for(const style of doc.querySelectorAll('style')){
