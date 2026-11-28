@@ -35,3 +35,18 @@ try:
 finally:
     for image in images:
         image.close()
+
+# Compact contact sheets for reviewing every lobby directly in a conversation.
+for idx in range(0, len(presets), 6):
+    group = presets[idx:idx+6]
+    sheet = Image.new("RGB", (1232, ((len(group)+1)//2)*261+42), "#f8f8f8")
+    draw = ImageDraw.Draw(sheet)
+    draw.text((12, 8), "Lobbies · Maker Optimizado · escritorio y móvil", font=label, fill="#222")
+    for pos, preset in enumerate(group):
+        x, y = 12 + (pos%2)*610, 50 + (pos//2)*261
+        draw.text((x, y), preset.capitalize(), font=label, fill="#222")
+        for mode, dx, size in [("desktop",0,(355,222)),("mobile",365,(111,222))]:
+            with Image.open(source / f"{preset}-lobby-{mode}-maker.png") as im:
+                im.thumbnail(size,Image.Resampling.LANCZOS)
+                sheet.paste(im,(x+dx,y+32))
+    sheet.save(output / f"lobbies-{1+idx//6}.jpg", quality=79, optimize=True)

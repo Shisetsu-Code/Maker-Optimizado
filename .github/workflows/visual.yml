@@ -42,6 +42,12 @@ jobs:
             sleep 2
           done
           node scripts/compare-visual.mjs
+      - name: Build approval gallery from this revision
+        if: ${{ always() && hashFiles('work/visual/comparison.json') != '' }}
+        run: |
+          python3 -m venv /tmp/review-photos
+          /tmp/review-photos/bin/pip install Pillow
+          /tmp/review-photos/bin/python scripts/review-sheets.py work/visual work/visual/approval
       - uses: actions/upload-artifact@v4
         if: always()
         with:
