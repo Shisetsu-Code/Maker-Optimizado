@@ -112,7 +112,7 @@ fn artwork(n: &Component) -> String {
             escape(asset)
         )
     } else {
-        let symbols = ["?", "?", "", "?", "?", "?", "?", "?", "?", "?", "?", "?"];
+        let symbols = ["✦", "◆", "♠", "◈", "☀", "✧", "♛", "◉", "◇", "❖", "●", "✺"];
         format!(
             "<span class=\"art art-{}\" aria-hidden=\"true\"><span>{}</span></span>",
             n.art,
@@ -157,10 +157,10 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
     let text = escape(&n.text);
     match n.kind {
         Kind::Header => {
-            write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categor�as</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
+            write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categorías</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
         }
         Kind::Hero => {
-            write!(out,"<section class=\"component hero\" {attr}><div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA � DEMO</span><h1>{title}</h1><p>{text}</p>{}</div><div class=\"hero-art\">{}</div></section>",button(n),artwork(n)).unwrap();
+            write!(out,"<section class=\"component hero\" {attr}><div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA · DEMO</span><h1>{title}</h1><p>{text}</p>{}</div><div class=\"hero-art\">{}</div></section>",button(n),artwork(n)).unwrap();
         }
         Kind::Categories | Kind::Catalog | Kind::Live | Kind::Metrics | Kind::Activity => {
             let group = match n.kind {
@@ -208,7 +208,7 @@ pub fn catalog_card(n: &Component, game: &str, favorite: bool, preview: bool) ->
     let id = escape(&n.id);
     let game = escape(game);
     let pressed = if favorite { "true" } else { "false" };
-    let mark = if favorite { "" } else { "?" };
+    let mark = if favorite { "♥" } else { "♡" };
     let action = if n.button.is_empty() {
         "Ver demo".to_owned()
     } else {

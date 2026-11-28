@@ -76,16 +76,16 @@ impl Item {
 impl Catalog {
     pub fn parse(input: &str, preset: &str) -> ModelResult<Self> {
         if input.len() > MAX_CATALOG_BYTES {
-            return Err("Cat�logo demasiado grande.".into());
+            return Err("Catálogo demasiado grande.".into());
         }
-        let value: Self = serde_json::from_str(input).map_err(|_| "Cat�logo inv�lido.")?;
+        let value: Self = serde_json::from_str(input).map_err(|_| "Catálogo inválido.")?;
         if value.version != 1
             || value.preset != preset
             || value.items.len() > 10_000
             || value.groups.len() > 100
             || value.banners.len() > 100
         {
-            return Err("Cat�logo incompatible.".into());
+            return Err("Catálogo incompatible.".into());
         }
         let mut ids = BTreeSet::new();
         let mut seeds = BTreeSet::new();
@@ -105,7 +105,7 @@ impl Catalog {
                     !model::valid_id(s) || !s.starts_with("game-") || !seeds.insert(s.as_str())
                 })
             {
-                return Err("Tarjeta de cat�logo inv�lida.".into());
+                return Err("Tarjeta de catálogo inválida.".into());
             }
         }
         let mut group_ids = BTreeSet::new();
@@ -115,7 +115,7 @@ impl Catalog {
                 || !model::valid_text(&group.title, 120)
                 || group.items.iter().any(|id| !ids.contains(id.as_str()))
             {
-                return Err("Colecci�n inv�lida.".into());
+                return Err("Colección inválida.".into());
             }
         }
         for banner in &value.banners {
@@ -125,7 +125,7 @@ impl Catalog {
                     .as_deref()
                     .is_some_and(|id| !crate::media::valid_asset(id))
             {
-                return Err("Portada inv�lida.".into());
+                return Err("Portada inválida.".into());
             }
         }
         Ok(value)
@@ -184,6 +184,19 @@ impl Catalog {
             if let Some(n) = effective {
                 consumed.insert(n.id.as_str());
             }
+            if design
+                .catalog_selection
+                .providers
+                .as_ref()
+                .is_some_and(|list| !list.contains(&item.provider))
+                || design
+                    .catalog_selection
+                    .games
+                    .as_ref()
+                    .is_some_and(|list| !list.contains(&item.id))
+            {
+                continue;
+            }
             let title = effective.map_or(item.title.as_str(), |n| n.title.as_str());
             let detail = effective.map_or(item.provider.as_str(), |n| n.text.as_str());
             if (!query.preview && effective.is_some_and(|n| n.hidden))
@@ -215,7 +228,13 @@ impl Catalog {
             let original = defaults.as_ref().and_then(Self::nodes).unwrap_or_default();
             for n in nodes {
                 let id = n.id.as_str();
-                if consumed.contains(id)
+                if design.catalog_selection.providers.is_some()
+                    || design
+                        .catalog_selection
+                        .games
+                        .as_ref()
+                        .is_some_and(|list| !list.contains(id))
+                    || consumed.contains(id)
                     || (id.starts_with("game-") && original.contains(n))
                     || (!query.preview && n.hidden)
                     || (query.favorites_only && !favorites.contains(id))

@@ -56,6 +56,14 @@ function paintOutline(nodes,container,depth=0){
 function paintControls(){
   const data=describe();
   $('preset').value=data.active;
+  const fields=$('catalog-selection').elements;
+  const selection=data.catalog_selection;
+  fields.allProviders.checked=selection.providers===null;
+  fields.allGames.checked=selection.games===null;
+  fields.providers.disabled=fields.allProviders.checked;
+  fields.games.disabled=fields.allGames.checked;
+  fields.providers.value=(selection.providers??[]).join('\n');
+  fields.games.value=(selection.games??[]).join('\n');
   put(themeForm,data.theme);put(appearanceForm,data.appearance.settings);$('clear-background').disabled=!data.appearance.has_image;
   $('undo').disabled=!data.undo;$('redo').disabled=!data.redo;
   $('lobby').setAttribute('aria-pressed',String(screen==='lobby'));$('panel').setAttribute('aria-pressed',String(screen==='panel'));
@@ -245,6 +253,19 @@ function bind(){
   for(const view of ['lobby','panel'])$(view).onclick=()=>{screen=view;selected='';refresh();};
   for(const button of document.querySelectorAll('button[data-size]'))button.onclick=()=>{ $('canvas').dataset.size=button.dataset.size;for(const b of document.querySelectorAll('button[data-size]'))b.setAttribute('aria-pressed',String(b===button)); };
   $('mode').onclick=()=>{editing=!editing;$('mode').setAttribute('aria-pressed',String(editing));$('mode').textContent=editing?'Editar':'Explorar';refresh();};
+  const picker=$('catalog-selection'),fields=picker.elements;
+  picker.onchange=()=>{
+    fields.providers.disabled=fields.allProviders.checked;
+    fields.games.disabled=fields.allGames.checked;
+  };
+  picker.onsubmit=event=>{
+    event.preventDefault();
+    const lines=input=>input.value.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+    dispatch({type:'select_catalog',selection:{
+      providers:fields.allProviders.checked?null:lines(fields.providers),
+      games:fields.allGames.checked?null:lines(fields.games),
+    }});
+  };
   themeForm.onsubmit=event=>{event.preventDefault();dispatch({type:'theme',theme:readTheme()});};
   appearanceForm.onsubmit=event=>{
     event.preventDefault();const f=new FormData(appearanceForm);

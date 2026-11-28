@@ -12,7 +12,7 @@ fn view(value: &str) -> Result<View, JsValue> {
     match value {
         "lobby" => Ok(View::Lobby),
         "panel" => Ok(View::Panel),
-        _ => Err(JsValue::from_str("Pantalla inv�lida.")),
+        _ => Err(JsValue::from_str("Pantalla inválida.")),
     }
 }
 
@@ -52,10 +52,10 @@ impl Studio {
     }
     pub fn dispatch(&mut self, input: &str) -> Result<(), JsValue> {
         if input.len() > crate::model::MAX_BACKGROUND_BYTES + 16_384 {
-            return Err(JsValue::from_str("Acci�n demasiado grande."));
+            return Err(JsValue::from_str("Acción demasiado grande."));
         }
         let action: Action =
-            serde_json::from_str(input).map_err(|_| JsValue::from_str("Acci�n inv�lida."))?;
+            serde_json::from_str(input).map_err(|_| JsValue::from_str("Acción inválida."))?;
         let base = action.target().and_then(|(view, id)| {
             if view != View::Lobby {
                 return None;
@@ -74,17 +74,17 @@ impl Studio {
     pub fn catalog_metadata(&self) -> Result<String, JsValue> {
         self.current_catalog()
             .map(|c| c.metadata().to_string())
-            .ok_or_else(|| JsValue::from_str("Cat�logo no disponible."))
+            .ok_or_else(|| JsValue::from_str("Catálogo no disponible."))
     }
     pub fn catalog_page(&self, input: &str) -> Result<String, JsValue> {
         if input.len() > 256 * 1024 {
             return Err(JsValue::from_str("Filtro demasiado grande."));
         }
         let query: crate::catalog::Query =
-            serde_json::from_str(input).map_err(|_| JsValue::from_str("Filtro inv�lido."))?;
+            serde_json::from_str(input).map_err(|_| JsValue::from_str("Filtro inválido."))?;
         let catalog = self
             .current_catalog()
-            .ok_or_else(|| JsValue::from_str("Cat�logo no disponible."))?;
+            .ok_or_else(|| JsValue::from_str("Catálogo no disponible."))?;
         serde_json::to_string(&catalog.page(self.editor.active(), &query))
             .map_err(|e| JsValue::from_str(&e.to_string()))
     }
