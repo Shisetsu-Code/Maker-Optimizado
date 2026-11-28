@@ -46,6 +46,7 @@ pub struct Query {
     pub provider: String,
     pub category: String,
     pub group: String,
+    pub group_order: bool,
     pub favorites_only: bool,
     pub recent_only: bool,
     pub favorites: Vec<String>,
@@ -232,6 +233,17 @@ impl Catalog {
                 continue;
             }
             rows.push((item.id.as_str(), Some(item), effective));
+        }
+        if query.group_order && !query.group.is_empty() {
+            if let Some(collection) = self.groups.iter().find(|g| g.id == query.group) {
+                let order: BTreeMap<_, _> = collection
+                    .items
+                    .iter()
+                    .enumerate()
+                    .map(|(i, id)| (id.as_str(), i))
+                    .collect();
+                rows.sort_by_key(|(id, _, _)| order.get(id).copied());
+            }
         }
         if query.top {
             rows.truncate(12);

@@ -117,7 +117,7 @@ function collectionMenu(doc,root,groups,studio){
       const title=doc.createElement('h2');title.textContent=group.title;
       header.append(title,button(doc,'Ver todos →','catalogGroup',group.id));
       const row=doc.createElement('div');row.className='pp-row';
-      const page=JSON.parse(studio.catalog_page(JSON.stringify({group:group.id,source_only:Boolean(endpoint)})));
+      const page=JSON.parse(studio.catalog_page(JSON.stringify({group:group.id,group_order:true,source_only:Boolean(endpoint)})));
       const fragment=doc.createElement('template');fragment.innerHTML=page.html;
       for(const [i,card] of [...fragment.content.querySelectorAll('[data-catalog-card]')].slice(0,12).entries()){
         const name=card.querySelector('h3').textContent,img=card.querySelector('img');

@@ -199,6 +199,13 @@ fn emit(out: &mut String, template: &str, n: &Component, d: &Design, preset: &st
             "title" => out.push_str(&escape(&n.title)),
             "text" => out.push_str(&escape(&n.text)),
             "button" => out.push_str(&escape(&n.button)),
+            "hero_title" if preset == "aurum" && n.title == "Renace la emoción." => {
+                out.push_str("Renace<br><em>la emoción.</em>")
+            }
+            "hero_title" if preset == "amethyst" && n.title == "Las salas más poderosas" => {
+                out.push_str("Las salas más <strong>poderosas</strong>")
+            }
+            "hero_title" => out.push_str(&escape(&n.title).replace('\n', "<br>")),
             "lines_title" => out.push_str(&escape(&n.title).replace('\n', "<br>")),
             "lines_text" => out.push_str(&escape(&n.text).replace('\n', "<br>")),
             "ivory_brand" => {

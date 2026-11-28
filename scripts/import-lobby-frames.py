@@ -76,7 +76,7 @@ for preset,slug in names.items():
     else:
         img=hero.select_one('[data-artwork]')
         img['src']='{{src}}'
-        slot(hero.select_one('h1'),'title')
+        slot(hero.select_one('h1'),'hero_title')
         if preset=='aurum':
             slot(hero.select_one('p:not(.md-eyebrow)') or hero.select_one('p'),'text')
         else:slot(hero.select_one('h2'),'text')
