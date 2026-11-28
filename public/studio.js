@@ -108,7 +108,9 @@ function refresh(){
   const token=++paintToken;
   paintControls();
   const html=studio.html(screen,editing);
-  if(token===paintToken)frame.srcdoc=previewDocument(html);
+  const selection=describe().catalog_selection;
+  const restricted=selection.games!==null||selection.providers!==null;
+  if(token===paintToken)frame.srcdoc=previewDocument(html,restricted);
 }
 function readTheme(){const f=Object.fromEntries(new FormData(themeForm));return{...f,radius:Number(f.radius),button_color:f.button_color||null,glow_color:f.glow_color||null};}
 function readPatch(){const f=new FormData(inspector),number=name=>f.get(name)===''?null:Number(f.get(name)),color=name=>String(f.get(name)||'')||null;return{title:String(f.get('title')),text:String(f.get('text')),button:String(f.get('button')),hidden:inspector.elements.hidden.checked,art:Number(f.get('art')),style:{color:color('color'),background:color('background'),radius:number('radius'),padding:number('padding'),font_size:number('font_size'),columns:number('columns'),font_weight:number('font_weight'),align:color('align'),border_color:color('border_color'),border_width:number('border_width'),width:number('width'),height:number('height'),fit:color('fit'),position:color('position'),placeholder:color('placeholder')}};}

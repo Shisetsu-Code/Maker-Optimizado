@@ -120,8 +120,8 @@ function buildBanner(doc,meta,state){
   };
   current.banner={draw};draw();
 }
-export function previewDocument(html){
-  if(!endpoint)return html;
+export function previewDocument(html,restricted){
+  if(!endpoint&&!restricted)return html;
   const doc=new DOMParser().parseFromString(html,'text/html');
   doc.querySelector('#catalog .items')?.replaceChildren();
   return '<!doctype html>'+doc.documentElement.outerHTML;

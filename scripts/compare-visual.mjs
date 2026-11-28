@@ -54,6 +54,14 @@ try{
             }).map(img=>img.decode().catch(()=>{})));
           });
         }
+        if(preset==='ember'&&view==='panel'){
+          const structure=await old.locator('body').evaluate(body=>[...body.querySelectorAll('header,nav,aside,main,h1,h2,h3,button,dt,dd,[role=tab]')].map(el=>{
+            const r=el.getBoundingClientRect();
+            return {tag:el.localName,text:(el.innerText??'').trim().replace(/\\s+/g,' ').slice(0,90),box:[r.x,r.y,r.width,r.height].map(Math.round)};
+          }).filter(({box:[x,y,w,h]})=>w>0&&h>0&&x<innerWidth&&y<innerHeight&&x+w>0&&y+h>0));
+          console.log('Panel original '+name+' '+JSON.stringify(structure));
+          await writeFile(out+'/panel-'+name+'-structure.json',JSON.stringify(structure,null,2));
+        }
         const before=await old.screenshot({animations:'disabled',path:out+'/'+id+'-original.png'});
         const after=await frame.screenshot({animations:'disabled',path:out+'/'+id+'-maker.png'});
         const difference=await measure.evaluate(async ([a,b])=>{
