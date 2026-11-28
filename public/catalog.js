@@ -64,19 +64,27 @@ function request(state,preview,offset=0){
 }
 function classicShelf(doc,studio,meta){
   for(const summary of doc.querySelectorAll('[data-classic-summary]'))summary.textContent='Casino online con '+meta.total+' juegos de '+meta.providers.length+' proveedores.';
-  const root=doc.querySelector('[data-classic-shelf]'),row=root?.querySelector('.classic-shelf-row');
-  if(!row&&!doc.querySelector('.account-feature'))return;
+  const root=doc.querySelector('[data-classic-shelf]');
+  if(!root&&!doc.querySelector('.account-feature'))return;
   const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint)})));
   const template=doc.createElement('template');template.innerHTML=result.html;
-  const cards=[...template.content.querySelectorAll('[data-catalog-card]')].slice(0,8);
-  accountFeature(doc,cards);
-  if(!row)return;
+  const cards=[...template.content.querySelectorAll('[data-catalog-card]')];
+  accountFeature(doc,cards.slice(0,8));
+  if(!root)return;
   root.hidden=!cards.length;
-  row.replaceChildren(...cards.map(card=>{
-    const name=card.querySelector('h3').textContent,open=button(doc,'','game',card.dataset.catalogCard);
-    open.setAttribute('aria-label','Ver '+name);const img=card.querySelector('img');if(img)open.append(img);
-    const label=doc.createElement('span');label.textContent=name;open.append(label);return open;
-  }));
+  for(const row of root.querySelectorAll('[data-native-cards]')){
+    const selected=cards.slice(0,Number(row.dataset.itemLimit)||0);
+    const count=row.parentElement.querySelector('[data-native-count]');
+    if(count)count.textContent=String(selected.length);
+    row.replaceChildren(...selected.map(card=>{
+      const name=card.querySelector('h3').textContent,open=button(doc,'','game',card.dataset.catalogCard);
+      open.style.cssText=row.dataset.itemStyle||'';
+      open.setAttribute('aria-label','Ver '+name);
+      const img=card.querySelector('img');
+      if(img)open.append(img.cloneNode(true));
+      const label=doc.createElement('span');label.textContent=name;open.append(label);return open;
+    }));
+  }
 }
 function resortFeatured(doc,state){
   const feature=doc.querySelector('[data-resort-featured]');if(!feature)return;
@@ -320,6 +328,7 @@ export function catalogClick(doc,target,notice){
   }
   if(b?.hasAttribute('data-catalog-more')){populate(false);return true;}
   if(b?.dataset.favorite){const id=b.dataset.favorite;state.favorites.has(id)?state.favorites.delete(id):state.favorites.add(id);populate();return true;}
+  if(b?.hasAttribute('data-shelf-action')){doc.getElementById('catalog')?.scrollIntoView();return true;}
   if(b?.dataset.game){const id=b.dataset.game;state.recent=[id,...state.recent.filter(x=>x!==id)].slice(0,100);const recent=doc.querySelector('[data-catalog-mode=recent]');if(recent)recent.hidden=false;notice(b.closest('.catalog-card')?.querySelector('h3')?.textContent??'Juego','Vista de demostración local. No se inicia un motor de juego ni se realizan apuestas.');return true;}
   if(b?.dataset.bannerStep||b?.hasAttribute('data-banner-index')){
     if(current.banner){state.banner=b.dataset.bannerStep?state.banner+Number(b.dataset.bannerStep):Number(b.dataset.bannerIndex);current.banner.draw();}

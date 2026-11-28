@@ -7,7 +7,7 @@ body:has([data-classic-section]) #surface{display:block;padding:0;max-width:none
 .original-ember.lb{min-height:0;padding-bottom:0;overflow:visible}
 body[data-preset=ember] .classic-desktop .original-ember{padding:0 5% 0 calc(112px + 5%)}
 body[data-preset=ember] #header .classic-desktop .original-ember{padding-top:clamp(9px,1.1vw,16px)}
-@media(min-width:900px){body[data-preset=ember] .classic-shelf{margin-top:clamp(38px,3.6vw,58px)}}
+@media(min-width:900px){body[data-preset=ember] .native-shelf{margin-top:clamp(38px,3.6vw,58px)}}
 body[data-preset=cobalt] .classic-desktop .original-cobalt{zoom:calc(100vw / 1920px)!important}
 body[data-preset=flare]:has([data-classic-section]){background:var(--bb-bg,#f7f7f8);color:var(--bb-text,#0a0a0b);font-family:Manrope,system-ui,sans-serif}
 body[data-preset=flare] .classic-desktop aside{position:fixed!important;left:0;top:0}
@@ -49,3 +49,13 @@ body[data-preset=flare] [data-classic-section] img[shape=round]{border-radius:50
 .account-feature p{margin:12px 0}
 .account-feature button{padding:10px 14px;margin-right:6px;border-radius:12px;border:1px solid var(--br-linea,#2b2724);background:var(--br-hondo,#0c0b0a);color:inherit}
 .account-feature button[data-game]{background:var(--br-p,#ff5b14);color:#140b08}
+
+[data-native-cards]>button{border:0;padding:0;color:inherit;text-align:left;background:transparent;font:inherit;cursor:pointer;overflow:hidden}
+[data-native-cards]>button img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:7px}
+[data-native-cards]>button span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+body[data-preset=cobalt] [data-native-cards]>button:has(img) span{display:none}
+body[data-preset=cobalt] [data-native-cards]>button img{height:100%}
+body[data-preset=flare] #categories{padding:0 24px}
+body[data-preset=flare] #hero .bgpass{padding-bottom:22px!important}
+@media(max-width:768px){body[data-preset=flare] #categories{padding:0 14px}body[data-preset=coal] #categories{margin:0 14px}}
+@media(min-width:769px){body[data-preset=coal] #categories{display:none}}

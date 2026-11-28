@@ -81,7 +81,45 @@ def compile_one(p, mobile, d):
         for t in foot.find_all(string=True):
             if '5.915' in t and '41' in t:
                 span=s.new_tag('span');span['data-classic-summary']='';t.replace_with(span)
-    for node in [h,hero,foot]:sanitize(node)
+    # Keep the original shelf geometry; the account catalog supplies every card at runtime.
+    if p=='ember':
+        if mobile:
+            title,row=m[6:8]
+            shelf=wrapper(s,[title,row],mob)
+        else:
+            section=desk.select_one('section.lb-desk')
+            title,row=children(section)[:2]
+            shelf=wrapper(s,[title,row],section)
+        shelf['class']=['mb-tema','original-ember','native-shelf']
+    elif p=='cobalt':
+        section=s.select_one('#m-rec' if mobile else '#recomendados')
+        title,row=children(section)
+        shelf=section if mobile else wrapper(s,[section.parent],main)
+        if not mobile:shelf['class']=['original-cobalt']
+    elif p=='flare':
+        shelf=promo.select_one('section')
+        title,row=children(shelf)
+    elif mobile:
+        shelf=children(next(n for n in children(parent) if n.get_text(strip=True).startswith('Populares')))[0]
+        title,row=children(shelf)
+    else:
+        shelf=s.new_tag('div')
+        row=s.new_tag('div')
+        shelf.append(row)
+        title=None
+    cards=children(row)
+    if cards:
+        item=cards[0]
+        row['data-item-style']=item.get('style','') if p!='cobalt' or not mobile else 'flex:0 0 128px;height:168px;border-radius:12px'
+        row['data-item-limit']=str(len(cards))
+    row.clear()
+    row['data-native-cards']=''
+    if title:
+        for el in title.find_all(string=True):
+            if el.strip().isdigit():el.parent['data-native-count']=''
+        for el in [title,*title.select('button')]:
+            if el.name=='button':el['data-shelf-action']=''
+    for node in [h,hero,foot,shelf]:sanitize(node)
     for img in h.select('img'):
         if 'logo' in str(img.get('class','')).lower() or img.get('alt','').lower()=='rushybet':img['data-brand-logo']=''
     values={}
@@ -125,7 +163,7 @@ def compile_one(p, mobile, d):
         if href.endswith('/piel-lobby.css'):v=(public/'muestra/piel-lobby.css').read_text(encoding='utf8')
         if not v or 'data-maker-select' in v:continue
         sheet.append(css(re.sub(r'/\*[\s\S]*?\*/','',v)))
-    return dict(header=str(h),hero=str(hero),footer=str(foot),values=values,css='\n'.join(dict.fromkeys(sheet)))
+    return dict(shelf=str(shelf),header=str(h),hero=str(hero),footer=str(foot),values=values,css='\n'.join(dict.fromkeys(sheet)))
 out={}
 for preset in ['ember','cobalt','flare','coal']:
     variants={}

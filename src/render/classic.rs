@@ -7,6 +7,7 @@ use std::{collections::BTreeMap, fmt::Write, sync::OnceLock};
 struct Variant {
     header: String,
     hero: String,
+    shelf: String,
     footer: String,
     css: String,
     values: BTreeMap<String, String>,
@@ -124,7 +125,7 @@ impl Classic {
         out: &mut String,
         node: &Component,
         design: &Design,
-        preset: &str,
+        _preset: &str,
         defaults: &Design,
         preview: bool,
     ) -> bool {
@@ -133,12 +134,11 @@ impl Classic {
             && defaults.lobby.iter().any(|n| n == node)
         {
             if !node.hidden || preview {
-                let title = match preset {
-                    "ember" | "cobalt" => "Recomendados",
-                    "flare" => "Juegos populares",
-                    _ => "Populares",
-                };
-                write!(out,r##"<section id="categories" data-component="categories" class="classic-shelf" data-classic-shelf><div class="classic-shelf-title"><h2>{title}</h2><a href="#catalog">Ver todos →</a></div><div class="classic-shelf-row"></div></section>"##).unwrap();
+                out.push_str(r#"<section id="categories" data-component="categories" data-classic-shelf>"#);
+                for (mode, variant) in [("desktop", &self.desktop), ("mobile", &self.mobile)] {
+                    write!(out, "<div class=\"classic-{mode}\">{}</div>", variant.shelf).unwrap();
+                }
+                out.push_str("</section>");
             }
             return true;
         }
