@@ -36,6 +36,7 @@ try{
         await editor.locator('#'+view).evaluate(node=>node.click());
         const surface=editor.frameLocator('#preview');
         await surface.locator(view==='lobby'?'#catalog[data-catalog-ready=true]':'#panel-title').waitFor();
+        await surface.locator('body[data-preset="'+preset+'"] #surface.'+view).waitFor();
         const frame=editor.locator('#preview');
         await frame.evaluate((node,{width,height})=>{
           if(node.parentElement!==document.body)document.body.append(node);

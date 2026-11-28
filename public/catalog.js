@@ -14,7 +14,19 @@ async function catalogSource(preset){
     const pending=fetch(url,{credentials:'same-origin',cache:endpoint?'no-store':'default',redirect:'error'})
       .then(async response=>{
         if(!response.ok)throw Error('Catálogo no disponible ('+response.status+').');
-        return response.text();
+        const reader=response.body?.getReader();
+        if(!reader)throw Error('El catálogo llegó sin contenido.');
+        const chunks=[];let size=0;
+        try{
+          for(;;){
+            const {done,value}=await reader.read();
+            if(done)break;
+            size+=value.byteLength;
+            if(size>8*1024*1024){await reader.cancel();throw Error('El catálogo supera 8 MiB.');}
+            chunks.push(value);
+          }
+        }finally{reader.releaseLock();}
+        return new Blob(chunks).text();
       });
     sources.set(preset,pending);
     pending.catch(()=>sources.delete(preset));
@@ -107,6 +119,12 @@ function buildBanner(doc,meta,state){
     for(const b of nav.querySelectorAll('[data-banner-index]'))b.setAttribute('aria-pressed',String(Number(b.dataset.bannerIndex)===index));
   };
   current.banner={draw};draw();
+}
+export function previewDocument(html){
+  if(!endpoint)return html;
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  doc.querySelector('#catalog .items')?.replaceChildren();
+  return '<!doctype html>'+doc.documentElement.outerHTML;
 }
 export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!doc?.querySelector('#catalog'))return;

@@ -270,24 +270,40 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "header",
         Kind::Header,
         "Inicio",
-        "Explorá el catálogo",
+        "Explor� el cat�logo",
         "Acceder",
         p.art,
     );
-    let hero = section(
+    let mut hero = section(
         "hero",
         Kind::Hero,
         "Un nuevo nivel de entretenimiento",
-        "Descubrí un espacio hecho a tu medida. Una experiencia visual que comienza aquí.",
+        "Descubr� un espacio hecho a tu medida. Una experiencia visual que comienza aqu�.",
         "Explorar juegos",
         p.art,
     );
-    let mut categories = section("categories", Kind::Categories, "Categorías", "", "", p.art);
+    if matches!(
+        id,
+        "violet"
+            | "saffron"
+            | "midnight"
+            | "jade"
+            | "garnet"
+            | "brass"
+            | "verdant"
+            | "crimson"
+            | "onyx"
+    ) {
+        hero.title.clear();
+        hero.text.clear();
+        hero.button.clear();
+    }
+    let mut categories = section("categories", Kind::Categories, "Categor�as", "", "", p.art);
     for (index, title) in [
         "Destacados",
         "Slots",
         "Casino en vivo",
-        "Clásicos",
+        "Cl�sicos",
         "Favoritos",
     ]
     .iter()
@@ -306,7 +322,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "catalog",
         Kind::Catalog,
         "Juegos destacados",
-        "Una selección de demostraciones visuales.",
+        "Una selecci�n de demostraciones visuales.",
         "",
         p.art,
     );
@@ -324,11 +340,11 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "live",
         Kind::Live,
         "Casino en vivo",
-        "La experiencia visual de las mesas clásicas.",
+        "La experiencia visual de las mesas cl�sicas.",
         "",
         p.art,
     );
-    for (index, title) in ["Mesa clásica", "Mesa premium", "Ruleta de salón"]
+    for (index, title) in ["Mesa cl�sica", "Mesa premium", "Ruleta de sal�n"]
         .iter()
         .enumerate()
     {
@@ -345,7 +361,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
         "footer",
         Kind::Footer,
         "Entretenimiento responsable",
-        "Diseño de demostración. No se crean cuentas ni se realizan apuestas.",
+        "Dise�o de demostraci�n. No se crean cuentas ni se realizan apuestas.",
         "",
         p.art,
     );
@@ -370,10 +386,10 @@ pub fn design(id: &str) -> ModelResult<Design> {
         p.art,
     );
     for (index, (title, text)) in [
-        ("Usuarios", "—"),
-        ("Actividad", "—"),
-        ("Sesiones", "—"),
-        ("Balance", "—"),
+        ("Usuarios", "-"),
+        ("Actividad", "-"),
+        ("Sesiones", "-"),
+        ("Balance", "-"),
     ]
     .into_iter()
     .enumerate()
@@ -398,7 +414,7 @@ pub fn design(id: &str) -> ModelResult<Design> {
     for (index, title) in [
         "Sesiones de muestra",
         "Movimientos de ejemplo",
-        "Configuración",
+        "Configuraci�n",
     ]
     .iter()
     .enumerate()
@@ -420,8 +436,8 @@ pub fn design(id: &str) -> ModelResult<Design> {
             section(
                 "panel-title",
                 Kind::Text,
-                "Panel de administración",
-                "Previsualización de la interfaz.",
+                "Panel de administraci�n",
+                "Previsualizaci�n de la interfaz.",
                 "",
                 p.art,
             ),

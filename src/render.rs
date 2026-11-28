@@ -112,7 +112,7 @@ fn artwork(n: &Component) -> String {
             escape(asset)
         )
     } else {
-        let symbols = ["✦", "◆", "♠", "◈", "☀", "✧", "♛", "◉", "◇", "❖", "●", "✺"];
+        let symbols = ["?", "?", "", "?", "?", "?", "?", "?", "?", "?", "?", "?"];
         format!(
             "<span class=\"art art-{}\" aria-hidden=\"true\"><span>{}</span></span>",
             n.art,
@@ -157,10 +157,10 @@ fn render_node(out: &mut String, n: &Component, theme: &Theme, preview: bool) {
     let text = escape(&n.text);
     match n.kind {
         Kind::Header => {
-            write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categorías</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
+            write!(out,"<header class=\"component header\" {attr}><a class=\"brand\" href=\"#surface\">{}{}</a><nav><a href=\"#catalog\">{title}</a><a href=\"#categories\">Categor�as</a><a href=\"#live\">En vivo</a></nav><span class=\"header-caption\">{text}</span>{}</header>",if n.image.is_some() || n.asset.is_some() {optional_artwork(n,"brand-art")} else {"<span class=\"brand-mark\">M</span>".to_owned()},escape(&theme.brand),button(n)).unwrap();
         }
         Kind::Hero => {
-            write!(out,"<section class=\"component hero\" {attr}><div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA · DEMO</span><h1>{title}</h1><p>{text}</p>{}</div><div class=\"hero-art\">{}</div></section>",button(n),artwork(n)).unwrap();
+            write!(out,"<section class=\"component hero\" {attr}><div class=\"hero-copy\"><span class=\"eyebrow\">EXPERIENCIA � DEMO</span><h1>{title}</h1><p>{text}</p>{}</div><div class=\"hero-art\">{}</div></section>",button(n),artwork(n)).unwrap();
         }
         Kind::Categories | Kind::Catalog | Kind::Live | Kind::Metrics | Kind::Activity => {
             let group = match n.kind {
@@ -208,7 +208,7 @@ pub fn catalog_card(n: &Component, game: &str, favorite: bool, preview: bool) ->
     let id = escape(&n.id);
     let game = escape(game);
     let pressed = if favorite { "true" } else { "false" };
-    let mark = if favorite { "♥" } else { "♡" };
+    let mark = if favorite { "" } else { "?" };
     let action = if n.button.is_empty() {
         "Ver demo".to_owned()
     } else {
@@ -223,10 +223,11 @@ pub fn catalog_card(n: &Component, game: &str, favorite: bool, preview: bool) ->
         escape(&n.title)
     )
 }
-pub fn document(design: &Design, view: View, preview: bool) -> String {
-    document_with_appearance(design, view, preview, &Appearance::default())
+pub fn document(preset: &str, design: &Design, view: View, preview: bool) -> String {
+    document_with_appearance(preset, design, view, preview, &Appearance::default())
 }
 pub fn document_with_appearance(
+    preset: &str,
     design: &Design,
     view: View,
     preview: bool,
@@ -253,7 +254,7 @@ pub fn document_with_appearance(
     if let Some(weight) = settings.weight {
         write!(css, "--global-weight:{weight};").unwrap();
     }
-    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
+    write!(out,"<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'none'; form-action 'none'\"><title>{}</title><style>{SURFACE_CSS}</style></head><body data-preset=\"{}\" class=\"layout-{} font-{}\" style=\"{css}\">",escape(&t.brand),escape(preset),layout(t.layout),font(settings.font.unwrap_or(t.font))).unwrap();
     if settings.enabled {
         if let Some(image) = &appearance.image {
             write!(out,"<div class=\"page-backdrop\" aria-hidden=\"true\" style=\"--backdrop-fit:{};--backdrop-position:{};--backdrop-opacity:{}\"><img alt=\"\" src=\"{}\"></div>",settings.fit.css(),settings.position.css(),1.-f64::from(settings.shade)/100.,escape(image)).unwrap();
@@ -284,7 +285,7 @@ mod tests {
         let mut d = crate::presets::design("ember").unwrap();
         d.theme.brand = "<script>alert(1)</script>".into();
         d.lobby[1].title = "<img src=x onerror=alert(1)>".into();
-        let html = document(&d, View::Lobby, false);
+        let html = document("ember", &d, View::Lobby, false);
         assert!(!html.contains("<script>"));
         assert!(!html.contains("<img src=x"));
         assert!(html.contains("&lt;script&gt;"));
@@ -293,15 +294,15 @@ mod tests {
     fn hidden_not_exported() {
         let mut d = crate::presets::design("ember").unwrap();
         d.lobby[1].hidden = true;
-        assert!(!document(&d, View::Lobby, false).contains("id=\"hero\""));
-        assert!(document(&d, View::Lobby, true).contains("data-hidden=\"true\""));
+        assert!(!document("ember", &d, View::Lobby, false).contains("id=\"hero\""));
+        assert!(document("ember", &d, View::Lobby, true).contains("data-hidden=\"true\""));
     }
     #[test]
     fn all_templates_render_both_views() {
         for p in crate::presets::PRESETS {
             let d = crate::presets::design(p.id).unwrap();
             for view in [View::Lobby, View::Panel] {
-                assert!(document(&d, view, false).contains("id=\"surface\""));
+                assert!(document(p.id, &d, view, false).contains("id=\"surface\""));
             }
         }
     }

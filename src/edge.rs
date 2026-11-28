@@ -22,7 +22,7 @@ fn error(message: &str, status: u16, head: bool) -> Result<Response> {
     json_response(json!({"ok":false,"error":message}), status, head)
 }
 fn allow(methods: &str) -> Result<Response> {
-    let mut r = error("Método no permitido.", 405, false)?;
+    let mut r = error("M�todo no permitido.", 405, false)?;
     r.headers_mut().set("allow", methods)?;
     Ok(r)
 }
@@ -72,10 +72,10 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             }
             let bytes = match bounded_body(&mut req).await {
                 Ok(b) => b,
-                Err(code) => return error("Solicitud inválida o demasiado grande.", code, false),
+                Err(code) => return error("Solicitud inv�lida o demasiado grande.", code, false),
             };
             let Ok(body) = std::str::from_utf8(&bytes) else {
-                return error("UTF-8 inválido.", 400, false);
+                return error("UTF-8 inv�lido.", 400, false);
             };
             match model::decode(body) {
                 Ok(_) => json_response(
@@ -83,7 +83,7 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
                     200,
                     false,
                 ),
-                Err(_) => error("Proyecto inválido.", 422, false),
+                Err(_) => error("Proyecto inv�lido.", 422, false),
             }
         }
         "/api/v1/preview" => {
@@ -106,7 +106,7 @@ async fn handle(mut req: Request, env: Env) -> Result<Response> {
             let mut response = if head {
                 Response::empty()?
             } else {
-                Response::from_html(render::document(&design, view, false))?
+                Response::from_html(render::document(&id, &design, view, false))?
             };
             response
                 .headers_mut()
