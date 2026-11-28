@@ -62,6 +62,18 @@ function request(state,preview,offset=0){
     favorites_only:state.favorites_only,recent_only:state.recent_only,favorites:[...state.favorites],recent:state.recent,
     top:state.top,source_only:Boolean(endpoint),preview,offset});
 }
+function classicShelf(doc,studio){
+  const root=doc.querySelector('[data-classic-shelf]'),row=root?.querySelector('.classic-shelf-row');if(!row)return;
+  const result=JSON.parse(studio.catalog_page(JSON.stringify({source_only:Boolean(endpoint)})));
+  const template=doc.createElement('template');template.innerHTML=result.html;
+  const cards=[...template.content.querySelectorAll('[data-catalog-card]')].slice(0,8);
+  root.hidden=!cards.length;
+  row.replaceChildren(...cards.map(card=>{
+    const name=card.querySelector('h3').textContent,open=button(doc,'','game',card.dataset.catalogCard);
+    open.setAttribute('aria-label','Ver '+name);const img=card.querySelector('img');if(img)open.append(img);
+    const label=doc.createElement('span');label.textContent=name;open.append(label);return open;
+  }));
+}
 function resortFeatured(doc,state){
   const feature=doc.querySelector('[data-resort-featured]');if(!feature)return;
   const first=doc.querySelector('#catalog [data-catalog-card]');
@@ -228,7 +240,7 @@ export async function attachCatalog(doc,studio,preset,editing,stillCurrent){
   if(!meta.categories.includes(state.category))state.category='';
   if(!meta.groups.some(group=>group.id===state.group))state.group='';
   current={doc,studio,preset,state,editing,banner:null};
-  controls(doc,meta,state,studio);populate();updateMode(doc,state);
+  classicShelf(doc,studio);controls(doc,meta,state,studio);populate();updateMode(doc,state);
   if(doc.querySelector('[data-original-layout]'))current.banner=nativeBanner(doc,meta,state);
   else buildBanner(doc,meta,state);
 }
@@ -278,6 +290,7 @@ export async function exportCatalog(doc,studio,preset,stillCurrent){
   if(endpoint||selection?.games!=null||selection?.providers!=null)doc.querySelectorAll('[data-fixture-only]').forEach(n=>n.remove());
   const state=stateFor(preset),page=JSON.parse(studio.catalog_page(request(state,false,0)));
   items.innerHTML=page.html;
+  classicShelf(doc,studio);
   resortFeatured(doc,state);
   if(doc.querySelector('[data-original-layout]')){
     const meta=JSON.parse(studio.catalog_metadata());

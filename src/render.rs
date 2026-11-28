@@ -360,7 +360,7 @@ pub fn document_with_appearance(
     .unwrap();
     for n in design.nodes(view) {
         if let (Some(frame), Some(defaults)) = (classic, original.as_ref()) {
-            if frame.section(&mut out, n, design, defaults, preview) {
+            if frame.section(&mut out, n, design, preset, defaults, preview) {
                 continue;
             }
         }

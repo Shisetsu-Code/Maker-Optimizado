@@ -44,9 +44,24 @@ impl Classic {
         out: &mut String,
         node: &Component,
         design: &Design,
+        preset: &str,
         defaults: &Design,
         preview: bool,
     ) -> bool {
+        if node.id == "categories"
+            && node.kind == Kind::Categories
+            && defaults.lobby.iter().any(|n| n == node)
+        {
+            if !node.hidden || preview {
+                let title = match preset {
+                    "ember" | "cobalt" => "Recomendados",
+                    "flare" => "Juegos populares",
+                    _ => "Populares",
+                };
+                write!(out,r##"<section id="categories" data-component="categories" class="classic-shelf" data-classic-shelf><div class="classic-shelf-title"><h2>{title}</h2><a href="#catalog">Ver todos →</a></div><div class="classic-shelf-row"></div></section>"##).unwrap();
+            }
+            return true;
+        }
         let header = node.id == "header" && node.kind == Kind::Header;
         if !header && !(node.id == "hero" && node.kind == Kind::Hero) {
             return false;

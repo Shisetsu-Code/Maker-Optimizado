@@ -76,7 +76,7 @@ def matches(selector):
 def css_for(css):
     retained=[]
     for head,body in blocks(re.sub(r'/\*[\s\S]*?\*/','',css)):
-        if head.startswith(('@media','@supports','@layer')):
+        if head.startswith(('@media','@supports','@layer','@container')):
             body=css_for(body)
             if not body:continue
         elif head.startswith('@keyframes'):
